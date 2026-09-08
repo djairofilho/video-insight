@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.12.0">
-  <title>Processamento de vídeos com IA na AWS Diagram</title>
+  <title>Video Insight nas máquinas AWS da equipe Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
@@ -4496,12 +4496,12 @@
     <div class="header">
       <div class="header-row">
         <div class="pulse-dot"></div>
-        <h1>Processamento de vídeos com IA na AWS</h1>
+        <h1>Video Insight nas máquinas AWS da equipe</h1>
       </div>
-      <p class="subtitle">Upload direto, jobs assíncronos e workers escaláveis</p>
+      <p class="subtitle">Seis instâncias EC2, comunicação privada e deploy automático</p>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"upload","label":"Upload","focus":["user","frontend","gateway","video-service","s3"],"note":"O usuário recebe uma URL assinada e envia o arquivo diretamente ao S3."},{"id":"processing","label":"Processamento","focus":["job-service","sqs","processing-service","s3","bedrock"],"note":"O worker processa mídia e publica o resultado sem bloquear a requisição."},{"id":"security-ops","label":"Segurança e operação","focus":["auth0","gateway","secrets","cloudwatch"],"note":"Auth0, Secrets Manager e CloudWatch cobrem segurança e observabilidade."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"request","label":"Entrada HTTP","focus":["user","frontend","gateway","video-service","job-service"],"note":"O KrakenD é a entrada única e encaminha chamadas pela rede privada."},{"id":"processing","label":"Processamento assíncrono","focus":["job-service","rabbitmq","processing-service","minio","ai-adapter"],"note":"O Processing Service consome mensagens, trata a mídia e publica o resultado."},{"id":"data","label":"Dados isolados","focus":["video-service","video-db","job-service","job-db","minio"],"note":"Video e Job têm bancos PostgreSQL separados; o worker não acessa esses bancos."},{"id":"operations","label":"Deploy e operação","focus":["github-actions","gateway","video-service","job-service","processing-service","observability"],"note":"GitHub Actions entrega cada componente alterado e a observabilidade acompanha as seis máquinas."}]</script>
 
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
@@ -4544,9 +4544,9 @@
 
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="map">
-      <svg viewBox="0 0 1500 840" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="blueprint" data-quality-profile="standard">
-        <title id="archify-diagram-title">Processamento de vídeos com IA na AWS</title>
-        <desc id="archify-diagram-description">Upload direto, jobs assíncronos e workers escaláveis</desc>
+      <svg viewBox="0 0 1560 900" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="blueprint" data-quality-profile="standard">
+        <title id="archify-diagram-title">Video Insight nas máquinas AWS da equipe</title>
+        <desc id="archify-diagram-description">Seis instâncias EC2, comunicação privada e deploy automático</desc>
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -4570,240 +4570,281 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="226" y="66" width="1218" height="528" rx="12" class="c-region" stroke-width="1"/>
-        <text x="234" y="84" class="t-cloud" font-size="9" font-weight="600">AWS Region</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="408" y="73" width="1064" height="646" rx="12" class="c-region" stroke-width="1"/>
+        <text x="416" y="91" class="t-cloud" font-size="9" font-weight="600">AWS us-east-1</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="675" y="85" width="785" height="634" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="683" y="103" class="t-security" font-size="9" font-weight="600">rede privada da VPC</text>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="user" data-edge-to="frontend" data-edge-label="HTTPS" data-edge-key="0" data-edge-id="user-frontend" data-composition-points="180,330;215,330;215,332;250,332" d="M 180 330 L 214 330 Q 215 330 215 331 L 215 331 Q 215 332 216 332 L 250 332" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="frontend" data-edge-to="gateway" data-edge-label="REST" data-edge-key="1" data-edge-id="frontend-gateway" data-composition-points="410,332;450,332;450,334;490,334" d="M 410 332 L 449 332 Q 450 332 450 333 L 450 333 Q 450 334 451 334 L 490 334" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="auth0" data-edge-to="gateway" data-edge-label="JWT" data-edge-key="2" data-edge-id="auth-gateway" data-composition-points="325,154;325,200;575,200;575,300" d="M 325 154 L 325 192 Q 325 200 333 200 L 567 200 Q 575 200 575 208 L 575 300" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="gateway" data-edge-to="video-service" data-edge-label="REST" data-edge-key="3" data-edge-id="gateway-video" data-composition-points="660,334;705,334;705,202;750,202" d="M 660 334 L 697 334 Q 705 334 705 326 L 705 210 Q 705 202 713 202 L 750 202" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="gateway" data-edge-to="job-service" data-edge-label="REST" data-edge-key="4" data-edge-id="gateway-job" data-composition-points="660,334;705,334;705,362;750,362" d="M 660 334 L 697 334 Q 705 334 705 342 L 705 354 Q 705 362 713 362 L 750 362" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="video-service" data-edge-to="s3" data-edge-label="URL assinada" data-edge-key="5" data-edge-id="video-s3" data-composition-points="910,202;1010,202" d="M 910 202 L 1010 202" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="job-service" data-edge-to="rds" data-edge-label="SQL" data-edge-key="6" data-edge-id="job-rds" data-composition-points="910,362;1010,362" d="M 910 362 L 1010 362" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="job-service" data-edge-to="sqs" data-edge-label="processing.requested" data-edge-key="7" data-edge-id="job-sqs" data-composition-points="830,394;830,510" d="M 830 394 L 830 510" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="sqs" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="8" data-edge-id="sqs-worker" data-composition-points="910,540;960,540;960,542;1010,542" d="M 910 540 L 959 540 Q 960 540 960 541 L 960 541 Q 960 542 961 542 L 1010 542" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="processing-service" data-edge-to="s3" data-edge-label="lê e grava" data-edge-key="9" data-edge-id="worker-s3" data-composition-points="1100,510;1215,510;1215,260;1090,260;1090,234" d="M 1100 510 L 1207 510 Q 1215 510 1215 502 L 1215 268 Q 1215 260 1207 260 L 1098 260 Q 1090 260 1090 252 L 1090 234" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="processing-service" data-edge-to="bedrock" data-edge-label="prompt" data-edge-key="10" data-edge-id="worker-bedrock" data-composition-points="1190,542;1260,542" d="M 1190 542 L 1260 542" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="processing-service" data-edge-to="transcribe" data-edge-label="transcreve" data-edge-key="11" data-edge-id="worker-whisper" data-composition-points="1100,574;1100,670" d="M 1100 574 L 1100 670" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="processing-service" data-edge-to="sqs" data-edge-label="completed / failed" data-edge-key="12" data-edge-id="worker-result" data-composition-points="1010,542;950,542;950,610;830,610;830,570;910,540" d="M 1010 542 L 958 542 Q 950 542 950 550 L 950 602 Q 950 610 942 610 L 838 610 Q 830 610 830 602 L 830 578 Q 830 570 837.4906334205524 567.1910124672929 L 910 540" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="user" data-edge-to="frontend" data-edge-label="HTTPS" data-edge-key="0" data-edge-id="user-frontend" data-composition-points="155,397;210,397" d="M 155 397 L 210 397" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="frontend" data-edge-to="gateway" data-edge-label="REST" data-edge-key="1" data-edge-id="frontend-gateway" data-composition-points="360,397;430,397" d="M 360 397 L 430 397" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="gateway" data-edge-to="video-service" data-edge-label="REST privado" data-edge-key="2" data-edge-id="gateway-video" data-composition-points="600,397;640,397;640,202;685,202" d="M 600 397 L 632 397 Q 640 397 640 389 L 640 210 Q 640 202 648 202 L 685 202" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="gateway" data-edge-to="job-service" data-edge-label="REST privado" data-edge-key="3" data-edge-id="gateway-job" data-composition-points="600,397;685,397" d="M 600 397 L 685 397" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="video-service" data-edge-to="video-db" data-edge-label="SQL" data-edge-key="4" data-edge-id="video-db-link" data-composition-points="865,202;912.5,202;912.5,127;960,127" d="M 865 202 L 904.5 202 Q 912.5 202 912.5 194 L 912.5 135 Q 912.5 127 920.5 127 L 960 127" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="video-service" data-edge-to="minio" data-edge-label="URL assinada" data-edge-key="5" data-edge-id="video-minio" data-composition-points="775,234;900,234;900,667;960,667" d="M 775 234 L 892 234 Q 900 234 900 242 L 900 659 Q 900 667 908 667 L 960 667" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="job-service" data-edge-to="job-db" data-edge-label="SQL" data-edge-key="6" data-edge-id="job-db-link" data-composition-points="865,397;910,397;910,307;960,307" d="M 865 397 L 902 397 Q 910 397 910 389 L 910 315 Q 910 307 918 307 L 960 307" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="job-service" data-edge-to="rabbitmq" data-edge-label="processing.requested" data-edge-key="7" data-edge-id="job-rabbit" data-composition-points="775,429;900,429;900,485;960,485" d="M 775 429 L 892 429 Q 900 429 900 437 L 900 477 Q 900 485 908 485 L 960 485" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="rabbitmq" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="8" data-edge-id="rabbit-worker" data-composition-points="960,485;915,485;915,617;875,617" d="M 960 485 L 923 485 Q 915 485 915 493 L 915 609 Q 915 617 907 617 L 875 617" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="processing-service" data-edge-to="minio" data-edge-label="lê e grava" data-edge-key="9" data-edge-id="worker-minio" data-composition-points="875,617;917.5,617;917.5,667;960,667" d="M 875 617 L 909.5 617 Q 917.5 617 917.5 625 L 917.5 659 Q 917.5 667 925.5 667 L 960 667" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="processing-service" data-edge-to="ai-adapter" data-edge-label="transcreve e resume" data-edge-key="10" data-edge-id="worker-ai" data-composition-points="780,649;780,735;1200,735;1200,667;1245,667" d="M 780 649 L 780 727 Q 780 735 788 735 L 1192 735 Q 1200 735 1200 727 L 1200 675 Q 1200 667 1208 667 L 1245 667" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="processing-service" data-edge-to="rabbitmq" data-edge-label="progresso / resultado" data-edge-key="11" data-edge-id="worker-events" data-composition-points="780,585;780,545;1052,545;1052.5,515" d="M 780 585 L 780 553 Q 780 545 788 545 L 1044 545 Q 1052 545 1052.133314818672 537.0011108796832 L 1052.5 515" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="github-actions" data-edge-to="gateway" data-edge-label="SSH" data-edge-key="12" data-edge-id="deploy-gateway" data-composition-points="515,154;515,365" d="M 515 154 L 515 365" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="github-actions" data-edge-to="video-service" data-edge-label="imagem" data-edge-key="13" data-edge-id="deploy-video" data-composition-points="600,122;640,122;775,122;775,170" d="M 600 122 L 632 122 Q 640 122 648 122 L 767 122 Q 775 122 775 130 L 775 170" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="job-service" data-edge-to="observability" data-edge-label="métricas" data-edge-key="14" data-edge-id="metrics-job" data-composition-points="775,365;775,345;1200,345;1200,307;1245,307" d="M 775 365 L 775 353 Q 775 345 783 345 L 1192 345 Q 1200 345 1200 337 L 1200 315 Q 1200 307 1208 307 L 1245 307" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-user" data-node-id="user" data-node-label="Usuário" tabindex="0" role="button" aria-label="Focus Usuário, navegador, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="navegador" data-node-context="Architecture component">
           <title>Usuário · navegador · Architecture component</title>
-          <rect x="40" y="300" width="140" height="60" rx="6" class="c-mask"/>
-          <rect x="40" y="300" width="140" height="60" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 306) scale(0.6875)">
+          <rect x="25" y="367" width="130" height="60" rx="6" class="c-mask"/>
+          <rect x="25" y="367" width="130" height="60" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(31 373) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-detail-anchor x="110" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Usuário</text>
-        <text data-detail="context" x="110" y="344" class="t-muted" font-size="9" text-anchor="middle">navegador</text>
+          <text data-detail-anchor x="90" y="395" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Usuário</text>
+        <text data-detail="context" x="90" y="411" class="t-muted" font-size="9" text-anchor="middle">navegador</text>
         </g>
 
-        <g id="node-auth0" data-node-id="auth0" data-node-label="Auth0" tabindex="0" role="button" aria-label="Focus Auth0, OAuth2 + JWT, Architecture component" aria-pressed="false" data-node-kind="security" data-node-sublabel="OAuth2 + JWT" data-node-context="Architecture component">
-          <title>Auth0 · OAuth2 + JWT · Architecture component</title>
-          <rect x="250" y="90" width="150" height="64" rx="6" class="c-mask"/>
-          <rect x="250" y="90" width="150" height="64" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(256 96) scale(0.6875)">
-            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
-            <path d="m5.8 8 1.5 1.5 3-3"/>
+        <g id="node-frontend" data-node-id="frontend" data-node-label="Frontend SPA" tabindex="0" role="button" aria-label="Focus Frontend SPA, TypeScript, Architecture component" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="TypeScript" data-node-context="Architecture component">
+          <title>Frontend SPA · TypeScript · Architecture component</title>
+          <rect x="210" y="367" width="150" height="60" rx="6" class="c-mask"/>
+          <rect x="210" y="367" width="150" height="60" rx="6" class="c-frontend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(216 373) scale(0.6875)">
+            <rect x="2" y="3" width="12" height="10" rx="2"/>
+            <path d="M2 6.5h12"/>
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-detail-anchor x="325" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auth0</text>
-        <text data-detail="context" x="325" y="136" class="t-muted" font-size="9" text-anchor="middle">OAuth2 + JWT</text>
+          <text data-detail-anchor x="285" y="395" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Frontend SPA</text>
+        <text data-detail="context" x="285" y="411" class="t-muted" font-size="9" text-anchor="middle">TypeScript</text>
         </g>
 
-        <g id="node-frontend" data-node-id="frontend" data-node-label="S3 + CloudFront" tabindex="0" role="button" aria-label="Focus S3 + CloudFront, frontend SPA, AWS Region" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="frontend SPA" data-node-context="AWS Region">
-          <title>S3 + CloudFront · frontend SPA · AWS Region</title>
-          <rect x="250" y="300" width="160" height="64" rx="6" class="c-mask"/>
-          <rect x="250" y="300" width="160" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="cloudfront" x="256" y="306" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tQ2xvdWRGcm9udF82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tQ2xvdWRGcm9udF82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L05ldHdvcmtpbmctQ29udGVudC1EZWxpdmVyeSIgZmlsbD0iIzhDNEZGRiI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNNTUuMTIyLDUyLjEyMyBDNTUuMTIyLDUwLjQ2OSA1My43NzYsNDkuMTIzIDUyLjEyMiw0OS4xMjMgQzUwLjQ2OCw0OS4xMjMgNDkuMTIyLDUwLjQ2OSA0OS4xMjIsNTIuMTIzIEM0OS4xMjIsNTMuNzc3IDUwLjQ2OCw1NS4xMjMgNTIuMTIyLDU1LjEyMyBDNTMuNzc2LDU1LjEyMyA1NS4xMjIsNTMuNzc3IDU1LjEyMiw1Mi4xMjMgTDU1LjEyMiw1Mi4xMjMgWiBNNTcuMTIyLDUyLjEyMyBDNTcuMTIyLDU0Ljg4IDU0Ljg3OSw1Ny4xMjMgNTIuMTIyLDU3LjEyMyBDNDkuMzY1LDU3LjEyMyA0Ny4xMjIsNTQuODggNDcuMTIyLDUyLjEyMyBDNDcuMTIyLDQ5LjM2NiA0OS4zNjUsNDcuMTIzIDUyLjEyMiw0Ny4xMjMgQzU0Ljg3OSw0Ny4xMjMgNTcuMTIyLDQ5LjM2NiA1Ny4xMjIsNTIuMTIzIEw1Ny4xMjIsNTIuMTIzIFogTTMwLjM5MiwzNy42OTIgQzMwLjM5MiwzNi4wMzggMjkuMDQ2LDM0LjY5MiAyNy4zOTIsMzQuNjkyIEMyNS43MzcsMzQuNjkyIDI0LjM5MiwzNi4wMzggMjQuMzkyLDM3LjY5MiBDMjQuMzkyLDM5LjM0NiAyNS43MzcsNDAuNjkyIDI3LjM5Miw0MC42OTIgQzI5LjA0Niw0MC42OTIgMzAuMzkyLDM5LjM0NiAzMC4zOTIsMzcuNjkyIEwzMC4zOTIsMzcuNjkyIFogTTMyLjM5MiwzNy42OTIgQzMyLjM5Miw0MC40NDkgMzAuMTQ4LDQyLjY5MiAyNy4zOTIsNDIuNjkyIEMyNC42MzUsNDIuNjkyIDIyLjM5Miw0MC40NDkgMjIuMzkyLDM3LjY5MiBDMjIuMzkyLDM0LjkzNSAyNC42MzUsMzIuNjkyIDI3LjM5MiwzMi42OTIgQzMwLjE0OCwzMi42OTIgMzIuMzkyLDM0LjkzNSAzMi4zOTIsMzcuNjkyIEwzMi4zOTIsMzcuNjkyIFogTTM5LjczLDIyLjAwNyBDMzkuNzMsMjMuNjYxIDQxLjA3NiwyNS4wMDcgNDIuNzMsMjUuMDA3IEM0NC4zODUsMjUuMDA3IDQ1LjczLDIzLjY2MSA0NS43MywyMi4wMDcgQzQ1LjczLDIwLjM1MiA0NC4zODUsMTkuMDA3IDQyLjczLDE5LjAwNyBDNDEuMDc2LDE5LjAwNyAzOS43MywyMC4zNTIgMzkuNzMsMjIuMDA3IEwzOS43MywyMi4wMDcgWiBNMzcuNzMsMjIuMDA3IEMzNy43MywxOS4yNSAzOS45NzQsMTcuMDA3IDQyLjczLDE3LjAwNyBDNDUuNDg3LDE3LjAwNyA0Ny43MywxOS4yNSA0Ny43MywyMi4wMDcgQzQ3LjczLDI0Ljc2NCA0NS40ODcsMjcuMDA3IDQyLjczLDI3LjAwNyBDMzkuOTc0LDI3LjAwNyAzNy43MywyNC43NjQgMzcuNzMsMjIuMDA3IEwzNy43MywyMi4wMDcgWiBNNjYsNDAgQzY2LDMwLjcyNyA2MS4wMjgsMjIuMTQ4IDUzLjAxMiwxNy41MDkgQzUxLjU3NSwxNy43OTkgNTAuMTg1LDE4LjE5NiA0OC40NTEsMTguODIzIEw0Ny43NzEsMTYuOTQyIEM0OC42NzYsMTYuNjE2IDQ5LjQ4NiwxNi4zNTIgNTAuMjY2LDE2LjEyNiBDNDcuMDQ2LDE0LjczNyA0My41NDgsMTQgNDAsMTQgQzM4LjMxMSwxNCAzNi42NDksMTQuMTc1IDM1LjAyNSwxNC40OTIgQzM2LjIwMSwxNS4xOCAzNy4yNDQsMTUuODY2IDM4LjI1NywxNi42MzQgTDM3LjA0OCwxOC4yMjcgQzM1LjYyLDE3LjE0NSAzNC4xNCwxNi4yMjggMzIuMTk3LDE1LjIxIEMyMi4zNzgsMTguMjk4IDE1LjMwNiwyNi45NTggMTQuMTgzLDM3LjEyOCBDMTYuMjQyLDM2LjcxMSAxOC4yMTksMzYuNDg0IDIwLjQxNCwzNi40MyBMMjAuNDYzLDM4LjQyOSBDMTguMTYzLDM4LjQ4NiAxNi4xODcsMzguNzMgMTQuMDI3LDM5LjIwNSBDMTQuMDE4LDM5LjQ3IDE0LDM5LjczOCAxNCw0MCBDMTQsNDguNjU4IDE4LjI4Myw1Ni42MzYgMjUuMzI3LDYxLjQ0NyBDMjQuMDc0LDU3LjcxNiAyMy40NSw1NC4xOSAyMy40NSw1MC43NDYgQzIzLjQ1LDQ4Ljc4MiAyMy43ODgsNDcuMTY5IDI0LjE0NSw0NS40NjIgQzI0LjIyOCw0NS4wNjcgMjQuMzEyLDQ0LjY2NSAyNC4zOTQsNDQuMjQ4IEwyNi4zNTcsNDQuNjM1IEMyNi4yNzMsNDUuMDU5IDI2LjE4Nyw0NS40NyAyNi4xMDMsNDUuODczIEMyNS43NTMsNDcuNTQ1IDI1LjQ1LDQ4Ljk4OSAyNS40NSw1MC43NDYgQzI1LjQ1LDU0LjY1NCAyNi4zMDgsNTguNjk1IDI4LjA1NCw2My4wODMgQzMxLjc3Myw2NS4wMTQgMzUuNzg5LDY2IDQwLDY2IEM0Mi43NTYsNjYgNDUuNDQ2LDY1LjU2IDQ4LjAxMiw2NC43MTQgQzQ5LjAxOSw2Mi43MjcgNDkuNzY2LDYwLjg1MiA1MC4zOSw1OC42OTkgTDUyLjMxMSw1OS4yNTYgQzUxLjg1NSw2MC44MjYgNTEuMzMyLDYyLjI1MyA1MC43MDksNjMuNjc3IEM1Mi4zMjMsNjIuOTUxIDUzLjg1LDYyLjA1MyA1NS4yODMsNjEuMDA1IEM1NC45MzgsNjAuMTU5IDU0LjU2OCw1OS4zMTggNTQuMTU5LDU4LjQ5OSBMNTUuOTQ4LDU3LjYwNCBDNTYuMjk2LDU4LjMgNTYuNjE1LDU5LjAxMiA1Ni45Miw1OS43MjggQzYyLjcwNSw1NC43NzUgNjYsNDcuNjYgNjYsNDAgTDY2LDQwIFogTTY4LDQwIEM2OCw0OC43MjcgNjQuMDM0LDU2Ljc5OSA1Ny4xMjEsNjIuMTQ5IEM1NS40MDksNjMuNDc5IDUzLjU1Miw2NC41ODMgNTEuNTg5LDY1LjQ3MiBDNTAuNzU2LDY1Ljg1IDQ5LjkwOCw2Ni4yIDQ5LjAzNiw2Ni40OTQgQzQ2LjE1Niw2Ny40OTMgNDMuMTEzLDY4IDQwLDY4IEMzNS40LDY4IDMwLjgzMiw2Ni44NTQgMjYuNzg4LDY0LjY4NiBDMTcuNjY3LDU5LjgwNiAxMiw1MC4zNDcgMTIsNDAgQzEyLDM5LjMxNCAxMi4wMTgsMzguNzkyIDEyLjA1OSwzOC4zMDkgQzEyLjc0LDI2LjYyNSAyMC43NTYsMTYuNTEyIDMyLjAwMSwxMy4xNjYgQzM0LjU2MiwxMi4zOTMgMzcuMjU1LDEyIDQwLDEyIEM0NC44MDgsMTIgNDkuNTM5LDEzLjIzOCA1My42ODQsMTUuNTc5IEM2Mi41MTMsMjAuNTI1IDY4LDI5Ljg4NCA2OCw0MCBMNjgsNDAgWiBNMzcuMzE0LDI1LjQ2MyBMMzYsMjMuOTU2IEMzMy43NTgsMjUuOTEyIDMyLjAxNCwyNy45ODkgMjkuOTc3LDMxLjEyNiBMMzEuNjU1LDMyLjIxNSBDMzMuNTgzLDI5LjI0NCAzNS4yMjMsMjcuMjg4IDM3LjMxNCwyNS40NjMgTDM3LjMxNCwyNS40NjMgWiBNMzQuMjc1LDM4LjQyNyBMMzMuNjI1LDQwLjMxOCBDMzguMjE4LDQxLjg5NSA0Mi4yMjUsNDQuNDExIDQ2LjIzNCw0OC4yMzYgTDQ3LjYxNSw0Ni43ODkgQzQzLjM4OSw0Mi43NTggMzkuMTUsNDAuMTAxIDM0LjI3NSwzOC40MjcgTDM0LjI3NSwzOC40MjcgWiBNNDcuNjQ2LDI2LjY2OCBDNTEuMzk4LDMyLjM5IDUzLjUxMSwzOC42NzEgNTMuOTI1LDQ1LjMzOCBMNTEuOTI5LDQ1LjQ2MiBDNTEuNTM2LDM5LjE0NiA0OS41MzMsMzMuMTkyIDQ1Ljk3NSwyNy43NjUgTDQ3LjY0NiwyNi42NjggWiIgaWQ9IkFtYXpvbi1DbG91ZEZyb250X0ljb25fNjRfU3F1aWQiIGZpbGw9IiNGRkZGRkYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+"/>
-          <text data-detail-anchor x="330" y="330" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">S3 + CloudFront</text>
-        <text data-detail="context" x="330" y="346" class="t-muted" font-size="9" text-anchor="middle">frontend SPA</text>
+        <g id="node-gateway" data-node-id="gateway" data-node-label="KrakenD" tabindex="0" role="button" aria-label="Focus KrakenD, Djairo · porta 80, AWS us-east-1" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Djairo · porta 80" data-node-tag="172.31.7.117" data-node-context="AWS us-east-1">
+          <title>KrakenD · Djairo · porta 80 · AWS us-east-1 · 172.31.7.117</title>
+          <rect x="430" y="365" width="170" height="64" rx="6" class="c-mask"/>
+          <rect x="430" y="365" width="170" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(436 371) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-detail-anchor x="515" y="395" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">KrakenD</text>
+        <text data-detail="context" x="515" y="411" class="t-muted" font-size="9" text-anchor="middle">Djairo · porta 80</text>
+        <text data-detail="fine" x="515" y="421" class="t-cloud" font-size="7" text-anchor="middle">172.31.7.117</text>
         </g>
 
-        <g id="node-gateway" data-node-id="gateway" data-node-label="Amazon API Gateway" tabindex="0" role="button" aria-label="Focus Amazon API Gateway, JWT, rotas e limites, AWS Region" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="JWT, rotas e limites" data-node-context="AWS Region">
-          <title>Amazon API Gateway · JWT, rotas e limites · AWS Region</title>
-          <rect x="490" y="300" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="490" y="300" width="170" height="68" rx="6" class="c-cloud" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="api-gateway" x="496" y="306" width="21" height="21" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLzY0L0FyY2hfQW1hem9uLUFQSS1HYXRld2F5XzY0Ij4KPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L05ldHdvcmtpbmctQ29udGVudC1EZWxpdmVyeSI+CjxyZWN0IGlkPSJSZWN0YW5nbGUiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzhDNEZGRiIvPgo8L2c+CjxnIGlkPSJJY29uLVNlcnZpY2UvNjQvQW1hem9uLUFQSS1HYXRld2F5XzY0Ij4KPHBhdGggaWQ9IkFtYXpvbi1BUEktR2F0ZXdheV9JY29uXzY0X1NxdWlkIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTM0LjA2NSA1NS42MzI0SDM3VjUzLjYxNTNIMzQuMDY1VjU1LjYzMjRaTTM5IDU1LjYzMjRINDJWNTMuNjE1M0gzOVY1NS42MzI0Wk0yNyAxNC42Mjk1TDE0IDIxLjA4MjFWNjEuMTkzNEwyNyA2NS41ODk2VjE0LjYyOTVaTTI5IDI3LjM5MzRWNTMuNjE1M0gzMlY1NS42MzI0SDI5VjY2Ljk5MTVDMjkgNjcuMzE2MiAyOC44NDUgNjcuNjIwOCAyOC41ODQgNjcuODEwNEMyOC40MTIgNjcuOTM1NSAyOC4yMDcgNjggMjggNjhDMjcuODk0IDY4IDI3Ljc4NiA2Ny45ODI5IDI3LjY4MiA2Ny45NDc2TDEyLjY4MiA2Mi44NzU2QzEyLjI3NCA2Mi43Mzc1IDEyIDYyLjM1MjIgMTIgNjEuOTE5NlYyMC40NTM3QzEyIDIwLjA3MDUgMTIuMjE3IDE5LjcxODUgMTIuNTU5IDE5LjU0OTFMMjcuNTU5IDEyLjEwNDFDMjcuODY4IDExLjk0OTggMjguMjM1IDExLjk2NzkgMjguNTI4IDEyLjE1MjVDMjguODIxIDEyLjMzNjEgMjkgMTIuNjU5OCAyOSAxMy4wMDg3VjI1LjM3NjRIMzJWMjcuMzkzNEgyOVpNNDQgNTUuNjMyNEg0N1Y1My42MTUzSDQ0VjU1LjYzMjRaTTQ0LjA2NSAyNy4zOTM0SDQ3VjI1LjM3NjRINDQuMDY1VjI3LjM5MzRaTTM5LjA2NSAyNy4zOTM0SDQyVjI1LjM3NjRIMzkuMDY1VjI3LjM5MzRaTTM0LjA2NSAyNy4zOTM0SDM3VjI1LjM3NjRIMzQuMDY1VjI3LjM5MzRaTTY2IDIxLjA4MjFMNTMgMTQuNjI5NVY2NS41ODk2TDY2IDYxLjE5MzRWMjEuMDgyMVpNNjggNjEuOTE5NkM2OCA2Mi4zNTIyIDY3LjcyNiA2Mi43Mzc1IDY3LjMxOCA2Mi44NzU2TDUyLjMxOCA2Ny45NDc2QzUyLjIxNCA2Ny45ODI5IDUyLjEwNiA2OCA1MiA2OEM1MS43OTMgNjggNTEuNTg4IDY3LjkzNTUgNTEuNDE2IDY3LjgxMDRDNTEuMTU1IDY3LjYyMDggNTEgNjcuMzE2MiA1MSA2Ni45OTE1VjU1LjYzMjRINDkuMDY1VjUzLjYxNTNINTFWMjcuMzkzNEg0OS4wNjVWMjUuMzc2NEg1MVYxMy4wMDg3QzUxIDEyLjY1OTggNTEuMTc5IDEyLjMzNjEgNTEuNDcyIDEyLjE1MjVDNTEuNzY1IDExLjk2NzkgNTIuMTMxIDExLjk0OTggNTIuNDQxIDEyLjEwNDFMNjcuNDQxIDE5LjU0OTFDNjcuNzgzIDE5LjcxODUgNjggMjAuMDcwNSA2OCAyMC40NTM3VjYxLjkxOTZaTTQyLjkzNCAzMy44MDY3TDQxLjA2NiAzMy4wODI2TDM2LjA2NiA0Ni4xOTM1TDM3LjkzNCA0Ni45MTc2TDQyLjkzNCAzMy44MDY3Wk00OS43MDcgNDAuMjA4OUM1MC4wOTggMzkuODE0NSA1MC4wOTggMzkuMTc2MSA0OS43MDcgMzguNzgyOEw0NS43MDcgMzQuNzQ4N0w0NC4yOTMgMzYuMTc0N0w0Ny41ODYgMzkuNDk1OEw0NC4yOTMgNDIuODE2OUw0NS43MDcgNDQuMjQzTDQ5LjcwNyA0MC4yMDg5Wk0zNC4yOTMgNDQuMjQzTDMwLjI5MyA0MC4yMDg5QzI5LjkwMiAzOS44MTQ1IDI5LjkwMiAzOS4xNzYxIDMwLjI5MyAzOC43ODI4TDM0LjI5MyAzNC43NDg3TDM1LjcwNyAzNi4xNzQ3TDMyLjQxNCAzOS40OTU4TDM1LjcwNyA0Mi44MTY5TDM0LjI5MyA0NC4yNDNaIiBmaWxsPSJ3aGl0ZSIvPgo8L2c+CjwvZz4KPC9zdmc+Cg=="/>
-          <text data-detail-anchor x="575" y="332" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon API Gateway</text>
-        <text data-detail="context" x="575" y="348" class="t-muted" font-size="9" text-anchor="middle">JWT, rotas e limites</text>
+        <g id="node-github-actions" data-node-id="github-actions" data-node-label="GitHub Actions" tabindex="0" role="button" aria-label="Focus GitHub Actions, CI/CD por diretório, Architecture component" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="CI/CD por diretório" data-node-tag="deploy por SSH" data-node-context="Architecture component">
+          <title>GitHub Actions · CI/CD por diretório · Architecture component · deploy por SSH</title>
+          <rect x="430" y="90" width="170" height="64" rx="6" class="c-mask"/>
+          <rect x="430" y="90" width="170" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(436 96) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-detail-anchor x="515" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">GitHub Actions</text>
+        <text data-detail="context" x="515" y="136" class="t-muted" font-size="9" text-anchor="middle">CI/CD por diretório</text>
+        <text data-detail="fine" x="515" y="146" class="t-cloud" font-size="7" text-anchor="middle">deploy por SSH</text>
         </g>
 
-        <g id="node-secrets" data-node-id="secrets" data-node-label="AWS Secrets Manager" tabindex="0" role="button" aria-label="Focus AWS Secrets Manager, credenciais, AWS Region" aria-pressed="false" data-node-kind="security" data-node-sublabel="credenciais" data-node-context="AWS Region">
-          <title>AWS Secrets Manager · credenciais · AWS Region</title>
-          <rect x="490" y="90" width="170" height="64" rx="6" class="c-mask"/>
-          <rect x="490" y="90" width="170" height="64" rx="6" class="c-security" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="secrets" x="496" y="96" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtU2VjcmV0cy1NYW5hZ2VyXzY0PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS82NC9BcmNoX0FXUy1TZWNyZXRzLU1hbmFnZXJfNjQiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy82NC9TZWN1cml0eS1JZGVudGl0eS1Db21wbGlhbmNlIiBmaWxsPSIjREQzNDRDIj4KICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj48L3JlY3Q+CiAgICAgICAgPC9nPgogICAgICAgIDxwYXRoIGQ9Ik0zOC43Niw0My4zNiBDMzguNzYsNDQuMDQ0IDM5LjMxNyw0NC42IDQwLDQ0LjYgQzQwLjY4NCw0NC42IDQxLjI0LDQ0LjA0NCA0MS4yNCw0My4zNiBDNDEuMjQsNDIuNjc2IDQwLjY4NCw0Mi4xMiA0MCw0Mi4xMiBDMzkuMzE3LDQyLjEyIDM4Ljc2LDQyLjY3NiAzOC43Niw0My4zNiBMMzguNzYsNDMuMzYgWiBNMzYuNzYsNDMuMzYgQzM2Ljc2LDQxLjU3MyAzOC4yMTMsNDAuMTIgNDAsNDAuMTIgQzQxLjc4Nyw0MC4xMiA0My4yNCw0MS41NzMgNDMuMjQsNDMuMzYgQzQzLjI0LDQ0Ljc5NiA0Mi4yOTYsNDYuMDAyIDQxLDQ2LjQyNiBMNDEsNDkgTDM5LDQ5IEwzOSw0Ni40MjYgQzM3LjcwNCw0Ni4wMDIgMzYuNzYsNDQuNzk2IDM2Ljc2LDQzLjM2IEwzNi43Niw0My4zNiBaIE00OSwzOCBMMzEsMzggTDMxLDUxIEw0OSw1MSBMNDksNDggTDQ2LDQ4IEw0Niw0NiBMNDksNDYgTDQ5LDQzIEw0Niw0MyBMNDYsNDEgTDQ5LDQxIEw0OSwzOCBaIE0zNCwzNiBMNDUuOTk5LDM2IEw0NiwzMSBDNDYuMDAxLDI4LjM4NCA0My4xNDMsMjYuMDAyIDQwLjAwNCwyNiBMNDAuMDAxLDI2IEMzOC40NzIsMjYgMzYuOTI4LDI2LjU3NCAzNS43NjMsMjcuNTc1IEMzNC42NDMsMjguNTM3IDM0LDI5Ljc4NiAzNCwzMS4wMDEgTDM0LDM2IFogTTQ4LDMxLjAwMSBMNDcuOTk5LDM2IEw1MCwzNiBDNTAuNTUzLDM2IDUxLDM2LjQ0OCA1MSwzNyBMNTEsNTIgQzUxLDUyLjU1MiA1MC41NTMsNTMgNTAsNTMgTDMwLDUzIEMyOS40NDcsNTMgMjksNTIuNTUyIDI5LDUyIEwyOSwzNyBDMjksMzYuNDQ4IDI5LjQ0NywzNiAzMCwzNiBMMzIsMzYgTDMyLDMxIEMzMi4wMDEsMjkuMjAyIDMyLjg5NywyNy40MDEgMzQuNDU5LDI2LjA1OCBDMzUuOTgyLDI0Ljc1IDM4LjAwMSwyNCA0MC4wMDEsMjQgTDQwLjAwNCwyNCBDNDQuMjY1LDI0LjAwMiA0OC4wMDEsMjcuMjczIDQ4LDMxLjAwMSBMNDgsMzEuMDAxIFogTTE5LjIwNyw1NS4wNDkgTDIwLjgyOCw1My44NzcgQzE4LjA5Myw1MC4wOTcgMTYuNTgxLDQ1LjY2MiAxNi4zOTYsNDEgTDE5LDQxIEwxOSwzOSBMMTYuMzk5LDM5IEMxNi41OTgsMzQuMzY2IDE4LjEwOCwyOS45NTcgMjAuODI4LDI2LjE5OCBMMTkuMjA3LDI1LjAyNSBDMTYuMjM5LDI5LjEyOCAxNC41OTksMzMuOTQyIDE0LjM5OSwzOSBMMTIsMzkgTDEyLDQxIEwxNC4zOTYsNDEgQzE0LjU4Miw0Ni4wODYgMTYuMjI0LDUwLjkyNiAxOS4yMDcsNTUuMDQ5IEwxOS4yMDcsNTUuMDQ5IFogTTUzLjgzOCw1OS4yMDggQzUwLjA2OSw2MS45MzYgNDUuNjQ4LDYzLjQ0NiA0MSw2My42MzkgTDQxLDYxIEwzOSw2MSBMMzksNjMuNjM5IEMzNC4zNTIsNjMuNDQ3IDI5LjkzLDYxLjkzNyAyNi4xNTksNTkuMjA4IEwyNC45ODgsNjAuODI4IEMyOS4xLDYzLjgwNSAzMy45MjgsNjUuNDQ1IDM5LDY1LjYzOSBMMzksNjggTDQxLDY4IEw0MSw2NS42MzkgQzQ2LjA3Miw2NS40NDUgNTAuODk4LDYzLjgwNSA1NS4wMSw2MC44MjggTDUzLjgzOCw1OS4yMDggWiBNMjYuMTU5LDIwLjg2NiBDMjkuOTMsMTguMTM4IDM0LjM1MiwxNi42MjggMzksMTYuNDM2IEwzOSwxOSBMNDEsMTkgTDQxLDE2LjQzNiBDNDUuNjQ4LDE2LjYyOCA1MC4wNjksMTguMTM4IDUzLjgzOCwyMC44NjYgTDU1LjAxLDE5LjI0NiBDNTAuODk4LDE2LjI3IDQ2LjA3MiwxNC42MyA0MSwxNC40MzYgTDQxLDEyIEwzOSwxMiBMMzksMTQuNDM2IEMzMy45MjgsMTQuNjI5IDI5LjEsMTYuMjY5IDI0Ljk4OCwxOS4yNDYgTDI2LjE1OSwyMC44NjYgWiBNNjUuNTk5LDM5IEM2NS4zOTksMzMuOTQyIDYzLjc1OSwyOS4xMjggNjAuNzksMjUuMDI1IEw1OS4xNjksMjYuMTk4IEM2MS44OSwyOS45NTcgNjMuNCwzNC4zNjYgNjMuNTk5LDM5IEw2MSwzOSBMNjEsNDEgTDYzLjYwMiw0MSBDNjMuNDE2LDQ1LjY2MiA2MS45MDUsNTAuMDk3IDU5LjE2OSw1My44NzcgTDYwLjc5LDU1LjA0OSBDNjMuNzc0LDUwLjkyNiA2NS40MTUsNDYuMDg2IDY1LjYwMiw0MSBMNjgsNDEgTDY4LDM5IEw2NS41OTksMzkgWiBNNTYuMzg2LDI1LjA2NCBMNjQuMjI2LDE3LjIyNCBMNjIuODEyLDE1LjgxIEw1NC45NzIsMjMuNjUgTDU2LjM4NiwyNS4wNjQgWiBNMjMuNjEyLDU1LjAxIEwxNS43NzIsNjIuODUgTDE3LjE4Niw2NC4yNjQgTDI1LjAyNiw1Ni40MjQgTDIzLjYxMiw1NS4wMSBaIE0yOC42NjYsMjcuMjUzIEwxMy44MjUsMTIuNDEzIEwxMi40MTEsMTMuODI3IEwyNy4yNTIsMjguNjY3IEwyOC42NjYsMjcuMjUzIFogTTU0LjE5Myw1Mi43OCBMNjcuNTg2LDY2LjE3MyBMNjYuMTcyLDY3LjU4NyBMNTIuNzc5LDU0LjE5NCBMNTQuMTkzLDUyLjc4IFoiIGlkPSJBV1MtU2VjcmV0cy1NYW5hZ2VyX0ljb25fNjRfU3F1aWQiIGZpbGw9IiNGRkZGRkYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+"/>
-          <text data-detail-anchor x="575" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">AWS Secrets Manager</text>
-        <text data-detail="context" x="575" y="136" class="t-muted" font-size="9" text-anchor="middle">credenciais</text>
+        <g id="node-video-service" data-node-id="video-service" data-node-label="Video Service" tabindex="0" role="button" aria-label="Focus Video Service, Matheus · Java, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Matheus · Java" data-node-tag="172.31.1.54:8081" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>Video Service · Matheus · Java · AWS us-east-1 › rede privada da VPC · 172.31.1.54:8081</title>
+          <rect x="685" y="170" width="180" height="64" rx="6" class="c-mask"/>
+          <rect x="685" y="170" width="180" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(691 176) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-detail-anchor x="775" y="200" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Video Service</text>
+        <text data-detail="context" x="775" y="216" class="t-muted" font-size="9" text-anchor="middle">Matheus · Java</text>
+        <text data-detail="fine" x="775" y="226" class="t-backend" font-size="7" text-anchor="middle">172.31.1.54:8081</text>
         </g>
 
-        <g id="node-video-service" data-node-id="video-service" data-node-label="Video Service" tabindex="0" role="button" aria-label="Focus Video Service, ECS + Fargate, AWS Region" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ECS + Fargate" data-node-context="AWS Region">
-          <title>Video Service · ECS + Fargate · AWS Region</title>
-          <rect x="750" y="170" width="160" height="64" rx="6" class="c-mask"/>
-          <rect x="750" y="170" width="160" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="ecs" x="756" y="176" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRWxhc3RpYy1Db250YWluZXItU2VydmljZV82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRWxhc3RpYy1Db250YWluZXItU2VydmljZV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L0NvbXB1dGUiIGZpbGw9IiNFRDcxMDAiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTY0LDQ4LjIzNDAwOTUgTDU2LDQzLjQzMzAxMTcgTDU2LDMyLjAwMDAxNjkgQzU2LDMxLjY0NDAxNzEgNTUuODEyLDMxLjMxNTAxNzIgNTUuNTA0LDMxLjEzNjAxNzMgTDQ0LDI0LjQyNjAyMDQgTDQ0LDE0Ljc1MjAyNDggTDY0LDI2LjU3MTAxOTQgTDY0LDQ4LjIzNDAwOTUgWiBNNjUuNTA5LDI1LjEzOTAyIEw0My41MDksMTIuMTM5MDI2IEM0My4xOTksMTEuOTU2MDI2MSA0Mi44MTgsMTEuOTU0MDI2MSA0Mi41MDQsMTIuMTMxMDI2IEM0Mi4xOTMsMTIuMzA5MDI1OSA0MiwxMi42NDEwMjU3IDQyLDEzLjAwMDAyNTYgTDQyLDI1LjAwMDAyMDEgQzQyLDI1LjM1NTAxOTkgNDIuMTg5LDI1LjY4NDAxOTggNDIuNDk2LDI1Ljg2NDAxOTcgTDU0LDMyLjU3NDAxNjYgTDU0LDQ0LjAwMDAxMTQgQzU0LDQ0LjM1MTAxMTMgNTQuMTg1LDQ0LjY3NzAxMTEgNTQuNDg2LDQ0Ljg1NzAxMSBMNjQuNDg2LDUwLjg1NzAwODMgQzY0LjY0NCw1MC45NTIwMDgyIDY0LjgyMiw1MSA2NSw1MSBDNjUuMTcsNTEgNjUuMzQsNTAuOTU3MDA4MiA2NS40OTMsNTAuODcwMDA4MyBDNjUuODA3LDUwLjY5MzAwODQgNjYsNTAuMzYwMDA4NSA2Niw1MCBMNjYsMjYuMDAwMDE5NiBDNjYsMjUuNjQ2MDE5OCA2NS44MTQsMjUuMzE5MDIgNjUuNTA5LDI1LjEzOTAyIEw2NS41MDksMjUuMTM5MDIgWiBNNDAuNDQ1LDY2Ljg2MzAwMSBMMTcsNTQuMzk5MDA2NyBMMTcsMjYuNTcxMDE5NCBMMzcsMTQuNzUyMDI0OCBMMzcsMjQuNDUxMDIwNCBMMjYuNDYzLDMxLjE1NjAxNzMgQzI2LjE3NSwzMS4zNDAwMTcyIDI2LDMxLjY1ODAxNzEgMjYsMzIuMDAwMDE2OSBMMjYsNDkuMDAwMDA5MSBDMjYsNDkuMzczMDA5IDI2LjIwOCw0OS43MTUwMDg4IDI2LjUzOCw0OS44ODcwMDg3IEwzOS45OTEsNTYuODg3MDA1NSBDNDAuMjgsNTcuMDM3MDA1NSA0MC42MjQsNTcuMDM4MDA1NSA0MC45MTIsNTYuODg4MDA1NSBMNTMuOTY0LDUwLjE0NDAwODYgTDYxLjk5Niw1NC45NjQwMDY0IEw0MC40NDUsNjYuODYzMDAxIFogTTY0LjUxNSw1NC4xNDIwMDY4IEw1NC41MTUsNDguMTQyMDA5NSBDNTQuMjE3LDQ3Ljk2NDAwOTYgNTMuODQ5LDQ3Ljk1MjAwOTYgNTMuNTQxLDQ4LjExMjAwOTUgTDQwLjQ1NSw1NC44NzMwMDY1IEwyOCw0OC4zOTMwMDk0IEwyOCwzMi41NDkwMTY3IEwzOC41MzcsMjUuODQ0MDE5NyBDMzguODI1LDI1LjY2MDAxOTggMzksMjUuMzQyMDE5OSAzOSwyNS4wMDAwMjAxIEwzOSwxMy4wMDAwMjU2IEMzOSwxMi42NDEwMjU3IDM4LjgwOCwxMi4zMDkwMjU5IDM4LjQ5NiwxMi4xMzEwMjYgQzM4LjE4NCwxMS45NTQwMjYxIDM3LjgwMiwxMS45NTYwMjYxIDM3LjQ5MSwxMi4xMzkwMjYgTDE1LjQ5MSwyNS4xMzkwMiBDMTUuMTg3LDI1LjMxOTAyIDE1LDI1LjY0NjAxOTggMTUsMjYuMDAwMDE5NiBMMTUsNTUgQzE1LDU1LjM2OTAwNjIgMTUuMjA0LDU1LjcwOTAwNjEgMTUuNTMsNTUuODgzMDA2IEwzOS45ODQsNjguODgzMDAwMSBDNDAuMTMxLDY4Ljk2MSA0MC4yOTIsNjkgNDAuNDUzLDY5IEM0MC42Miw2OSA0MC43ODYsNjguOTU4IDQwLjkzNyw2OC44NzUwMDAxIEw2NC40ODQsNTUuODc1MDA2IEM2NC43OTcsNTUuNzAyMDA2MSA2NC45OTMsNTUuMzc1MDA2MiA2NS4wMDAxNDE2LDU1LjAxODAwNjQgQzY1LjAwNiw1NC42NjAwMDY2IDY0LjgyMSw1NC4zMjYwMDY3IDY0LjUxNSw1NC4xNDIwMDY4IEw2NC41MTUsNTQuMTQyMDA2OCBaIiBpZD0iQW1hem9uLUVsYXN0aWMtQ29udGFpbmVyLVNlcnZpY2VfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4="/>
-          <text data-detail-anchor x="830" y="200" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Video Service</text>
-        <text data-detail="context" x="830" y="216" class="t-muted" font-size="9" text-anchor="middle">ECS + Fargate</text>
+        <g id="node-job-service" data-node-id="job-service" data-node-label="Job Service" tabindex="0" role="button" aria-label="Focus Job Service, Marcus · Java, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Marcus · Java" data-node-tag="172.31.13.221:8081" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>Job Service · Marcus · Java · AWS us-east-1 › rede privada da VPC · 172.31.13.221:8081</title>
+          <rect x="685" y="365" width="180" height="64" rx="6" class="c-mask"/>
+          <rect x="685" y="365" width="180" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(691 371) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-detail-anchor x="775" y="395" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Job Service</text>
+        <text data-detail="context" x="775" y="411" class="t-muted" font-size="9" text-anchor="middle">Marcus · Java</text>
+        <text data-detail="fine" x="775" y="421" class="t-backend" font-size="7" text-anchor="middle">172.31.13.221:8081</text>
         </g>
 
-        <g id="node-job-service" data-node-id="job-service" data-node-label="Job Service" tabindex="0" role="button" aria-label="Focus Job Service, ECS + Fargate, AWS Region" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ECS + Fargate" data-node-context="AWS Region">
-          <title>Job Service · ECS + Fargate · AWS Region</title>
-          <rect x="750" y="330" width="160" height="64" rx="6" class="c-mask"/>
-          <rect x="750" y="330" width="160" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="ecs" x="756" y="336" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRWxhc3RpYy1Db250YWluZXItU2VydmljZV82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRWxhc3RpYy1Db250YWluZXItU2VydmljZV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L0NvbXB1dGUiIGZpbGw9IiNFRDcxMDAiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTY0LDQ4LjIzNDAwOTUgTDU2LDQzLjQzMzAxMTcgTDU2LDMyLjAwMDAxNjkgQzU2LDMxLjY0NDAxNzEgNTUuODEyLDMxLjMxNTAxNzIgNTUuNTA0LDMxLjEzNjAxNzMgTDQ0LDI0LjQyNjAyMDQgTDQ0LDE0Ljc1MjAyNDggTDY0LDI2LjU3MTAxOTQgTDY0LDQ4LjIzNDAwOTUgWiBNNjUuNTA5LDI1LjEzOTAyIEw0My41MDksMTIuMTM5MDI2IEM0My4xOTksMTEuOTU2MDI2MSA0Mi44MTgsMTEuOTU0MDI2MSA0Mi41MDQsMTIuMTMxMDI2IEM0Mi4xOTMsMTIuMzA5MDI1OSA0MiwxMi42NDEwMjU3IDQyLDEzLjAwMDAyNTYgTDQyLDI1LjAwMDAyMDEgQzQyLDI1LjM1NTAxOTkgNDIuMTg5LDI1LjY4NDAxOTggNDIuNDk2LDI1Ljg2NDAxOTcgTDU0LDMyLjU3NDAxNjYgTDU0LDQ0LjAwMDAxMTQgQzU0LDQ0LjM1MTAxMTMgNTQuMTg1LDQ0LjY3NzAxMTEgNTQuNDg2LDQ0Ljg1NzAxMSBMNjQuNDg2LDUwLjg1NzAwODMgQzY0LjY0NCw1MC45NTIwMDgyIDY0LjgyMiw1MSA2NSw1MSBDNjUuMTcsNTEgNjUuMzQsNTAuOTU3MDA4MiA2NS40OTMsNTAuODcwMDA4MyBDNjUuODA3LDUwLjY5MzAwODQgNjYsNTAuMzYwMDA4NSA2Niw1MCBMNjYsMjYuMDAwMDE5NiBDNjYsMjUuNjQ2MDE5OCA2NS44MTQsMjUuMzE5MDIgNjUuNTA5LDI1LjEzOTAyIEw2NS41MDksMjUuMTM5MDIgWiBNNDAuNDQ1LDY2Ljg2MzAwMSBMMTcsNTQuMzk5MDA2NyBMMTcsMjYuNTcxMDE5NCBMMzcsMTQuNzUyMDI0OCBMMzcsMjQuNDUxMDIwNCBMMjYuNDYzLDMxLjE1NjAxNzMgQzI2LjE3NSwzMS4zNDAwMTcyIDI2LDMxLjY1ODAxNzEgMjYsMzIuMDAwMDE2OSBMMjYsNDkuMDAwMDA5MSBDMjYsNDkuMzczMDA5IDI2LjIwOCw0OS43MTUwMDg4IDI2LjUzOCw0OS44ODcwMDg3IEwzOS45OTEsNTYuODg3MDA1NSBDNDAuMjgsNTcuMDM3MDA1NSA0MC42MjQsNTcuMDM4MDA1NSA0MC45MTIsNTYuODg4MDA1NSBMNTMuOTY0LDUwLjE0NDAwODYgTDYxLjk5Niw1NC45NjQwMDY0IEw0MC40NDUsNjYuODYzMDAxIFogTTY0LjUxNSw1NC4xNDIwMDY4IEw1NC41MTUsNDguMTQyMDA5NSBDNTQuMjE3LDQ3Ljk2NDAwOTYgNTMuODQ5LDQ3Ljk1MjAwOTYgNTMuNTQxLDQ4LjExMjAwOTUgTDQwLjQ1NSw1NC44NzMwMDY1IEwyOCw0OC4zOTMwMDk0IEwyOCwzMi41NDkwMTY3IEwzOC41MzcsMjUuODQ0MDE5NyBDMzguODI1LDI1LjY2MDAxOTggMzksMjUuMzQyMDE5OSAzOSwyNS4wMDAwMjAxIEwzOSwxMy4wMDAwMjU2IEMzOSwxMi42NDEwMjU3IDM4LjgwOCwxMi4zMDkwMjU5IDM4LjQ5NiwxMi4xMzEwMjYgQzM4LjE4NCwxMS45NTQwMjYxIDM3LjgwMiwxMS45NTYwMjYxIDM3LjQ5MSwxMi4xMzkwMjYgTDE1LjQ5MSwyNS4xMzkwMiBDMTUuMTg3LDI1LjMxOTAyIDE1LDI1LjY0NjAxOTggMTUsMjYuMDAwMDE5NiBMMTUsNTUgQzE1LDU1LjM2OTAwNjIgMTUuMjA0LDU1LjcwOTAwNjEgMTUuNTMsNTUuODgzMDA2IEwzOS45ODQsNjguODgzMDAwMSBDNDAuMTMxLDY4Ljk2MSA0MC4yOTIsNjkgNDAuNDUzLDY5IEM0MC42Miw2OSA0MC43ODYsNjguOTU4IDQwLjkzNyw2OC44NzUwMDAxIEw2NC40ODQsNTUuODc1MDA2IEM2NC43OTcsNTUuNzAyMDA2MSA2NC45OTMsNTUuMzc1MDA2MiA2NS4wMDAxNDE2LDU1LjAxODAwNjQgQzY1LjAwNiw1NC42NjAwMDY2IDY0LjgyMSw1NC4zMjYwMDY3IDY0LjUxNSw1NC4xNDIwMDY4IEw2NC41MTUsNTQuMTQyMDA2OCBaIiBpZD0iQW1hem9uLUVsYXN0aWMtQ29udGFpbmVyLVNlcnZpY2VfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4="/>
-          <text data-detail-anchor x="830" y="360" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Job Service</text>
-        <text data-detail="context" x="830" y="376" class="t-muted" font-size="9" text-anchor="middle">ECS + Fargate</text>
+        <g id="node-processing-service" data-node-id="processing-service" data-node-label="Processing Service" tabindex="0" role="button" aria-label="Focus Processing Service, Eduardo · Python, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Eduardo · Python" data-node-tag="172.31.14.236:8081" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>Processing Service · Eduardo · Python · AWS us-east-1 › rede privada da VPC · 172.31.14.236:8081</title>
+          <rect x="685" y="585" width="190" height="64" rx="6" class="c-mask"/>
+          <rect x="685" y="585" width="190" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(691 591) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-detail-anchor x="780" y="615" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Processing Service</text>
+        <text data-detail="context" x="780" y="631" class="t-muted" font-size="9" text-anchor="middle">Eduardo · Python</text>
+        <text data-detail="fine" x="780" y="641" class="t-backend" font-size="7" text-anchor="middle">172.31.14.236:8081</text>
         </g>
 
-        <g id="node-s3" data-node-id="s3" data-node-label="Amazon S3" tabindex="0" role="button" aria-label="Focus Amazon S3, vídeos e resultados, AWS Region" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="vídeos e resultados" data-node-context="AWS Region">
-          <title>Amazon S3 · vídeos e resultados · AWS Region</title>
-          <rect x="1010" y="170" width="160" height="64" rx="6" class="c-mask"/>
-          <rect x="1010" y="170" width="160" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="s3" x="1016" y="176" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tU2ltcGxlLVN0b3JhZ2UtU2VydmljZV82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tU2ltcGxlLVN0b3JhZ2UtU2VydmljZV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L1N0b3JhZ2UiIGZpbGw9IiM3QUExMTYiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPGcgaWQ9Ikljb24tU2VydmljZS82NC9BbWF6b24tU2ltcGxlLVN0b3JhZ2UtU2VydmljZV82NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTIuOTk5OTAwLCAxMS45OTk2MDApIiBmaWxsPSIjRkZGRkZGIj4KICAgICAgICAgICAgPHBhdGggZD0iTTQ3LjgzNiwzMC44OTMgTDQ4LjIyLDI4LjE4OSBDNTEuNzYxLDMwLjMxIDUxLjgwNywzMS4xODYgNTEuODA2MDEzMiwzMS4yMSBDNTEuOCwzMS4yMTUgNTEuMTk2LDMxLjcxOSA0Ny44MzYsMzAuODkzIEw0Ny44MzYsMzAuODkzIFogTTQ1Ljg5MywzMC4zNTMgQzM5Ljc3MywyOC41MDEgMzEuMjUsMjQuNTkxIDI3LjgwMSwyMi45NjEgQzI3LjgwMSwyMi45NDcgMjcuODA1LDIyLjkzNCAyNy44MDUsMjIuOTIgQzI3LjgwNSwyMS41OTUgMjYuNzI3LDIwLjUxNyAyNS40MDEsMjAuNTE3IEMyNC4wNzcsMjAuNTE3IDIyLjk5OSwyMS41OTUgMjIuOTk5LDIyLjkyIEMyMi45OTksMjQuMjQ1IDI0LjA3NywyNS4zMjMgMjUuNDAxLDI1LjMyMyBDMjUuOTgzLDI1LjMyMyAyNi41MTEsMjUuMTA2IDI2LjkyOCwyNC43NjEgQzMwLjk4NiwyNi42ODIgMzkuNDQzLDMwLjUzNSA0NS42MDgsMzIuMzU1IEw0My4xNyw0OS41NjEgQzQzLjE2Myw0OS42MDggNDMuMTYsNDkuNjU1IDQzLjE2LDQ5LjcwMiBDNDMuMTYsNTEuMjE3IDM2LjQ1Myw1NCAyNS40OTQsNTQgQzE0LjQxOSw1NCA3LjY0MSw1MS4yMTcgNy42NDEsNDkuNzAyIEM3LjY0MSw0OS42NTYgNy42MzgsNDkuNjExIDcuNjMyLDQ5LjU2NiBMMi41MzgsMTIuMzU5IEM2Ljk0NywxNS4zOTQgMTYuNDMsMTcgMjUuNSwxNyBDMzQuNTU2LDE3IDQ0LjAyMywxNS40IDQ4LjQ0MSwxMi4zNzQgTDQ1Ljg5MywzMC4zNTMgWiBNMiw4LjQ3OCBDMi4wNzIsNy4xNjIgOS42MzQsMiAyNS41LDIgQzQxLjM2NCwyIDQ4LjkyNyw3LjE2MSA0OSw4LjQ3OCBMNDksOC45MjcgQzQ4LjEzLDExLjg3OCAzOC4zMywxNSAyNS41LDE1IEMxMi42NDgsMTUgMi44NDMsMTEuODY4IDIsOC45MTMgTDIsOC40NzggWiBNNTEsOC41IEM1MSw1LjAzNSA0MS4wNjYsMCAyNS41LDAgQzkuOTM0LDAgMCw1LjAzNSAwLDguNSBMMC4wOTQsOS4yNTQgTDUuNjQyLDQ5Ljc3OCBDNS43NzUsNTQuMzEgMTcuODYxLDU2IDI1LjQ5NCw1NiBDMzQuOTY2LDU2IDQ1LjAyOSw1My44MjIgNDUuMTU5LDQ5Ljc4MSBMNDcuNTU1LDMyLjg4NCBDNDguODg4LDMzLjIwMyA0OS45ODUsMzMuMzY2IDUwLjg2NiwzMy4zNjYgQzUyLjA0OSwzMy4zNjYgNTIuODQ5LDMzLjA3NyA1My4zMzQsMzIuNDk5IEM1My43MzIsMzIuMDI1IDUzLjg4NCwzMS40NTEgNTMuNzcsMzAuODQgQzUzLjUxMSwyOS40NTYgNTEuODY4LDI3Ljk2NCA0OC41MjIsMjYuMDU1IEw1MC44OTgsOS4yOTMgTDUxLDguNSBaIiBpZD0iQW1hem9uLVNpbXBsZS1TdG9yYWdlLVNlcnZpY2UtSWNvbl82NF9TcXVpZCI+PC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+"/>
-          <text data-detail-anchor x="1090" y="200" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon S3</text>
-        <text data-detail="context" x="1090" y="216" class="t-muted" font-size="9" text-anchor="middle">vídeos e resultados</text>
+        <g id="node-video-db" data-node-id="video-db" data-node-label="PostgreSQL Video" tabindex="0" role="button" aria-label="Focus PostgreSQL Video, metadados de vídeos, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="database" data-node-sublabel="metadados de vídeos" data-node-tag="Ruan · :5433" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>PostgreSQL Video · metadados de vídeos · AWS us-east-1 › rede privada da VPC · Ruan · :5433</title>
+          <rect x="960" y="95" width="185" height="64" rx="6" class="c-mask"/>
+          <rect x="960" y="95" width="185" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(966 101) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-detail-anchor x="1052.5" y="125" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL Video</text>
+        <text data-detail="context" x="1052.5" y="141" class="t-muted" font-size="9" text-anchor="middle">metadados de vídeos</text>
+        <text data-detail="fine" x="1052.5" y="151" class="t-database" font-size="7" text-anchor="middle">Ruan · :5433</text>
         </g>
 
-        <g id="node-rds" data-node-id="rds" data-node-label="Amazon RDS" tabindex="0" role="button" aria-label="Focus Amazon RDS, PostgreSQL para jobs, AWS Region" aria-pressed="false" data-node-kind="database" data-node-sublabel="PostgreSQL para jobs" data-node-context="AWS Region">
-          <title>Amazon RDS · PostgreSQL para jobs · AWS Region</title>
-          <rect x="1010" y="330" width="160" height="64" rx="6" class="c-mask"/>
-          <rect x="1010" y="330" width="160" height="64" rx="6" class="c-database" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="rds" x="1016" y="336" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tUkRTXzY0PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS82NC9BcmNoX0FtYXpvbi1SRFNfNjQiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy82NC9EYXRhYmFzZSIgZmlsbD0iI0M5MjVEMSI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNMTUuNDE0LDE0IEwyNC43MDcsMjMuMjkzIEwyMy4yOTMsMjQuNzA3IEwxNCwxNS40MTQgTDE0LDIzIEwxMiwyMyBMMTIsMTMgQzEyLDEyLjQ0OCAxMi40NDcsMTIgMTMsMTIgTDIzLDEyIEwyMywxNCBMMTUuNDE0LDE0IFogTTY4LDEzIEw2OCwyMyBMNjYsMjMgTDY2LDE1LjQxNCBMNTYuNzA3LDI0LjcwNyBMNTUuMjkzLDIzLjI5MyBMNjQuNTg2LDE0IEw1NywxNCBMNTcsMTIgTDY3LDEyIEM2Ny41NTMsMTIgNjgsMTIuNDQ4IDY4LDEzIEw2OCwxMyBaIE02Niw1NyBMNjgsNTcgTDY4LDY3IEM2OCw2Ny41NTIgNjcuNTUzLDY4IDY3LDY4IEw1Nyw2OCBMNTcsNjYgTDY0LjU4Niw2NiBMNTUuMjkzLDU2LjcwNyBMNTYuNzA3LDU1LjI5MyBMNjYsNjQuNTg2IEw2Niw1NyBaIE02NS41LDM5LjIxMyBDNjUuNSwzNS44OTQgNjEuNjY4LDMyLjYxNSA1NS4yNSwzMC40NDIgTDU1Ljg5MSwyOC41NDggQzYzLjI2OCwzMS4wNDUgNjcuNSwzNC45MzIgNjcuNSwzOS4yMTMgQzY3LjUsNDMuNDk1IDYzLjI2OCw0Ny4zODMgNTUuODksNDkuODc5IEw1NS4yNDksNDcuOTg0IEM2MS42NjgsNDUuODEyIDY1LjUsNDIuNTM0IDY1LjUsMzkuMjEzIEw2NS41LDM5LjIxMyBaIE0xNC41NTYsMzkuMjEzIEMxNC41NTYsNDIuMzkzIDE4LjE0Myw0NS41ODUgMjQuMTUyLDQ3Ljc1MyBMMjMuNDczLDQ5LjYzNCBDMTYuNTM1LDQ3LjEzMSAxMi41NTYsNDMuMzMzIDEyLjU1NiwzOS4yMTMgQzEyLjU1NiwzNS4wOTQgMTYuNTM1LDMxLjI5NiAyMy40NzMsMjguNzkyIEwyNC4xNTIsMzAuNjczIEMxOC4xNDMsMzIuODQyIDE0LjU1NiwzNi4wMzQgMTQuNTU2LDM5LjIxMyBMMTQuNTU2LDM5LjIxMyBaIE0yNC43MDcsNTYuNzA3IEwxNS40MTQsNjYgTDIzLDY2IEwyMyw2OCBMMTMsNjggQzEyLjQ0Nyw2OCAxMiw2Ny41NTIgMTIsNjcgTDEyLDU3IEwxNCw1NyBMMTQsNjQuNTg2IEwyMy4yOTMsNTUuMjkzIEwyNC43MDcsNTYuNzA3IFogTTQwLDMxLjI4NiBDMzIuODU0LDMxLjI4NiAyOSwyOS40NCAyOSwyOC42ODYgQzI5LDI3LjkzMSAzMi44NTQsMjYuMDg2IDQwLDI2LjA4NiBDNDcuMTQ1LDI2LjA4NiA1MSwyNy45MzEgNTEsMjguNjg2IEM1MSwyOS40NCA0Ny4xNDUsMzEuMjg2IDQwLDMxLjI4NiBMNDAsMzEuMjg2IFogTTQwLjAyOSwzOS4wMzEgQzMzLjE4NywzOS4wMzEgMjksMzcuMTYyIDI5LDM2LjE0NSBMMjksMzEuMjg0IEMzMS40NjMsMzIuNjQzIDM1LjgzMiwzMy4yODYgNDAsMzMuMjg2IEM0NC4xNjgsMzMuMjg2IDQ4LjUzNywzMi42NDMgNTEsMzEuMjg0IEw1MSwzNi4xNDUgQzUxLDM3LjE2MyA0Ni44MzUsMzkuMDMxIDQwLjAyOSwzOS4wMzEgTDQwLjAyOSwzOS4wMzEgWiBNNDAuMDI5LDQ2LjY2NyBDMzMuMTg3LDQ2LjY2NyAyOSw0NC43OTggMjksNDMuNzgxIEwyOSwzOC44NjIgQzMxLjQzMSw0MC4yOTEgMzUuNzQyLDQxLjAzMSA0MC4wMjksNDEuMDMxIEM0NC4yOTIsNDEuMDMxIDQ4LjU3OCw0MC4yOTIgNTEsMzguODY3IEw1MSw0My43ODEgQzUxLDQ0Ljc5OSA0Ni44MzUsNDYuNjY3IDQwLjAyOSw0Ni42NjcgTDQwLjAyOSw0Ni42NjcgWiBNNDAsNTMuNTE4IEMzMi44ODMsNTMuNTE4IDI5LDUxLjYwNSAyOSw1MC42MjIgTDI5LDQ2LjQ5OCBDMzEuNDMxLDQ3LjkyNyAzNS43NDIsNDguNjY3IDQwLjAyOSw0OC42NjcgQzQ0LjI5Miw0OC42NjcgNDguNTc4LDQ3LjkyOSA1MSw0Ni41MDMgTDUxLDUwLjYyMiBDNTEsNTEuNjA1IDQ3LjExNyw1My41MTggNDAsNTMuNTE4IEw0MCw1My41MTggWiBNNDAsMjQuMDg2IEMzMy43MzksMjQuMDg2IDI3LDI1LjUyNSAyNywyOC42ODYgTDI3LDUwLjYyMiBDMjcsNTMuODM2IDMzLjU0LDU1LjUxOCA0MCw1NS41MTggQzQ2LjQ2LDU1LjUxOCA1Myw1My44MzYgNTMsNTAuNjIyIEw1MywyOC42ODYgQzUzLDI1LjUyNSA0Ni4yNjEsMjQuMDg2IDQwLDI0LjA4NiBMNDAsMjQuMDg2IFoiIGlkPSJBbWF6b24tUkRTX0ljb25fNjRfU3F1aWQiIGZpbGw9IiNGRkZGRkYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+"/>
-          <text data-detail-anchor x="1090" y="360" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon RDS</text>
-        <text data-detail="context" x="1090" y="376" class="t-muted" font-size="9" text-anchor="middle">PostgreSQL para jobs</text>
+        <g id="node-job-db" data-node-id="job-db" data-node-label="PostgreSQL Job" tabindex="0" role="button" aria-label="Focus PostgreSQL Job, jobs e resultados, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="database" data-node-sublabel="jobs e resultados" data-node-tag="Ruan · :5434" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>PostgreSQL Job · jobs e resultados · AWS us-east-1 › rede privada da VPC · Ruan · :5434</title>
+          <rect x="960" y="275" width="185" height="64" rx="6" class="c-mask"/>
+          <rect x="960" y="275" width="185" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(966 281) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-detail-anchor x="1052.5" y="305" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL Job</text>
+        <text data-detail="context" x="1052.5" y="321" class="t-muted" font-size="9" text-anchor="middle">jobs e resultados</text>
+        <text data-detail="fine" x="1052.5" y="331" class="t-database" font-size="7" text-anchor="middle">Ruan · :5434</text>
         </g>
 
-        <g id="node-sqs" data-node-id="sqs" data-node-label="Amazon SQS" tabindex="0" role="button" aria-label="Focus Amazon SQS, fila + DLQ, AWS Region" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="fila + DLQ" data-node-context="AWS Region">
-          <title>Amazon SQS · fila + DLQ · AWS Region</title>
-          <rect x="750" y="510" width="160" height="60" rx="6" class="c-mask"/>
-          <rect x="750" y="510" width="160" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="sqs" x="756" y="516" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tU2ltcGxlLVF1ZXVlLVNlcnZpY2VfNjQ8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLzY0L0FyY2hfQW1hem9uLVNpbXBsZS1RdWV1ZS1TZXJ2aWNlXzY0IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUtQkcvNjQvQXBwbGljYXRpb24tSW50ZWdyYXRpb24iIGZpbGw9IiNFNzE1N0IiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTI4LjcxNjk5NjYsNDMuNjg3Njc1NiBMMzEuNzE4OTI2NSw0MC43MjE4MjYgQzMxLjkwNzA0NzQsNDAuNTM1OTAxMSAzMi4wMTMxMTU2LDQwLjI4MzM2MTQgMzIuMDE0MTIzMyw0MC4wMTk4ODUgQzMyLjAxNTExNjksMzkuNzU2NDA4NiAzMS45MTAwNDkzLDM5LjUwMjg3NDcgMzEuNzIyOTI5LDM5LjMxNTk1NTYgTDI4LjcyMDk5OTIsMzYuMzE2MzAxNCBMMjcuMzAyMDg3MSwzNy43MTgxOTQ4IEwyOC41ODk5MTQ5LDM5LjAwNTc0OTQgTDI0LjAwODk3MDEsMzkuMDA1NzQ5NCBMMjQuMDA4OTcwMSw0MC45OTQyNTA2IEwyOC42MDU5MjUyLDQwLjk5NDI1MDYgTDI3LjMwNjA4OTYsNDIuMjc3ODI4MiBMMjguNzE2OTk2Niw0My42ODc2NzU2IFogTTUxLjYyNzcyNSw0My43NzgxNTI0IEw1NS42MzAyOTgsNDAuNzkzNDEyIEM1NS44ODA0NTg5LDQwLjYwNTQ5ODYgNTYuMDI5NTU0Nyw0MC4zMTEyMDA0IDU2LjAyOTU1NDcsMzkuOTk5MDA1NyBDNTYuMDI5NTU0NywzOS42ODU4MTY4IDU1Ljg4MDQ1ODksMzkuMzkwNTI0NCA1NS42MjkyOTc0LDM5LjIwMjYxMSBMNTEuNjI2NzI0MywzNi4yMjE4NDc2IEw1MC40MjU5NTI0LDM3LjgxMjY0ODYgTDUyLjAyNjk4MTYsMzkuMDA1NzQ5NCBMNDguMDI0NDA4NSwzOS4wMDU3NDk0IEw0OC4wMjQ0MDg1LDQwLjk5NDI1MDYgTDUyLjAyNTk4MSw0MC45OTQyNTA2IEw1MC40MjQ5NTE4LDQyLjE4NzM1MTQgTDUxLjYyNzcyNSw0My43NzgxNTI0IFogTTM1LjIwODE2OTUsNDAgQzM1LjIwODE2OTUsNDIuMTEwNzk0MSAzNC44NDI5MzQ3LDQ0LjEwMTI4MzkgMzQuMTYwNDk2LDQ1LjgzMzI2ODUgQzM1Ljk2MDY1MzMsNDUuMTQxMjcgMzcuOTkwOTU4NSw0NC43OTUyNzA4IDQwLjAxOTI2MjQsNDQuNzk1MjcwOCBDNDIuMDQ3NTY2Myw0NC43OTUyNzA4IDQ0LjA3Nzg3MTUsNDUuMTQxMjcgNDUuODc3MDI4MSw0NS44MzMyNjg1IEM0NS4xOTU1OSw0NC4xMDEyODM5IDQ0LjgzMDM1NTIsNDIuMTEwNzk0MSA0NC44MzAzNTUyLDQwIEM0NC44MzAzNTUyLDM3Ljg4OTIwNTkgNDUuMTk1NTksMzUuODk5NzEwNCA0NS44NzcwMjgxLDM0LjE2NjczMTUgQzQyLjI3NzcxNDIsMzUuNTQ5NzM0MSAzNy43NjA4MTA1LDM1LjU0OTczNDEgMzQuMTYwNDk2LDM0LjE2NjczMTUgQzM0Ljg0MjkzNDcsMzUuODk5NzEwNCAzNS4yMDgxNjk1LDM3Ljg4OTIwNTkgMzUuMjA4MTY5NSw0MCBMMzUuMjA4MTY5NSw0MCBaIE0zMC4zMDYwMTgyLDQ5LjY1MTE5MDkgQzMwLjExMDg5MjcsNDkuNDU3MzEyMSAzMC4wMTI4Mjk3LDQ5LjIwMjc4MzkgMzAuMDEyODI5Nyw0OC45NDgyNTU3IEMzMC4wMTI4Mjk3LDQ4LjY5MzcyNzYgMzAuMTEwODkyNyw0OC40MzkxOTk0IDMwLjMwNjAxODIsNDguMjQ1MzIwNSBDMzIuMTIyMTg1Nyw0Ni40NDA3NTU2IDMzLjIwNjg4Myw0My4zNTc1ODQ0IDMzLjIwNjg4Myw0MCBDMzMuMjA2ODgzLDM2LjY0MjQxNTYgMzIuMTIyMTg1NywzMy41NTkyNDQ0IDMwLjMwNjAxODIsMzEuNzU0Njc5NSBDMzAuMTEwODkyNywzMS41NjA4MDA2IDMwLjAxMjgyOTcsMzEuMzA2MjcyNCAzMC4wMTI4Mjk3LDMxLjA1MTc0NDMgQzMwLjAxMjgyOTcsMzAuNzk3MjE2MSAzMC4xMTA4OTI3LDMwLjU0MjY4NzkgMzAuMzA2MDE4MiwzMC4zNDg4MDkxIEMzMC42OTcyNjk3LDI5Ljk2MDA1NzEgMzEuMzI5Njc2MiwyOS45NjAwNTcxIDMxLjcyMDkyNzcsMzAuMzQ4ODA5MSBDMzUuNTk4NDIwNCwzNC4yMDE1MzAzIDQ0LjQ0MDEwNDQsMzQuMjAxNTMwMyA0OC4zMTc1OTcsMzAuMzQ4ODA5MSBDNDguNzA4ODQ4NSwyOS45NjAwNTcxIDQ5LjM0MTI1NTEsMjkuOTYwMDU3MSA0OS43MzI1MDY2LDMwLjM0ODgwOTEgQzQ5LjkyNzYzMiwzMC41NDI2ODc5IDUwLjAyNTY5NTEsMzAuNzk3MjE2MSA1MC4wMjU2OTUxLDMxLjA1MTc0NDMgQzUwLjAyNTY5NTEsMzEuMzA2MjcyNCA0OS45Mjc2MzIsMzEuNTYwODAwNiA0OS43MzI1MDY2LDMxLjc1NDY3OTUgQzQ3LjkxNjMzOTEsMzMuNTU5MjQ0NCA0Ni44MzE2NDE4LDM2LjY0MjQxNTYgNDYuODMxNjQxOCw0MCBDNDYuODMxNjQxOCw0My4zNTc1ODQ0IDQ3LjkxNjMzOTEsNDYuNDQwNzU1NiA0OS43MzI1MDY2LDQ4LjI0NTMyMDUgQzQ5LjkyNzYzMiw0OC40MzkxOTk0IDUwLjAyNTY5NTEsNDguNjkzNzI3NiA1MC4wMjU2OTUxLDQ4Ljk0ODI1NTcgQzUwLjAyNTY5NTEsNDkuMjAyNzgzOSA0OS45Mjc2MzIsNDkuNDU3MzEyMSA0OS43MzI1MDY2LDQ5LjY1MTE5MDkgQzQ5LjUzNzM4MTIsNDkuODQ1MDY5OCA0OS4yODEyMTY1LDQ5Ljk0MjUwNjQgNDkuMDI1MDUxOCw0OS45NDI1MDY0IEM0OC43Njg4ODcxLDQ5Ljk0MjUwNjQgNDguNTEyNzIyNSw0OS44NDUwNjk4IDQ4LjMxNzU5Nyw0OS42NTExOTA5IEM0NC40NDAxMDQ0LDQ1Ljc5ODQ2OTcgMzUuNTk4NDIwNCw0NS43OTg0Njk3IDMxLjcyMDkyNzcsNDkuNjUxMTkwOSBDMzEuMzI5Njc2Miw1MC4wMzk5NDI5IDMwLjY5NzI2OTcsNTAuMDM5OTQyOSAzMC4zMDYwMTgyLDQ5LjY1MTE5MDkgTDMwLjMwNjAxODIsNDkuNjUxMTkwOSBaIE02Ni4wMDA5NjQ5LDQwLjAwNDk3MTMgQzY2LjAwMDk2NDksMzkuMDc4MzI5NyA2NS42Mzc3MzE0LDM4LjIwNzM2NjEgNjQuOTc4MzA3NSwzNy41NTIxNTQ5IEM2NC4yOTc4NzAxLDM2Ljg3NTA3MDIgNjMuNDAzMjk1LDM2LjUzODAxOTMgNjIuNTA5NzIwNSwzNi41MzgwMTkzIEM2MS42MTYxNDYxLDM2LjUzODAxOTMgNjAuNzIxNTcxLDM2Ljg3NTA3MDIgNjAuMDQxMTMzNiwzNy41NTIxNTQ5IEM1OC42NzkyNTgxLDM4LjkwNDMzNTggNTguNjc5MjU4MSw0MS4xMDQ2MTI1IDYwLjA0MTEzMzYsNDIuNDU3Nzg3NiBDNjEuNDAyMDA4NCw0My44MDk5Njg0IDYzLjYxNTQzMTMsNDMuODEwOTYyNyA2NC45NzgzMDc1LDQyLjQ1Nzc4NzYgQzY1LjYzNzczMTQsNDEuODAyNTc2NCA2Ni4wMDA5NjQ5LDQwLjkzMTYxMjggNjYuMDAwOTY0OSw0MC4wMDQ5NzEzIEw2Ni4wMDA5NjQ5LDQwLjAwNDk3MTMgWiBNNjYuMzkzMjE3MSw0My44NjM2NTggQzY1LjMyMjUyODgsNDQuOTI3NTA2MiA2My45MTY2MjUsNDUuNDU5NDMwMyA2Mi41MDk3MjA1LDQ1LjQ1OTQzMDMgQzYxLjEwMjgxNjEsNDUuNDU5NDMwMyA1OS42OTY5MTIzLDQ0LjkyNzUwNjIgNTguNjI2MjI0LDQzLjg2MzY1OCBDNTYuNDgzODQ2OCw0MS43MzU5NjE2IDU2LjQ4Mzg0NjgsMzguMjczOTgwOSA1OC42MjYyMjQsMzYuMTQ2Mjg0NSBDNjAuNzY4NjAxMiwzNC4wMTY1OTk3IDY0LjI1Mjg0MTEsMzQuMDE4NTg4MiA2Ni4zOTMyMTcxLDM2LjE0NjI4NDUgQzY4LjUzNTU5NDMsMzguMjczOTgwOSA2OC41MzU1OTQzLDQxLjczNTk2MTYgNjYuMzkzMjE3MSw0My44NjM2NTggTDY2LjM5MzIxNzEsNDMuODYzNjU4IFogTTIwLjk4MDAyMjksNDAuMDI3ODM5IEMyMC45ODAwMjI5LDM5LjEwMTE5NzQgMjAuNjE2Nzg5NCwzOC4yMzAyMzM5IDE5Ljk1NzM2NTQsMzcuNTc1MDIyNyBDMTkuMjk3OTQxNSwzNi45MTk4MTE1IDE4LjQyMTM3OCwzNi41NTg4OTg1IDE3LjQ4ODc3ODUsMzYuNTU4ODk4NSBDMTYuNTU3MTc5NiwzNi41NTg4OTg1IDE1LjY4MDYxNjEsMzYuOTE5ODExNSAxNS4wMjAxOTE2LDM3LjU3NTAyMjcgQzE0LjM2MDc2NzYsMzguMjMwMjMzOSAxMy45OTg1MzQ4LDM5LjEwMTE5NzQgMTMuOTk4NTM0OCw0MC4wMjc4MzkgQzEzLjk5ODUzNDgsNDAuOTUzNDg2NCAxNC4zNjA3Njc2LDQxLjgyNDQ0OTkgMTUuMDIwMTkxNiw0Mi40ODA2NTUzIEMxNi4zNDAwNCw0My43OTAwODM0IDE4LjYzODUxNzYsNDMuNzkwMDgzNCAxOS45NTczNjU0LDQyLjQ4MDY1NTMgQzIwLjYxNjc4OTQsNDEuODI0NDQ5OSAyMC45ODAwMjI5LDQwLjk1MzQ4NjQgMjAuOTgwMDIyOSw0MC4wMjc4MzkgTDIwLjk4MDAyMjksNDAuMDI3ODM5IFogTTIxLjM3MjI3NSw0My44ODY1MjU3IEMyMC4zMDE1ODY3LDQ0Ljk1MDM3MzkgMTguODk1NjgyOSw0NS40ODIyOTggMTcuNDg4Nzc4NSw0NS40ODIyOTggQzE2LjA4Mjg3NDcsNDUuNDgyMjk4IDE0LjY3Njk3MDksNDQuOTUwMzczOSAxMy42MDUyODIsNDMuODg2NTI1NyBDMTEuNDY0OTA2LDQxLjc1ODgyOTQgMTEuNDY0OTA2LDM4LjI5Njg0ODcgMTMuNjA1MjgyLDM2LjE2OTE1MjMgQzE1Ljc0NzY1OTIsMzQuMDQxNDU1OSAxOS4yMzA4OTg0LDM0LjA0MTQ1NTkgMjEuMzcyMjc1LDM2LjE2OTE1MjMgQzIzLjUxMzY1MTYsMzguMjk2ODQ4NyAyMy41MTM2NTE2LDQxLjc1ODgyOTQgMjEuMzcyMjc1LDQzLjg4NjUyNTcgTDIxLjM3MjI3NSw0My44ODY1MjU3IFogTTU0Ljg5NTgyNTksNTQuODU2MDkzIEM1MC45MDEyNTgsNTguODI2MTM1OCA0NS41ODg4NDI4LDYxLjAxMTQ5ODcgMzkuOTM5MjEwOSw2MS4wMTE0OTg3IEMzNC4yODc1Nzc3LDYxLjAxMTQ5ODcgMjguOTc2MTYzMiw1OC44MjYxMzU4IDI0Ljk4MTU5NTMsNTQuODU2MDkzIEMyMi4yNDE4MzQsNTIuMTM0ODI5IDIwLjczMzg2NDYsNDguODgyNjM1MiAxOS45NTEzNjE2LDQ2LjYzNDYzNDUgTDE4LjA2MDE0NTgsNDcuMjg0ODc0NCBDMTguOTExNjkzMiw0OS43MzA3MzEgMjAuNTU3NzUxNCw1My4yNzMyNDYgMjMuNTY2Njg1Nyw1Ni4yNjE5NjM0IEMyNy45Mzk0OTY4LDYwLjYwNzgzMyAzMy43NTMyMzQyLDYzIDM5LjkzOTIxMDksNjMgQzQ2LjEyNDE4Nyw2MyA1MS45Mzc5MjQ0LDYwLjYwNzgzMyA1Ni4zMTA3MzU1LDU2LjI2MTk2MzQgQzU4LjgzNzM1OTcsNTMuNzUzNDY5MSA2MC44NDk2NTMzLDUwLjU2MzkxMyA2MS45NzkzNzk2LDQ3LjI4MTg5MTcgTDYwLjA4NjE2MjUsNDYuNjM3NjE3MyBDNTkuMDUzNDk4Nyw0OS42MzgyNjU3IDU3LjIxMDMxMzgsNTIuNTU3Mzg1NiA1NC44OTU4MjU5LDU0Ljg1NjA5MyBMNTQuODk1ODI1OSw1NC44NTYwOTMgWiBNMTkuOTUwMzYwOSwzMy4zNjYzNTk3IEwxOC4wNjExNDY1LDMyLjcxNDEzMTMgQzE5LjI3MTkyNDgsMjkuMjUwMTYyMSAyMS4yMjkxODMsMjYuMDYwNjA2MSAyMy41NzI2ODk2LDIzLjczMzA2NTMgQzI3Ljk0MzQ5OTQsMTkuMzkxMTcyOCAzMy43NTUyMzU1LDE3IDM5LjkzOTIxMDksMTcgQzQ2LjEyMzE4NjMsMTcgNTEuOTM0OTIyNSwxOS4zOTExNzI4IDU2LjMwNDczMTYsMjMuNzMzMDY1MyBDNTguNzcxMzE3MywyNi4xODM4OTMxIDYwLjgzOTY0NjksMjkuNDU2OTY2MiA2MS45NzczNzgzLDMyLjcxNDEzMTMgTDYwLjA4ODE2MzgsMzMuMzY2MzU5NyBDNTkuMDQ0NDkyOSwzMC4zODM2MDc4IDU3LjE1MDI3NTIsMjcuMzg0OTQ3OSA1NC44ODk4MjIsMjUuMTM4OTM1NyBDNTAuODk4MjU2LDIxLjE3MTg3NTcgNDUuNTg3ODQyMiwxOC45ODg1MDEzIDM5LjkzOTIxMDksMTguOTg4NTAxMyBDMzQuMjg5NTc5LDE4Ljk4ODUwMTMgMjguOTgwMTY1OCwyMS4xNzE4NzU3IDI0Ljk4NzU5OTIsMjUuMTM4OTM1NyBDMjIuODU0MjI3NywyNy4yNTk2NzIzIDIxLjA2NTA3NzUsMzAuMTgxNzc1IDE5Ljk1MDM2MDksMzMuMzY2MzU5NyBMMTkuOTUwMzYwOSwzMy4zNjYzNTk3IFoiIGlkPSJBV1MtU2ltcGxlLVF1ZXVlLVNlcnZpY2VfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4="/>
-          <text data-detail-anchor x="830" y="538" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon SQS</text>
-        <text data-detail="context" x="830" y="554" class="t-muted" font-size="9" text-anchor="middle">fila + DLQ</text>
+        <g id="node-rabbitmq" data-node-id="rabbitmq" data-node-label="RabbitMQ" tabindex="0" role="button" aria-label="Focus RabbitMQ, fila + eventos, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="fila + eventos" data-node-tag="Ruan · :5672" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>RabbitMQ · fila + eventos · AWS us-east-1 › rede privada da VPC · Ruan · :5672</title>
+          <rect x="960" y="455" width="185" height="60" rx="6" class="c-mask"/>
+          <rect x="960" y="455" width="185" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(966 461) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-detail-anchor x="1052.5" y="483" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">RabbitMQ</text>
+        <text data-detail="context" x="1052.5" y="499" class="t-muted" font-size="9" text-anchor="middle">fila + eventos</text>
+        <text data-detail="fine" x="1052.5" y="507" class="t-messagebus" font-size="7" text-anchor="middle">Ruan · :5672</text>
         </g>
 
-        <g id="node-processing-service" data-node-id="processing-service" data-node-label="Processing Service" tabindex="0" role="button" aria-label="Focus Processing Service, ECS worker + FFmpeg, AWS Region" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ECS worker + FFmpeg" data-node-context="AWS Region">
-          <title>Processing Service · ECS worker + FFmpeg · AWS Region</title>
-          <rect x="1010" y="510" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="1010" y="510" width="180" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="fargate" x="1016" y="516" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtRmFyZ2F0ZV82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtRmFyZ2F0ZV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L0NvbXB1dGUiIGZpbGw9IiNFRDcxMDAiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTUyLDU2LjUyMyBMNTIsNTEuNjc3IEw1NSw1MC40NzcgTDU1LDU1LjMyMyBMNTIsNTYuNTIzIFogTTQ3LDUwLjQ3NyBMNTAsNTEuNjc3IEw1MCw1Ni41MjMgTDQ3LDU1LjMyMyBMNDcsNTAuNDc3IFogTTQxLDYzLjUyMyBMNDEsNTguNjc3IEw0NCw1Ny40NzcgTDQ0LDYyLjMyMyBMNDEsNjMuNTIzIFogTTM2LDU3LjQ3NyBMMzksNTguNjc3IEwzOSw2My41MjMgTDM2LDYyLjMyMyBMMzYsNTcuNDc3IFogTTMwLDU2LjUyMyBMMzAsNTEuNjc3IEwzMyw1MC40NzcgTDMzLDU1LjMyMyBMMzAsNTYuNTIzIFogTTI1LDUwLjQ3NyBMMjgsNTEuNjc3IEwyOCw1Ni41MjMgTDI1LDU1LjMyMyBMMjUsNTAuNDc3IFogTTI5LDQ4LjA3NyBMMzEuMzA4LDQ5IEwyOSw0OS45MjMgTDI2LjY5Miw0OSBMMjksNDguMDc3IFogTTQwLDU1LjA3NyBMNDIuMzA4LDU2IEw0MCw1Ni45MjMgTDM3LjY5Miw1NiBMNDAsNTUuMDc3IFogTTUxLDQ4LjA3NyBMNTMuMzA4LDQ5IEw1MSw0OS45MjMgTDQ4LjY5Miw0OSBMNTEsNDguMDc3IFogTTU2LjM3MSw0OC4wNzEgTDUxLjM3MSw0Ni4wNzEgQzUxLjEzMyw0NS45NzcgNTAuODY3LDQ1Ljk3NyA1MC42MjksNDYuMDcxIEw0NS42MjksNDguMDcxIEM0NS4yNDksNDguMjI0IDQ1LDQ4LjU5MSA0NSw0OSBMNDUsNTQuOTIzIEw0MC4zNzEsNTMuMDcxIEM0MC4xMzMsNTIuOTc3IDM5Ljg2Nyw1Mi45NzcgMzkuNjI5LDUzLjA3MSBMMzUsNTQuOTIzIEwzNSw0OSBDMzUsNDguNTkxIDM0Ljc1MSw0OC4yMjQgMzQuMzcxLDQ4LjA3MSBMMjkuMzcxLDQ2LjA3MSBDMjkuMTMzLDQ1Ljk3NyAyOC44NjcsNDUuOTc3IDI4LjYyOSw0Ni4wNzEgTDIzLjYyOSw0OC4wNzEgQzIzLjI0OSw0OC4yMjQgMjMsNDguNTkxIDIzLDQ5IEwyMyw1NiBDMjMsNTYuNDA5IDIzLjI0OSw1Ni43NzYgMjMuNjI5LDU2LjkyOSBMMjguNjI5LDU4LjkyOSBDMjguNzQ4LDU4Ljk3NiAyOC44NzQsNTkgMjksNTkgQzI5LjEyNiw1OSAyOS4yNTIsNTguOTc2IDI5LjM3MSw1OC45MjkgTDM0LDU3LjA3NyBMMzQsNjMgQzM0LDYzLjQwOSAzNC4yNDksNjMuNzc2IDM0LjYyOSw2My45MjkgTDM5LjYyOSw2NS45MjkgQzM5Ljc0OCw2NS45NzYgMzkuODc0LDY2IDQwLDY2IEM0MC4xMjYsNjYgNDAuMjUyLDY1Ljk3NiA0MC4zNzEsNjUuOTI5IEw0NS4zNzEsNjMuOTI5IEM0NS43NTEsNjMuNzc2IDQ2LDYzLjQwOSA0Niw2MyBMNDYsNTcuMDc3IEw1MC42MjksNTguOTI5IEM1MC43NDgsNTguOTc2IDUwLjg3NCw1OSA1MSw1OSBDNTEuMTI2LDU5IDUxLjI1Miw1OC45NzYgNTEuMzcxLDU4LjkyOSBMNTYuMzcxLDU2LjkyOSBDNTYuNzUxLDU2Ljc3NiA1Nyw1Ni40MDkgNTcsNTYgTDU3LDQ5IEM1Nyw0OC41OTEgNTYuNzUxLDQ4LjIyNCA1Ni4zNzEsNDguMDcxIEw1Ni4zNzEsNDguMDcxIFogTTY1LDM1LjkzOCBDNjUsNDEuNzgzIDUyLjExOSw0NC45MzggNDAsNDQuOTM4IEMyNy44ODEsNDQuOTM4IDE1LDQxLjc4MyAxNSwzNS45MzggQzE1LDMzLjE0NyAxOC4wOTUsMzAuNjkgMjMuNzE1LDI5LjAxOSBMMjQuMjg1LDMwLjkzNiBDMTkuNzkxLDMyLjI3MiAxNywzNC4xODkgMTcsMzUuOTM4IEMxNywzOS4yNDkgMjYuNDQ1LDQyLjkzOCA0MCw0Mi45MzggQzUzLjU1NSw0Mi45MzggNjMsMzkuMjQ5IDYzLDM1LjkzOCBDNjMsMzQuMTg5IDYwLjIwOSwzMi4yNzIgNTUuNzE1LDMwLjkzNiBMNTYuMjg1LDI5LjAxOSBDNjEuOTA1LDMwLjY5IDY1LDMzLjE0NyA2NSwzNS45MzggTDY1LDM1LjkzOCBaIE00MCwxNy4wNzEgTDUwLjIxNCwyMSBMNDAsMjQuOTI5IEwyOS43ODYsMjEgTDQwLDE3LjA3MSBaIE01MC41OCwzNi44NDIgQzQ4LjY5NCwzNy42ODYgNDUuNTI4LDM4LjY2OSA0MSwzOC44MDEgTDQxLDI2LjY4NyBMNTIsMjIuNDU3IEw1MiwzNC42NDggQzUyLDM1LjU5OSA1MS40NDQsMzYuNDYgNTAuNTgsMzYuODQyIEw1MC41OCwzNi44NDIgWiBNMjgsMzQuNjQ4IEwyOCwyMi40NTcgTDM5LDI2LjY4NyBMMzksMzguODAxIEMzNC40NzIsMzguNjY5IDMxLjMwNiwzNy42ODYgMjkuNDE2LDM2Ljg0IEMyOC41NTYsMzYuNDYgMjgsMzUuNTk5IDI4LDM0LjY0OCBMMjgsMzQuNjQ4IFogTTI4LjYwNCwzOC42NjcgQzMwLjgwNSwzOS42NTIgMzQuNTY5LDQwLjgyNyA0MCw0MC44MjcgQzQ1LjQzMSw0MC44MjcgNDkuMTk1LDM5LjY1MiA1MS4zOTMsMzguNjY5IEM1Mi45NzcsMzcuOTY4IDU0LDM2LjM5IDU0LDM0LjY0OCBMNTQsMjEgQzU0LDIwLjU4NiA1My43NDUsMjAuMjE1IDUzLjM1OSwyMC4wNjYgTDQwLjM1OSwxNS4wNjYgQzQwLjEyNywxNC45NzggMzkuODczLDE0Ljk3OCAzOS42NDEsMTUuMDY2IEwyNi42NDEsMjAuMDY2IEMyNi4yNTUsMjAuMjE1IDI2LDIwLjU4NiAyNiwyMSBMMjYsMzQuNjQ4IEMyNiwzNi4zOSAyNy4wMjMsMzcuOTY4IDI4LjYwNCwzOC42NjcgTDI4LjYwNCwzOC42NjcgWiIgaWQ9IkFXUy1GYXJnYXRlX0ljb25fNjRfU3F1aWQiIGZpbGw9IiNGRkZGRkYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+"/>
-          <text data-detail-anchor x="1100" y="540" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Processing Service</text>
-        <text data-detail="context" x="1100" y="556" class="t-muted" font-size="9" text-anchor="middle">ECS worker + FFmpeg</text>
+        <g id="node-minio" data-node-id="minio" data-node-label="MinIO" tabindex="0" role="button" aria-label="Focus MinIO, vídeos e artefatos, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="vídeos e artefatos" data-node-tag="Ruan · :9000" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>MinIO · vídeos e artefatos · AWS us-east-1 › rede privada da VPC · Ruan · :9000</title>
+          <rect x="960" y="635" width="185" height="64" rx="6" class="c-mask"/>
+          <rect x="960" y="635" width="185" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(966 641) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-detail-anchor x="1052.5" y="665" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">MinIO</text>
+        <text data-detail="context" x="1052.5" y="681" class="t-muted" font-size="9" text-anchor="middle">vídeos e artefatos</text>
+        <text data-detail="fine" x="1052.5" y="691" class="t-cloud" font-size="7" text-anchor="middle">Ruan · :9000</text>
         </g>
 
-        <g id="node-bedrock" data-node-id="bedrock" data-node-label="Amazon Bedrock" tabindex="0" role="button" aria-label="Focus Amazon Bedrock, resumo e highlights, AWS Region" aria-pressed="false" data-node-kind="external" data-node-sublabel="resumo e highlights" data-node-context="AWS Region">
-          <title>Amazon Bedrock · resumo e highlights · AWS Region</title>
-          <rect x="1260" y="510" width="160" height="64" rx="6" class="c-mask"/>
-          <rect x="1260" y="510" width="160" height="64" rx="6" class="c-external" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="bedrock" x="1266" y="516" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tQmVkcm9ja182NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tQmVkcm9ja182NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L01hY2hpbmUtTGVhcm5pbmciIGZpbGw9IiMwMUE4OEQiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPGcgaWQ9Ikljb24tU2VydmljZS82NC9BbWF6b24tQmVkcm9ja182NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTIuMDAwMDAwLCAxMi4wMDAwMDApIiBmaWxsPSIjRkZGRkZGIj4KICAgICAgICAgICAgPHBhdGggZD0iTTUyLDI2Ljk5OTg5MTggQzUwLjg5NywyNi45OTk4OTE4IDUwLDI2LjEwMjg5MTggNTAsMjQuOTk5ODkxOCBDNTAsMjMuODk2ODkxOCA1MC44OTcsMjIuOTk5ODkxOCA1MiwyMi45OTk4OTE4IEM1My4xMDMsMjIuOTk5ODkxOCA1NCwyMy44OTY4OTE4IDU0LDI0Ljk5OTg5MTggQzU0LDI2LjEwMjg5MTggNTMuMTAzLDI2Ljk5OTg5MTggNTIsMjYuOTk5ODkxOCBMNTIsMjYuOTk5ODkxOCBaIE0yMC4xMTMsNTMuOTA3ODkxOCBMMTYuODY1LDUyLjAxMzg5MTggTDIzLjUzLDQ3Ljg0Nzg5MTggTDIyLjQ3LDQ2LjE1MTg5MTggTDE0LjkxMyw1MC44NzQ4OTE4IEw5LDQ3LjQyNTg5MTggTDksMzguNTM0ODkxOCBMMTQuNTU1LDM0LjgzMTg5MTggTDEzLjQ0NSwzMy4xNjc4OTE4IEw3Ljk1OSwzNi44MjQ4OTE4IEwyLDMzLjQxOTg5MTggTDIsMjguNTc5ODkxOCBMOC40OTYsMjQuODY3ODkxOCBMNy41MDQsMjMuMTMxODkxOCBMMiwyNi4yNzY4OTE4IEwyLDIyLjU3OTg5MTggTDgsMTkuMTUxODkxOCBMMTQsMjIuNTc5ODkxOCBMMTQsMjYuNDMzODkxOCBMOS40ODUsMjkuMTQyODkxOCBMMTAuNTE1LDMwLjg1Njg5MTggTDE1LDI4LjE2NTg5MTggTDE5LjQ4NSwzMC44NTY4OTE4IEwyMC41MTUsMjkuMTQyODkxOCBMMTYsMjYuNDMzODkxOCBMMTYsMjIuNTM0ODkxOCBMMjEuNTU1LDE4LjgzMTg5MTggQzIxLjgzMywxOC42NDU4OTE4IDIyLDE4LjMzMzg5MTggMjIsMTcuOTk5ODkxOCBMMjIsMTAuOTk5ODkxOCBMMjAsMTAuOTk5ODkxOCBMMjAsMTcuNDY0ODkxOCBMMTQuOTU5LDIwLjgyNDg5MTggTDksMTcuNDE5ODkxOCBMOSw4LjU3Mzg5MTgxIEwxNCw1LjY1Nzg5MTgxIEwxNCwxMy45OTk4OTE4IEwxNiwxMy45OTk4OTE4IEwxNiw0LjQ5MDg5MTgxIEwyMC4xMTMsMi4wOTE4OTE4MSBMMjgsNC43MjA4OTE4MSBMMjgsMzMuNDMzODkxOCBMMTMuNDg1LDQyLjE0Mjg5MTggTDE0LjUxNSw0My44NTY4OTE4IEwyOCwzNS43NjU4OTE4IEwyOCw1MS4yNzg4OTE4IEwyMC4xMTMsNTMuOTA3ODkxOCBaIE01MCwzNy45OTk4OTE4IEM1MCwzOS4xMDI4OTE4IDQ5LjEwMywzOS45OTk4OTE4IDQ4LDM5Ljk5OTg5MTggQzQ2Ljg5NywzOS45OTk4OTE4IDQ2LDM5LjEwMjg5MTggNDYsMzcuOTk5ODkxOCBDNDYsMzYuODk2ODkxOCA0Ni44OTcsMzUuOTk5ODkxOCA0OCwzNS45OTk4OTE4IEM0OS4xMDMsMzUuOTk5ODkxOCA1MCwzNi44OTY4OTE4IDUwLDM3Ljk5OTg5MTggTDUwLDM3Ljk5OTg5MTggWiBNNDAsNDcuOTk5ODkxOCBDNDAsNDkuMTAyODkxOCAzOS4xMDMsNDkuOTk5ODkxOCAzOCw0OS45OTk4OTE4IEMzNi44OTcsNDkuOTk5ODkxOCAzNiw0OS4xMDI4OTE4IDM2LDQ3Ljk5OTg5MTggQzM2LDQ2Ljg5Njg5MTggMzYuODk3LDQ1Ljk5OTg5MTggMzgsNDUuOTk5ODkxOCBDMzkuMTAzLDQ1Ljk5OTg5MTggNDAsNDYuODk2ODkxOCA0MCw0Ny45OTk4OTE4IEw0MCw0Ny45OTk4OTE4IFogTTM5LDcuOTk5ODkxODEgQzM5LDYuODk2ODkxODEgMzkuODk3LDUuOTk5ODkxODEgNDEsNS45OTk4OTE4MSBDNDIuMTAzLDUuOTk5ODkxODEgNDMsNi44OTY4OTE4MSA0Myw3Ljk5OTg5MTgxIEM0Myw5LjEwMjg5MTgxIDQyLjEwMyw5Ljk5OTg5MTgxIDQxLDkuOTk5ODkxODEgQzM5Ljg5Nyw5Ljk5OTg5MTgxIDM5LDkuMTAyODkxODEgMzksNy45OTk4OTE4MSBMMzksNy45OTk4OTE4MSBaIE01MiwyMC45OTk4OTE4IEM1MC4xNDEsMjAuOTk5ODkxOCA0OC41ODksMjIuMjc5ODkxOCA0OC4xNDIsMjMuOTk5ODkxOCBMMzAsMjMuOTk5ODkxOCBMMzAsMTguOTk5ODkxOCBMNDEsMTguOTk5ODkxOCBDNDEuNTUzLDE4Ljk5OTg5MTggNDIsMTguNTUxODkxOCA0MiwxNy45OTk4OTE4IEw0MiwxMS44NTc4OTE4IEM0My43MiwxMS40MTA4OTE4IDQ1LDkuODU3ODkxODEgNDUsNy45OTk4OTE4MSBDNDUsNS43OTM4OTE4MSA0My4yMDYsMy45OTk4OTE4MSA0MSwzLjk5OTg5MTgxIEMzOC43OTQsMy45OTk4OTE4MSAzNyw1Ljc5Mzg5MTgxIDM3LDcuOTk5ODkxODEgQzM3LDkuODU3ODkxODEgMzguMjgsMTEuNDEwODkxOCA0MCwxMS44NTc4OTE4IEw0MCwxNi45OTk4OTE4IEwzMCwxNi45OTk4OTE4IEwzMCwzLjk5OTg5MTgxIEMzMCwzLjU2ODg5MTgxIDI5LjcyNSwzLjE4Nzg5MTgxIDI5LjMxNiwzLjA1MDg5MTgxIEwyMC4zMTYsMC4wNTA4OTE4MTEgQzIwLjA0MiwtMC4wMzkxMDgxODkgMTkuNzQ0LC0wLjAwOTEwODE4OTA0IDE5LjQ5NiwwLjEzNTg5MTgxMSBMNy40OTYsNy4xMzU4OTE4MSBDNy4xODgsNy4zMTQ4OTE4MSA3LDcuNjQ0ODkxODEgNyw3Ljk5OTg5MTgxIEw3LDE3LjQxOTg5MTggTDAuNTA0LDIxLjEzMTg5MTggQzAuMTkyLDIxLjMwOTg5MTggMCwyMS42NDA4OTE4IDAsMjEuOTk5ODkxOCBMMCwzMy45OTk4OTE4IEMwLDM0LjM1ODg5MTggMC4xOTIsMzQuNjg5ODkxOCAwLjUwNCwzNC44Njc4OTE4IEw3LDM4LjU3OTg5MTggTDcsNDcuOTk5ODkxOCBDNyw0OC4zNTQ4OTE4IDcuMTg4LDQ4LjY4NDg5MTggNy40OTYsNDguODYzODkxOCBMMTkuNDk2LDU1Ljg2Mzg5MTggQzE5LjY1LDU1Ljk1Mzg5MTggMTkuODI1LDU1Ljk5OTg5MTggMjAsNTUuOTk5ODkxOCBDMjAuMTA2LDU1Ljk5OTg5MTggMjAuMjEzLDU1Ljk4Mjg5MTggMjAuMzE2LDU1Ljk0ODg5MTggTDI5LjMxNiw1Mi45NDg4OTE4IEMyOS43MjUsNTIuODExODkxOCAzMCw1Mi40MzA4OTE4IDMwLDUxLjk5OTg5MTggTDMwLDM5Ljk5OTg5MTggTDM3LDM5Ljk5OTg5MTggTDM3LDQ0LjE0MTg5MTggQzM1LjI4LDQ0LjU4ODg5MTggMzQsNDYuMTQxODkxOCAzNCw0Ny45OTk4OTE4IEMzNCw1MC4yMDU4OTE4IDM1Ljc5NCw1MS45OTk4OTE4IDM4LDUxLjk5OTg5MTggQzQwLjIwNiw1MS45OTk4OTE4IDQyLDUwLjIwNTg5MTggNDIsNDcuOTk5ODkxOCBDNDIsNDYuMTQxODkxOCA0MC43Miw0NC41ODg4OTE4IDM5LDQ0LjE0MTg5MTggTDM5LDM4Ljk5OTg5MTggQzM5LDM4LjQ0Nzg5MTggMzguNTUzLDM3Ljk5OTg5MTggMzgsMzcuOTk5ODkxOCBMMzAsMzcuOTk5ODkxOCBMMzAsMzIuOTk5ODkxOCBMNDIuNSwzMi45OTk4OTE4IEw0NC42MzgsMzUuODQ5ODkxOCBDNDQuMjM5LDM2LjQ3MTg5MTggNDQsMzcuMjA2ODkxOCA0NCwzNy45OTk4OTE4IEM0NCw0MC4yMDU4OTE4IDQ1Ljc5NCw0MS45OTk4OTE4IDQ4LDQxLjk5OTg5MTggQzUwLjIwNiw0MS45OTk4OTE4IDUyLDQwLjIwNTg5MTggNTIsMzcuOTk5ODkxOCBDNTIsMzUuNzkzODkxOCA1MC4yMDYsMzMuOTk5ODkxOCA0OCwzMy45OTk4OTE4IEM0Ny4zMTYsMzMuOTk5ODkxOCA0Ni42ODIsMzQuMTg3ODkxOCA0Ni4xMTksMzQuNDkxODkxOCBMNDMuOCwzMS4zOTk4OTE4IEM0My42MTEsMzEuMTQ3ODkxOCA0My4zMTQsMzAuOTk5ODkxOCA0MywzMC45OTk4OTE4IEwzMCwzMC45OTk4OTE4IEwzMCwyNS45OTk4OTE4IEw0OC4xNDIsMjUuOTk5ODkxOCBDNDguNTg5LDI3LjcxOTg5MTggNTAuMTQxLDI4Ljk5OTg5MTggNTIsMjguOTk5ODkxOCBDNTQuMjA2LDI4Ljk5OTg5MTggNTYsMjcuMjA1ODkxOCA1NiwyNC45OTk4OTE4IEM1NiwyMi43OTM4OTE4IDU0LjIwNiwyMC45OTk4OTE4IDUyLDIwLjk5OTg5MTggTDUyLDIwLjk5OTg5MTggWiIgaWQ9IkZpbGwtMSI+PC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+"/>
-          <text data-detail-anchor x="1340" y="540" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon Bedrock</text>
-        <text data-detail="context" x="1340" y="556" class="t-muted" font-size="9" text-anchor="middle">resumo e highlights</text>
+        <g id="node-observability" data-node-id="observability" data-node-label="Prometheus + Grafana" tabindex="0" role="button" aria-label="Focus Prometheus + Grafana, Leonardo, AWS us-east-1 › rede privada da VPC" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Leonardo" data-node-tag="172.31.7.191" data-node-context="AWS us-east-1 › rede privada da VPC">
+          <title>Prometheus + Grafana · Leonardo · AWS us-east-1 › rede privada da VPC · 172.31.7.191</title>
+          <rect x="1245" y="275" width="205" height="64" rx="6" class="c-mask"/>
+          <rect x="1245" y="275" width="205" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(1251 281) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-detail-anchor x="1347.5" y="305" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Prometheus + Grafana</text>
+        <text data-detail="context" x="1347.5" y="321" class="t-muted" font-size="9" text-anchor="middle">Leonardo</text>
+        <text data-detail="fine" x="1347.5" y="331" class="t-cloud" font-size="7" text-anchor="middle">172.31.7.191</text>
         </g>
 
-        <g id="node-cloudwatch" data-node-id="cloudwatch" data-node-label="Amazon CloudWatch" tabindex="0" role="button" aria-label="Focus Amazon CloudWatch, logs, métricas e alarmes, AWS Region" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="logs, métricas e alarmes" data-node-context="AWS Region">
-          <title>Amazon CloudWatch · logs, métricas e alarmes · AWS Region</title>
-          <rect x="1260" y="170" width="160" height="64" rx="6" class="c-mask"/>
-          <rect x="1260" y="170" width="160" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
-          <image aria-hidden="true" data-aws-icon="cloudwatch" x="1266" y="176" width="21" height="21" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tQ2xvdWRXYXRjaF82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tQ2xvdWRXYXRjaF82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L01hbmFnZW1lbnQtR292ZXJuYW5jZSIgZmlsbD0iI0U3MTU3QiI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNNTUuMDU5MjMxNSw0Ni43NzczNzA3IEM1NS4wNTkyMzE1LDQyLjg2ODAyODEgNTEuODU3NTU4OCwzOS42ODc2MzA1IDQ3LjkyMjA2NDYsMzkuNjg3NjMwNSBDNDMuOTg2NTcwNSwzOS42ODc2MzA1IDQwLjc4NTkwMyw0Mi44NjgwMjgxIDQwLjc4NTkwMyw0Ni43NzczNzA3IEM0MC43ODU5MDMsNTAuNjg2NzEzMyA0My45ODY1NzA1LDUzLjg2NzExMDggNDcuOTIyMDY0Niw1My44NjcxMTA4IEM1MS44NTc1NTg4LDUzLjg2NzExMDggNTUuMDU5MjMxNSw1MC42ODY3MTMzIDU1LjA1OTIzMTUsNDYuNzc3MzcwNyBNNTcuMDY5NzAxMSw0Ni43NzczNzA3IEM1Ny4wNjk3MDExLDUxLjc4ODExOTQgNTIuOTY2MzMyNyw1NS44NjQyMjA3IDQ3LjkyMjA2NDYsNTUuODY0MjIwNyBDNDIuODc4ODAxOCw1NS44NjQyMjA3IDM4Ljc3NTQzMzQsNTEuNzg4MTE5NCAzOC43NzU0MzM0LDQ2Ljc3NzM3MDcgQzM4Ljc3NTQzMzQsNDEuNzY2NjIxOSA0Mi44Nzg4MDE4LDM3LjY5MDUyMDYgNDcuOTIyMDY0NiwzNy42OTA1MjA2IEM1Mi45NjYzMzI3LDM3LjY5MDUyMDYgNTcuMDY5NzAxMSw0MS43NjY2MjE5IDU3LjA2OTcwMTEsNDYuNzc3MzcwNyBNNjUuNTA5NjUyMiw2MC40NzM1NTA0IEw1OC41MDExNTU0LDU0LjIwMjYyNTMgQzU3LjkzNTIwODIsNTQuOTk0NDc5NCA1Ny4yODA4MDA0LDU1LjcxNzQzMzIgNTYuNTU0MDE1Niw1Ni4zNjM0OTgyIEw2My41NTI0NjAxLDYyLjYzMzQyNDggQzY0LjE0OTU2OTYsNjMuMTY4NjUwMiA2NS4wNzg0MDY1LDYzLjExODcyMjUgNjUuNjE4MjE3Niw2Mi41MjU1ODA4IEM2Ni4xNTUwMTMsNjEuOTMyNDM5MiA2Ni4xMDY3NjE3LDYxLjAxMDc3MyA2NS41MDk2NTIyLDYwLjQ3MzU1MDQgTTQ3LjkyMjA2NDYsNTcuNjYxNjE5NyBDNTMuOTY0NTMwOSw1Ny42NjE2MTk3IDU4Ljg4MDEyODksNTIuNzc4Njg1OSA1OC44ODAxMjg5LDQ2Ljc3NzM3MDcgQzU4Ljg4MDEyODksNDAuNzc1MDU2OSA1My45NjQ1MzA5LDM1Ljg5MzEyMTcgNDcuOTIyMDY0NiwzNS44OTMxMjE3IEM0MS44ODA2MDM2LDM1Ljg5MzEyMTcgMzYuOTY1MDA1Niw0MC43NzUwNTY5IDM2Ljk2NTAwNTYsNDYuNzc3MzcwNyBDMzYuOTY1MDA1Niw1Mi43Nzg2ODU5IDQxLjg4MDYwMzYsNTcuNjYxNjE5NyA0Ny45MjIwNjQ2LDU3LjY2MTYxOTcgTTY3LjExMTk5NjUsNjMuODYyNjQ1OSBDNjYuNDI2NDI2NCw2NC42MTY1NTQ5IDY1LjQ3ODQ5LDY1IDY0LjUyODU0MzEsNjUgQzYzLjcwMDIyOTYsNjUgNjIuODY5OTA1Nyw2NC43MDg0MjIgNjIuMjA3NDU2LDY0LjExNzI3NzQgTDU0LjkzMDU2MTUsNTcuNTk4NzEwNyBDNTIuOTA3MDIzOSw1OC44OTY4MzIxIDUwLjUwNTUxOCw1OS42NTg3Mjk2IDQ3LjkyMjA2NDYsNTkuNjU4NzI5NiBDNDAuNzcxODI5Nyw1OS42NTg3Mjk2IDM0Ljk1NDUzNjEsNTMuODgwMDkyMSAzNC45NTQ1MzYxLDQ2Ljc3NzM3MDcgQzM0Ljk1NDUzNjEsMzkuNjc0NjQ5MyA0MC43NzE4Mjk3LDMzLjg5NjAxMTggNDcuOTIyMDY0NiwzMy44OTYwMTE4IEM1NS4wNzMzMDQ4LDMzLjg5NjAxMTggNjAuODkwNTk4NSwzOS42NzQ2NDkzIDYwLjg5MDU5ODUsNDYuNzc3MzcwNyBDNjAuODkwNTk4NSw0OC44MTU0MjEzIDYwLjM5OTAzODcsNTAuNzM2NjQxMSA1OS41NDY1OTk2LDUyLjQ1MTE1OTkgTDY2Ljg1NTY2MTYsNTguOTkwNjk2MyBDNjguMjc1MDUzMSw2MC4yNjU4NTEgNjguMzg5NjQ5OSw2Mi40NDk2OTA3IDY3LjExMTk5NjUsNjMuODYyNjQ1OSBNMjEuMjgwMzI3NCwyOS4zOTI1MjkgQzIxLjI4MDMyNzQsMjkuOTExNzc3NiAyMS4zMTI0OTQ5LDMwLjQyOTAyOSAyMS4zNzM4MTQzLDMwLjkyOTMwNTEgQzIxLjQwODk5NzUsMzEuMjEzODkzMiAyMS4zMjA1MzY4LDMxLjQ5ODQ4MTQgMjEuMTI5NTQyMiwzMS43MTMxNzA3IEMyMC45Nzc3NTE4LDMxLjg4MzkyMzYgMjAuNzczNjg5MSwzMS45OTY3NjAzIDIwLjU1MDUyNywzMi4wMzQ3MDU0IEMxOC4wNzg2NTQ3LDMyLjY2ODc4NzggMTQuMDEwNDY5NSwzNC41ODgwMTA0IDE0LjAxMDQ2OTUsNDAuMzQ1Njc4MiBDMTQuMDEwNDY5NSw0NC42OTMzODY1IDE2LjQyNDAzODIsNDcuMDkyOTE0MSAxOC40NDk1ODYzLDQ4LjM0MTEwNzcgQzE5LjE0MTE4NzgsNDguNzc0NDgwNiAxOS45NTk0NDg5LDQ5LjAwNTE0NjggMjAuODIyOTQ1Niw0OS4wMTQxMzM4IEwzMi45NDUwNzE3LDQ5LjAyNTExNzkgTDMyLjk0MzA2MTMsNTEuMDIyMjI3OCBMMjAuODExODg4LDUxLjAxMTI0MzcgQzE5LjU2NjQwMjEsNTAuOTk4MjYyNSAxOC4zODQyNDYsNTAuNjYwNzUwOSAxNy4zODQwMzc0LDUwLjAzNDY1NjkgQzE1LjM3NjU4MzYsNDguNzk3NDQ3NCAxMiw0NS44ODk2NTUzIDEyLDQwLjM0NTY3ODIgQzEyLDMzLjY2MjM1IDE2LjU5OTk1NDMsMzEuMTkxOTI1IDE5LjMwMDAxNDksMzAuMzE5MTg4IEMxOS4yNzk5MTAyLDMwLjAxMTYzMzEgMTkuMjY5ODU3OSwyOS43MDIwODEgMTkuMjY5ODU3OSwyOS4zOTI1MjkgQzE5LjI2OTg1NzksMjMuOTMyNDMwNSAyMi45OTgyNzM3LDE4LjI2OTYyNTQgMjcuOTQyMDE4MywxNi4yMjE1ODkyIEMzMy43MjQxMjg3LDEzLjgxNTA3MTcgMzkuODUwMDI5NCwxNS4wMDgzNDQ5IDQ0LjMyNjMzOTksMTkuNDEwOTczNyBDNDUuNzEzNTYzOCwyMC43NzQ5OTk4IDQ2Ljg1NDUwNTMsMjIuNDMxNjAyNCA0Ny43MzAwNjQ4LDI0LjM0NzgyOTQgQzQ4LjkwNjE4OTUsMjMuMzgwMjI5NiA1MC4zNTU3MzgsMjIuODQ2MDAyNyA1MS44ODM2OTQ5LDIyLjg0NjAwMjcgQzU0Ljg4NjMzMTIsMjIuODQ2MDAyNyA1OC4yNjU5MzA1LDI1LjEwOTcyNjggNTguODY4MDY2MSwzMC4wNjA1NjIyIEM2MS42Nzk3MDc4LDMwLjcwNDYzMDIgNjcuNjIwNjQ1MywzMi45NTUzNzMxIDY3LjYyMDY0NTMsNDAuNDIyNTY3IEM2Ny42MjA2NDUzLDQzLjQwNDI1MjEgNjYuNjc5NzQ1NSw0NS44NjY2ODg2IDY0LjgyMzA3NjksNDcuNzQxOTc0OCBMNjMuMzg5NjEyMSw0Ni4zNDEwMDIyIEM2NC44NjMyODYzLDQ0Ljg1MzE1NTMgNjUuNjEwMTc1Nyw0Mi44NjIwMzY3IDY1LjYxMDE3NTcsNDAuNDIyNTY3IEM2NS42MTAxNzU3LDMzLjg5MTAxOSA2MC4xMDU1MTAxLDMyLjI2NjM3MDEgNTcuNzM3MTc3LDMxLjg3MTk0MDkgQzU3LjQ2Nzc3NDEsMzEuODI3MDA2IDU3LjIyOTUzMzQsMzEuNjc1MjI1NiA1Ny4wNzU3MzI1LDMxLjQ1MTU0OTMgQzU2LjkyNTk1MjUsMzEuMjM1ODYxNCA1Ni44Njg2NTQxLDMwLjk3MTI0NDQgNTYuOTEzODg5NywzMC43MTQ2MTU3IEM1Ni41ODUxNzc5LDI2LjY2MDQ4MjYgNTQuMTYwNTUxNiwyNC44NDMxMTI2IDUxLjg4MzY5NDksMjQuODQzMTEyNiBDNTAuNDQ3MjE0NCwyNC44NDMxMTI2IDQ5LjEwMDE5OTgsMjUuNTM4MTA2OSA0OC4xODc0NDY2LDI2Ljc1MDM1MjYgQzQ3Ljk2NTI4OTcsMjcuMDQzOTI3NyA0Ny42MDQ0MTA1LDI3LjE5MzcxMSA0Ny4yMzQ0ODQxLDI3LjEzOTc4OSBDNDYuODY5NTgzOCwyNy4wODU4NjcgNDYuNTYyOTg3MiwyNi44MzYyMjgzIDQ2LjQzNzMzMjksMjYuNDkxNzI2OCBDNDUuNjE0MDQ1NiwyNC4yMjYwMDU3IDQ0LjQyNzg2ODYsMjIuMzIwNzYyOCA0Mi45MTE5NzQ1LDIwLjgzMDkxODggQzM5LjAzMjc3MzUsMTcuMDE1NDQwNCAzMy43MjgxNDk2LDE1Ljk4MDkzNzQgMjguNzE3MDU0MywxOC4wNjQ5MjE2IEMyNC41NDYzMzUyLDE5Ljc5MjQyMTcgMjEuMjgwMzI3NCwyNC43NjcyMjI0IDIxLjI4MDMyNzQsMjkuMzkyNTI5IiBpZD0iQW1hem9uLUNsb3VkV2F0Y2hfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4="/>
-          <text data-detail-anchor x="1340" y="200" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon CloudWatch</text>
-        <text data-detail="context" x="1340" y="216" class="t-muted" font-size="9" text-anchor="middle">logs, métricas e alarmes</text>
-        </g>
-
-        <g id="node-transcribe" data-node-id="transcribe" data-node-label="whisper.cpp" tabindex="0" role="button" aria-label="Focus whisper.cpp, transcrição no worker, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="transcrição no worker" data-node-context="Architecture component">
-          <title>whisper.cpp · transcrição no worker · Architecture component</title>
-          <rect x="1010" y="670" width="180" height="60" rx="6" class="c-mask"/>
-          <rect x="1010" y="670" width="180" height="60" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(1016 676) scale(0.6875)">
+        <g id="node-ai-adapter" data-node-id="ai-adapter" data-node-label="Provedor de IA" tabindex="0" role="button" aria-label="Focus Provedor de IA, adapter substituível, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="adapter substituível" data-node-context="Architecture component">
+          <title>Provedor de IA · adapter substituível · Architecture component</title>
+          <rect x="1245" y="635" width="180" height="64" rx="6" class="c-mask"/>
+          <rect x="1245" y="635" width="180" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(1251 641) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-detail-anchor x="1100" y="698" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">whisper.cpp</text>
-        <text data-detail="context" x="1100" y="714" class="t-muted" font-size="9" text-anchor="middle">transcrição no worker</text>
+          <text data-detail-anchor x="1335" y="665" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Provedor de IA</text>
+        <text data-detail="context" x="1335" y="681" class="t-muted" font-size="9" text-anchor="middle">adapter substituível</text>
         </g>
 
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="user" data-edge-to="frontend" data-edge-label="HTTPS" data-edge-key="0" data-edge-id="user-frontend">
-          <rect x="198" y="311" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="215" y="321" class="t-backend" font-size="8" text-anchor="middle">HTTPS</text>
+          <rect x="165.5" y="377" width="34" height="14" rx="3" class="c-mask"/>
+          <text x="182.5" y="387" class="t-backend" font-size="8" text-anchor="middle">HTTPS</text>
         </g>
         <g data-detail="context" data-edge-from="frontend" data-edge-to="gateway" data-edge-label="REST" data-edge-key="1" data-edge-id="frontend-gateway">
-          <rect x="435" y="313" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="450" y="323" class="t-backend" font-size="8" text-anchor="middle">REST</text>
+          <rect x="380" y="377" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="395" y="387" class="t-backend" font-size="8" text-anchor="middle">REST</text>
         </g>
-        <g data-detail="context" data-edge-from="auth0" data-edge-to="gateway" data-edge-label="JWT" data-edge-key="2" data-edge-id="auth-gateway">
-          <rect x="435" y="180" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="450" y="190" class="t-security" font-size="8" text-anchor="middle">JWT</text>
+        <g data-detail="context" data-edge-from="gateway" data-edge-to="video-service" data-edge-label="REST privado" data-edge-key="2" data-edge-id="gateway-video">
+          <rect x="606.2" y="279.5" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="640" y="289.5" class="t-muted" font-size="8" text-anchor="middle">REST privado</text>
         </g>
-        <g data-detail="context" data-edge-from="gateway" data-edge-to="video-service" data-edge-label="REST" data-edge-key="3" data-edge-id="gateway-video">
-          <rect x="690" y="248" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="705" y="258" class="t-muted" font-size="8" text-anchor="middle">REST</text>
+        <g data-detail="context" data-edge-from="gateway" data-edge-to="job-service" data-edge-label="REST privado" data-edge-key="3" data-edge-id="gateway-job">
+          <rect x="608.7" y="377" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="642.5" y="387" class="t-muted" font-size="8" text-anchor="middle">REST privado</text>
         </g>
-        <g data-detail="context" data-edge-from="gateway" data-edge-to="job-service" data-edge-label="REST" data-edge-key="4" data-edge-id="gateway-job">
-          <rect x="690" y="328" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="705" y="338" class="t-muted" font-size="8" text-anchor="middle">REST</text>
+        <g data-detail="context" data-edge-from="video-service" data-edge-to="video-db" data-edge-label="SQL" data-edge-key="4" data-edge-id="video-db-link">
+          <rect x="897.5" y="144.5" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="912.5" y="154.5" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
         </g>
-        <g data-detail="context" data-edge-from="video-service" data-edge-to="s3" data-edge-label="URL assinada" data-edge-key="5" data-edge-id="video-s3">
-          <rect x="926.2" y="182" width="67.6" height="14" rx="3" class="c-mask"/>
-          <text x="960" y="192" class="t-muted" font-size="8" text-anchor="middle">URL assinada</text>
+        <g data-detail="context" data-edge-from="video-service" data-edge-to="minio" data-edge-label="URL assinada" data-edge-key="5" data-edge-id="video-minio">
+          <rect x="866.2" y="320" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="900" y="330" class="t-muted" font-size="8" text-anchor="middle">URL assinada</text>
         </g>
-        <g data-detail="context" data-edge-from="job-service" data-edge-to="rds" data-edge-label="SQL" data-edge-key="6" data-edge-id="job-rds">
-          <rect x="945" y="342" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="960" y="352" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
+        <g data-detail="context" data-edge-from="job-service" data-edge-to="job-db" data-edge-label="SQL" data-edge-key="6" data-edge-id="job-db-link">
+          <rect x="895" y="332" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="910" y="342" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
         </g>
-        <g data-detail="context" data-edge-from="job-service" data-edge-to="sqs" data-edge-label="processing.requested" data-edge-key="7" data-edge-id="job-sqs">
-          <rect x="777" y="420" width="106" height="14" rx="3" class="c-mask"/>
-          <text x="830" y="430" class="t-messagebus" font-size="8" text-anchor="middle">processing.requested</text>
+        <g data-detail="context" data-edge-from="job-service" data-edge-to="rabbitmq" data-edge-label="processing.requested" data-edge-key="7" data-edge-id="job-rabbit">
+          <rect x="847" y="435" width="106" height="14" rx="3" class="c-mask"/>
+          <text x="900" y="445" class="t-messagebus" font-size="8" text-anchor="middle">processing.requested</text>
         </g>
-        <g data-detail="context" data-edge-from="sqs" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="8" data-edge-id="sqs-worker">
-          <rect x="938.2" y="521" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="960" y="531" class="t-messagebus" font-size="8" text-anchor="middle">consome</text>
+        <g data-detail="context" data-edge-from="rabbitmq" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="8" data-edge-id="rabbit-worker">
+          <rect x="893.2" y="531" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="915" y="541" class="t-messagebus" font-size="8" text-anchor="middle">consome</text>
         </g>
-        <g data-detail="context" data-edge-from="processing-service" data-edge-to="s3" data-edge-label="lê e grava" data-edge-key="9" data-edge-id="worker-s3">
-          <rect x="1216" y="345" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="1245" y="355" class="t-muted" font-size="8" text-anchor="middle">lê e grava</text>
+        <g data-detail="context" data-edge-from="processing-service" data-edge-to="minio" data-edge-label="lê e grava" data-edge-key="9" data-edge-id="worker-minio">
+          <rect x="888.5" y="622" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="917.5" y="632" class="t-muted" font-size="8" text-anchor="middle">lê e grava</text>
         </g>
-        <g data-detail="context" data-edge-from="processing-service" data-edge-to="bedrock" data-edge-label="prompt" data-edge-key="10" data-edge-id="worker-bedrock">
-          <rect x="1205.6" y="522" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="1225" y="532" class="t-muted" font-size="8" text-anchor="middle">prompt</text>
+        <g data-detail="context" data-edge-from="processing-service" data-edge-to="ai-adapter" data-edge-label="transcreve e resume" data-edge-key="10" data-edge-id="worker-ai">
+          <rect x="999.4" y="715" width="101.2" height="14" rx="3" class="c-mask"/>
+          <text x="1050" y="725" class="t-muted" font-size="8" text-anchor="middle">transcreve e resume</text>
         </g>
-        <g data-detail="context" data-edge-from="processing-service" data-edge-to="transcribe" data-edge-label="transcreve" data-edge-key="11" data-edge-id="worker-whisper">
-          <rect x="1071" y="610" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="1100" y="620" class="t-muted" font-size="8" text-anchor="middle">transcreve</text>
+        <g data-detail="context" data-edge-from="processing-service" data-edge-to="rabbitmq" data-edge-label="progresso / resultado" data-edge-key="11" data-edge-id="worker-events">
+          <rect x="860.6" y="525" width="110.8" height="14" rx="3" class="c-mask"/>
+          <text x="916" y="535" class="t-messagebus" font-size="8" text-anchor="middle">progresso / resultado</text>
         </g>
-        <g data-detail="context" data-edge-from="processing-service" data-edge-to="sqs" data-edge-label="completed / failed" data-edge-key="12" data-edge-id="worker-result">
-          <rect x="846.8" y="620" width="96.39999999999999" height="14" rx="3" class="c-mask"/>
-          <text x="895" y="630" class="t-messagebus" font-size="8" text-anchor="middle">completed / failed</text>
+        <g data-detail="context" data-edge-from="github-actions" data-edge-to="gateway" data-edge-label="SSH" data-edge-key="12" data-edge-id="deploy-gateway">
+          <rect x="500" y="158" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="515" y="168" class="t-messagebus" font-size="8" text-anchor="middle">SSH</text>
+        </g>
+        <g data-detail="context" data-edge-from="github-actions" data-edge-to="video-service" data-edge-label="imagem" data-edge-key="13" data-edge-id="deploy-video">
+          <rect x="688.1" y="102" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="707.5" y="112" class="t-messagebus" font-size="8" text-anchor="middle">imagem</text>
+        </g>
+        <g data-detail="context" data-edge-from="job-service" data-edge-to="observability" data-edge-label="métricas" data-edge-key="14" data-edge-id="metrics-job">
+          <rect x="1155.8" y="350" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="1180" y="360" class="t-messagebus" font-size="8" text-anchor="middle">métricas</text>
         </g>
 
         <!-- Legend -->
         <g data-legend-bridge>
-          <text x="40" y="811" class="t-primary" font-size="9" font-weight="600">Legend</text>
+          <text x="40" y="871" class="t-primary" font-size="9" font-weight="600">Legend</text>
           <g data-legend-kind="external">
-            <rect x="40" y="816" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
-            <text x="60" y="824" class="t-muted" font-size="8">External</text>
+            <rect x="40" y="876" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="60" y="884" class="t-muted" font-size="8">External</text>
           </g>
-          <g data-legend-kind="security">
-            <rect x="144" y="816" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="164" y="824" class="t-muted" font-size="8">Security</text>
+          <g data-legend-kind="frontend">
+            <rect x="144" y="876" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+            <text x="164" y="884" class="t-muted" font-size="8">Frontend</text>
           </g>
           <g data-legend-kind="cloud">
-            <rect x="248" y="816" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-            <text x="268" y="824" class="t-muted" font-size="8">Cloud</text>
+            <rect x="248" y="876" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="268" y="884" class="t-muted" font-size="8">Cloud</text>
           </g>
           <g data-legend-kind="backend">
-            <rect x="337" y="816" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="357" y="824" class="t-muted" font-size="8">Backend</text>
+            <rect x="337" y="876" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="357" y="884" class="t-muted" font-size="8">Backend</text>
           </g>
           <g data-legend-kind="database">
-            <rect x="436" y="816" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-            <text x="456" y="824" class="t-muted" font-size="8">Database</text>
+            <rect x="436" y="876" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="456" y="884" class="t-muted" font-size="8">Database</text>
           </g>
           <g data-legend-kind="messagebus">
-            <rect x="540" y="816" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
-            <text x="560" y="824" class="t-muted" font-size="8">Message bus</text>
+            <rect x="540" y="876" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="560" y="884" class="t-muted" font-size="8">Message bus</text>
           </g>
         </g>
       </svg>
@@ -4992,36 +5033,36 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot cyan"></div>
-          <h3>Upload</h3>
+          <h3>Distribuição</h3>
         </div>
         <ul>
-          <li>&bull; API gera URL assinada</li>
-          <li>&bull; Arquivo vai direto ao S3</li>
-          <li>&bull; Gateway não carrega bytes grandes</li>
+          <li>&bull; Uma EC2 por serviço principal</li>
+          <li>&bull; Uma EC2 para dados e mensageria</li>
+          <li>&bull; Uma EC2 para observabilidade</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot emerald"></div>
-          <h3>Processamento</h3>
+          <h3>Persistência</h3>
         </div>
         <ul>
-          <li>&bull; SQS desacopla requisição e worker</li>
-          <li>&bull; FFmpeg e whisper.cpp rodam no container</li>
-          <li>&bull; Bedrock resume e cria highlights</li>
+          <li>&bull; Video e Job têm PostgreSQL separados</li>
+          <li>&bull; Processing usa RabbitMQ e MinIO</li>
+          <li>&bull; Processing não acessa PostgreSQL</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>Operação</h3>
+          <h3>Entrega contínua</h3>
         </div>
         <ul>
-          <li>&bull; DLQ para falhas permanentes</li>
-          <li>&bull; CloudWatch mede fila e duração</li>
-          <li>&bull; Secrets Manager protege chaves</li>
+          <li>&bull; Push em main aciona GitHub Actions</li>
+          <li>&bull; Filtros executam só o componente alterado</li>
+          <li>&bull; Health checks encerram cada deploy</li>
         </ul>
       </div>
     </div>

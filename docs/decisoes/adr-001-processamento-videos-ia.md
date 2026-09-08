@@ -31,6 +31,11 @@ A solução terá, no mínimo, três microsserviços:
 O frontend acessará os serviços por um API Gateway. O processamento longo será
 disparado por mensageria e não manterá requisições HTTP abertas.
 
+As tecnologias iniciais são Java 21 com Spring Boot para Video Service e Job
+Service, Python 3.12 com FastAPI para Processing Service, KrakenD Community
+Edition no Gateway, RabbitMQ para mensageria, MinIO para objetos e PostgreSQL
+separado para cada serviço de negócio.
+
 O Processing Service continuará sendo um único microsserviço, dividido
 internamente em dois módulos que podem ser desenvolvidos em paralelo:
 
@@ -85,10 +90,7 @@ fluxo principal estiver estável e testado.
 
 ## Decisões pendentes
 
-- Linguagem e framework de cada serviço.
 - Provedor local ou externo para transcrição e resumo.
-- RabbitMQ ou outro broker compatível com os requisitos da disciplina.
-- MinIO, S3 ou outro object storage no ambiente final.
 - Política de retenção dos vídeos e artefatos.
 - Semântica exata de cancelamento durante uma etapa em execução.
 

@@ -2,55 +2,58 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Processamento de vídeos com IA na AWS",
-    "subtitle": "Upload direto, jobs assíncronos e workers escaláveis",
+    "title": "Video Insight nas máquinas AWS da equipe",
+    "subtitle": "Seis instâncias EC2, comunicação privada e deploy automático",
     "output": "videos-ia-aws.html",
     "visual_preset": "blueprint",
     "quality_profile": "standard",
-    "viewBox": [1500, 840],
+    "viewBox": [1560, 900],
     "views": [
-      { "id": "upload", "label": "Upload", "focus": ["user", "frontend", "gateway", "video-service", "s3"], "note": "O usuário recebe uma URL assinada e envia o arquivo diretamente ao S3." },
-      { "id": "processing", "label": "Processamento", "focus": ["job-service", "sqs", "processing-service", "s3", "bedrock"], "note": "O worker processa mídia e publica o resultado sem bloquear a requisição." },
-      { "id": "security-ops", "label": "Segurança e operação", "focus": ["auth0", "gateway", "secrets", "cloudwatch"], "note": "Auth0, Secrets Manager e CloudWatch cobrem segurança e observabilidade." }
+      { "id": "request", "label": "Entrada HTTP", "focus": ["user", "frontend", "gateway", "video-service", "job-service"], "note": "O KrakenD é a entrada única e encaminha chamadas pela rede privada." },
+      { "id": "processing", "label": "Processamento assíncrono", "focus": ["job-service", "rabbitmq", "processing-service", "minio", "ai-adapter"], "note": "O Processing Service consome mensagens, trata a mídia e publica o resultado." },
+      { "id": "data", "label": "Dados isolados", "focus": ["video-service", "video-db", "job-service", "job-db", "minio"], "note": "Video e Job têm bancos PostgreSQL separados; o worker não acessa esses bancos." },
+      { "id": "operations", "label": "Deploy e operação", "focus": ["github-actions", "gateway", "video-service", "job-service", "processing-service", "observability"], "note": "GitHub Actions entrega cada componente alterado e a observabilidade acompanha as seis máquinas." }
     ]
   },
   "components": [
-    { "id": "user", "type": "external", "label": "Usuário", "sublabel": "navegador", "pos": [40, 300], "size": [140, 60] },
-    { "id": "auth0", "type": "security", "label": "Auth0", "sublabel": "OAuth2 + JWT", "pos": [250, 90], "size": [150, 64] },
-    { "id": "frontend", "type": "cloud", "label": "S3 + CloudFront", "sublabel": "frontend SPA", "pos": [250, 300], "size": [160, 64] },
-    { "id": "gateway", "type": "cloud", "label": "Amazon API Gateway", "sublabel": "JWT, rotas e limites", "pos": [490, 300], "size": [170, 68] },
-    { "id": "secrets", "type": "security", "label": "AWS Secrets Manager", "sublabel": "credenciais", "pos": [490, 90], "size": [170, 64] },
-    { "id": "video-service", "type": "backend", "label": "Video Service", "sublabel": "ECS + Fargate", "pos": [750, 170], "size": [160, 64] },
-    { "id": "job-service", "type": "backend", "label": "Job Service", "sublabel": "ECS + Fargate", "pos": [750, 330], "size": [160, 64] },
-    { "id": "s3", "type": "cloud", "label": "Amazon S3", "sublabel": "vídeos e resultados", "pos": [1010, 170], "size": [160, 64] },
-    { "id": "rds", "type": "database", "label": "Amazon RDS", "sublabel": "PostgreSQL para jobs", "pos": [1010, 330], "size": [160, 64] },
-    { "id": "sqs", "type": "messagebus", "label": "Amazon SQS", "sublabel": "fila + DLQ", "pos": [750, 510], "size": [160, 60] },
-    { "id": "processing-service", "type": "backend", "label": "Processing Service", "sublabel": "ECS worker + FFmpeg", "pos": [1010, 510], "size": [180, 64] },
-    { "id": "bedrock", "type": "external", "label": "Amazon Bedrock", "sublabel": "resumo e highlights", "pos": [1260, 510], "size": [160, 64] },
-    { "id": "cloudwatch", "type": "cloud", "label": "Amazon CloudWatch", "sublabel": "logs, métricas e alarmes", "pos": [1260, 170], "size": [160, 64] },
-    { "id": "transcribe", "type": "external", "label": "whisper.cpp", "sublabel": "transcrição no worker", "pos": [1010, 670], "size": [180, 60] }
+    { "id": "user", "type": "external", "label": "Usuário", "sublabel": "navegador", "pos": [25, 367], "size": [130, 60] },
+    { "id": "frontend", "type": "frontend", "label": "Frontend SPA", "sublabel": "TypeScript", "pos": [210, 367], "size": [150, 60] },
+    { "id": "gateway", "type": "cloud", "label": "KrakenD", "sublabel": "Djairo · porta 80", "pos": [430, 365], "size": [170, 64], "tag": "172.31.7.117" },
+    { "id": "github-actions", "type": "cloud", "label": "GitHub Actions", "sublabel": "CI/CD por diretório", "pos": [430, 90], "size": [170, 64], "tag": "deploy por SSH" },
+    { "id": "video-service", "type": "backend", "label": "Video Service", "sublabel": "Matheus · Java", "pos": [685, 170], "size": [180, 64], "tag": "172.31.1.54:8081" },
+    { "id": "job-service", "type": "backend", "label": "Job Service", "sublabel": "Marcus · Java", "pos": [685, 365], "size": [180, 64], "tag": "172.31.13.221:8081" },
+    { "id": "processing-service", "type": "backend", "label": "Processing Service", "sublabel": "Eduardo · Python", "pos": [685, 585], "size": [190, 64], "tag": "172.31.14.236:8081" },
+    { "id": "video-db", "type": "database", "label": "PostgreSQL Video", "sublabel": "metadados de vídeos", "pos": [960, 95], "size": [185, 64], "tag": "Ruan · :5433" },
+    { "id": "job-db", "type": "database", "label": "PostgreSQL Job", "sublabel": "jobs e resultados", "pos": [960, 275], "size": [185, 64], "tag": "Ruan · :5434" },
+    { "id": "rabbitmq", "type": "messagebus", "label": "RabbitMQ", "sublabel": "fila + eventos", "pos": [960, 455], "size": [185, 60], "tag": "Ruan · :5672" },
+    { "id": "minio", "type": "cloud", "label": "MinIO", "sublabel": "vídeos e artefatos", "pos": [960, 635], "size": [185, 64], "tag": "Ruan · :9000" },
+    { "id": "observability", "type": "cloud", "label": "Prometheus + Grafana", "sublabel": "Leonardo", "pos": [1245, 275], "size": [205, 64], "tag": "172.31.7.191" },
+    { "id": "ai-adapter", "type": "external", "label": "Provedor de IA", "sublabel": "adapter substituível", "pos": [1245, 635], "size": [180, 64] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "AWS Region", "wraps": ["frontend", "gateway", "secrets", "video-service", "job-service", "s3", "rds", "sqs", "processing-service", "bedrock", "cloudwatch"], "pad": 24 }
+    { "kind": "region", "label": "AWS us-east-1", "wraps": ["gateway", "video-service", "job-service", "processing-service", "video-db", "job-db", "rabbitmq", "minio", "observability"], "pad": 22 },
+    { "kind": "security-group", "label": "rede privada da VPC", "wraps": ["video-service", "job-service", "processing-service", "video-db", "job-db", "rabbitmq", "minio", "observability"], "pad": 10 }
   ],
   "connections": [
-    { "id": "user-frontend", "from": "user", "to": "frontend", "label": "HTTPS", "variant": "emphasis", "route": "orthogonal-h" },
-    { "id": "frontend-gateway", "from": "frontend", "to": "gateway", "label": "REST", "variant": "emphasis", "route": "orthogonal-h" },
-    { "id": "auth-gateway", "from": "auth0", "to": "gateway", "label": "JWT", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[325, 200], [575, 200]], "labelAt": [450, 190] },
-    { "id": "gateway-video", "from": "gateway", "to": "video-service", "label": "REST", "fromSide": "right", "toSide": "left", "via": [[705, 334], [705, 202]] },
-    { "id": "gateway-job", "from": "gateway", "to": "job-service", "label": "REST", "fromSide": "right", "toSide": "left", "via": [[705, 334], [705, 362]] },
-    { "id": "video-s3", "from": "video-service", "to": "s3", "label": "URL assinada" },
-    { "id": "job-rds", "from": "job-service", "to": "rds", "label": "SQL" },
-    { "id": "job-sqs", "from": "job-service", "to": "sqs", "label": "processing.requested", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [830, 430] },
-    { "id": "sqs-worker", "from": "sqs", "to": "processing-service", "label": "consome", "variant": "dashed", "route": "orthogonal-h" },
-    { "id": "worker-s3", "from": "processing-service", "to": "s3", "label": "lê e grava", "fromSide": "top", "toSide": "bottom", "via": [[1215, 510], [1215, 260], [1090, 260]], "labelAt": [1245, 355] },
-    { "id": "worker-bedrock", "from": "processing-service", "to": "bedrock", "label": "prompt" },
-    { "id": "worker-whisper", "from": "processing-service", "to": "transcribe", "label": "transcreve", "fromSide": "bottom", "toSide": "top", "labelAt": [1100, 620] },
-    { "id": "worker-result", "from": "processing-service", "to": "sqs", "label": "completed / failed", "variant": "dashed", "fromSide": "left", "toSide": "right", "via": [[950, 542], [950, 610], [830, 610], [830, 570]], "labelAt": [895, 630] }
+    { "id": "user-frontend", "from": "user", "to": "frontend", "label": "HTTPS", "variant": "emphasis", "route": "straight" },
+    { "id": "frontend-gateway", "from": "frontend", "to": "gateway", "label": "REST", "variant": "emphasis", "route": "straight" },
+    { "id": "gateway-video", "from": "gateway", "to": "video-service", "label": "REST privado", "fromSide": "right", "toSide": "left", "via": [[640, 397], [640, 202]] },
+    { "id": "gateway-job", "from": "gateway", "to": "job-service", "label": "REST privado", "route": "straight" },
+    { "id": "video-db-link", "from": "video-service", "to": "video-db", "label": "SQL", "route": "orthogonal-h" },
+    { "id": "video-minio", "from": "video-service", "to": "minio", "label": "URL assinada", "fromSide": "bottom", "toSide": "left", "via": [[900, 234], [900, 667]], "labelAt": [900, 330] },
+    { "id": "job-db-link", "from": "job-service", "to": "job-db", "label": "SQL", "fromSide": "right", "toSide": "left", "via": [[910, 397], [910, 307]] },
+    { "id": "job-rabbit", "from": "job-service", "to": "rabbitmq", "label": "processing.requested", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[900, 429], [900, 485]], "labelAt": [900, 445] },
+    { "id": "rabbit-worker", "from": "rabbitmq", "to": "processing-service", "label": "consome", "variant": "dashed", "fromSide": "left", "toSide": "right", "via": [[915, 485], [915, 617]] },
+    { "id": "worker-minio", "from": "processing-service", "to": "minio", "label": "lê e grava", "route": "orthogonal-h" },
+    { "id": "worker-ai", "from": "processing-service", "to": "ai-adapter", "label": "transcreve e resume", "fromSide": "bottom", "toSide": "left", "via": [[780, 735], [1200, 735], [1200, 667]], "labelAt": [1050, 725] },
+    { "id": "worker-events", "from": "processing-service", "to": "rabbitmq", "label": "progresso / resultado", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "via": [[780, 545], [1052, 545]], "labelAt": [916, 535] },
+    { "id": "deploy-gateway", "from": "github-actions", "to": "gateway", "label": "SSH", "variant": "dashed", "route": "straight", "labelAt": [515, 168] },
+    { "id": "deploy-video", "from": "github-actions", "to": "video-service", "label": "imagem", "variant": "dashed", "fromSide": "right", "toSide": "top", "via": [[640, 122], [775, 122]] },
+    { "id": "metrics-job", "from": "job-service", "to": "observability", "label": "métricas", "variant": "dashed", "fromSide": "top", "toSide": "left", "via": [[775, 345], [1200, 345], [1200, 307]], "labelAt": [1180, 360] }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Upload", "items": ["API gera URL assinada", "Arquivo vai direto ao S3", "Gateway não carrega bytes grandes"] },
-    { "dot": "emerald", "title": "Processamento", "items": ["SQS desacopla requisição e worker", "FFmpeg e whisper.cpp rodam no container", "Bedrock resume e cria highlights"] },
-    { "dot": "rose", "title": "Operação", "items": ["DLQ para falhas permanentes", "CloudWatch mede fila e duração", "Secrets Manager protege chaves"] }
+    { "dot": "cyan", "title": "Distribuição", "items": ["Uma EC2 por serviço principal", "Uma EC2 para dados e mensageria", "Uma EC2 para observabilidade"] },
+    { "dot": "emerald", "title": "Persistência", "items": ["Video e Job têm PostgreSQL separados", "Processing usa RabbitMQ e MinIO", "Processing não acessa PostgreSQL"] },
+    { "dot": "rose", "title": "Entrega contínua", "items": ["Push em main aciona GitHub Actions", "Filtros executam só o componente alterado", "Health checks encerram cada deploy"] }
   ]
 }

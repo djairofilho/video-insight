@@ -4501,7 +4501,7 @@
       <p class="subtitle">Containers, armazenamento de objetos e mensageria portável</p>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"upload","label":"Upload","focus":["user","frontend","gateway","video-service","minio"],"note":"O upload usa URL assinada e não atravessa o API Gateway."},{"id":"processing","label":"Processamento","focus":["job-service","rabbitmq","processing-service","minio","ai-adapter"],"note":"O worker combina FFmpeg, whisper.cpp e um adapter de IA."},{"id":"portability","label":"Portabilidade","focus":["platform","postgres","rabbitmq","vault","observability"],"note":"Os componentes podem rodar localmente ou em qualquer nuvem."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"upload","label":"Upload","focus":["user","frontend","gateway","video-service","minio"],"note":"O upload usa URL assinada e não atravessa o API Gateway."},{"id":"processing","label":"Processamento","focus":["job-service","rabbitmq","processing-service","minio","ai-adapter"],"note":"O worker combina FFmpeg, whisper.cpp e um adapter de IA."},{"id":"portability","label":"Portabilidade","focus":["platform","video-db","postgres","rabbitmq","vault","observability"],"note":"Os componentes podem rodar localmente ou em qualquer nuvem."}]</script>
 
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
@@ -4570,8 +4570,8 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="226" y="66" width="1218" height="528" rx="12" class="c-region" stroke-width="1"/>
-        <text x="234" y="84" class="t-cloud" font-size="9" font-weight="600">Infraestrutura portável</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="226" y="36" width="1218" height="558" rx="12" class="c-region" stroke-width="1"/>
+        <text x="234" y="54" class="t-cloud" font-size="9" font-weight="600">Infraestrutura portável</text>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="user" data-edge-to="frontend" data-edge-label="HTTPS" data-edge-key="0" data-edge-id="user-frontend" data-composition-points="180,330;215,330;215,332;250,332" d="M 180 330 L 214 330 Q 215 330 215 331 L 215 331 Q 215 332 216 332 L 250 332" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -4579,13 +4579,14 @@
         <path data-edge-from="auth0" data-edge-to="gateway" data-edge-label="JWT" data-edge-key="2" data-edge-id="auth-gateway" data-composition-points="325,154;325,200;575,200;575,300" d="M 325 154 L 325 192 Q 325 200 333 200 L 567 200 Q 575 200 575 208 L 575 300" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="gateway" data-edge-to="video-service" data-edge-label="REST" data-edge-key="3" data-edge-id="gateway-video" data-composition-points="660,334;705,334;705,202;750,202" d="M 660 334 L 697 334 Q 705 334 705 326 L 705 210 Q 705 202 713 202 L 750 202" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="gateway" data-edge-to="job-service" data-edge-label="REST" data-edge-key="4" data-edge-id="gateway-job" data-composition-points="660,334;705,334;705,362;750,362" d="M 660 334 L 697 334 Q 705 334 705 342 L 705 354 Q 705 362 713 362 L 750 362" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="video-service" data-edge-to="minio" data-edge-label="URL assinada" data-edge-key="5" data-edge-id="video-storage" data-composition-points="920,202;1020,202" d="M 920 202 L 1020 202" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="job-service" data-edge-to="postgres" data-edge-label="SQL" data-edge-key="6" data-edge-id="job-postgres" data-composition-points="920,362;1020,362" d="M 920 362 L 1020 362" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="job-service" data-edge-to="rabbitmq" data-edge-label="processing.requested" data-edge-key="7" data-edge-id="job-rabbit" data-composition-points="835,394;835,510" d="M 835 394 L 835 510" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="rabbitmq" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="8" data-edge-id="rabbit-worker" data-composition-points="920,540;970,540;970,542;1020,542" d="M 920 540 L 969 540 Q 970 540 970 541 L 970 541 Q 970 542 971 542 L 1020 542" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="processing-service" data-edge-to="minio" data-edge-label="lê e grava" data-edge-key="9" data-edge-id="worker-storage" data-composition-points="1115,510;1230,510;1230,260;1110,260;1110,234" d="M 1115 510 L 1222 510 Q 1230 510 1230 502 L 1230 268 Q 1230 260 1222 260 L 1118 260 Q 1110 260 1110 252 L 1110 234" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="processing-service" data-edge-to="ai-adapter" data-edge-label="prompt" data-edge-key="10" data-edge-id="worker-ai" data-composition-points="1210,542;1270,542" d="M 1210 542 L 1270 542" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="processing-service" data-edge-to="rabbitmq" data-edge-label="completed / failed" data-edge-key="11" data-edge-id="worker-result" data-composition-points="1020,542;960,542;960,610;835,610;835,570;920,540" d="M 1020 542 L 968 542 Q 960 542 960 550 L 960 602 Q 960 610 952 610 L 843 610 Q 835 610 835 602 L 835 578 Q 835 570 842.5439226686631 567.3374390581189 L 920 540" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="video-service" data-edge-to="video-db" data-edge-label="SQL" data-edge-key="5" data-edge-id="video-postgres" data-composition-points="835,170;835,140;970,140;970,92;1020,92" d="M 835 170 L 835 148 Q 835 140 843 140 L 962 140 Q 970 140 970 132 L 970 100 Q 970 92 978 92 L 1020 92" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="video-service" data-edge-to="minio" data-edge-label="URL assinada" data-edge-key="6" data-edge-id="video-storage" data-composition-points="920,202;1020,202" d="M 920 202 L 1020 202" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="job-service" data-edge-to="postgres" data-edge-label="SQL" data-edge-key="7" data-edge-id="job-postgres" data-composition-points="920,362;1020,362" d="M 920 362 L 1020 362" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="job-service" data-edge-to="rabbitmq" data-edge-label="processing.requested" data-edge-key="8" data-edge-id="job-rabbit" data-composition-points="835,394;835,510" d="M 835 394 L 835 510" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="rabbitmq" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="9" data-edge-id="rabbit-worker" data-composition-points="920,540;970,540;970,542;1020,542" d="M 920 540 L 969 540 Q 970 540 970 541 L 970 541 Q 970 542 971 542 L 1020 542" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="processing-service" data-edge-to="minio" data-edge-label="lê e grava" data-edge-key="10" data-edge-id="worker-storage" data-composition-points="1115,510;1230,510;1230,260;1110,260;1110,234" d="M 1115 510 L 1222 510 Q 1230 510 1230 502 L 1230 268 Q 1230 260 1222 260 L 1118 260 Q 1110 260 1110 252 L 1110 234" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="processing-service" data-edge-to="ai-adapter" data-edge-label="prompt" data-edge-key="11" data-edge-id="worker-ai" data-composition-points="1210,542;1270,542" d="M 1210 542 L 1270 542" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="processing-service" data-edge-to="rabbitmq" data-edge-label="completed / failed" data-edge-key="12" data-edge-id="worker-result" data-composition-points="1020,542;960,542;960,610;835,610;835,570;920,540" d="M 1020 542 L 968 542 Q 960 542 960 550 L 960 602 Q 960 610 952 610 L 843 610 Q 835 610 835 602 L 835 578 Q 835 570 842.5439226686631 567.3374390581189 L 920 540" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-user" data-node-id="user" data-node-label="Usuário" tabindex="0" role="button" aria-label="Focus Usuário, navegador, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="navegador" data-node-context="Architecture component">
@@ -4626,15 +4627,15 @@
         <text data-detail="context" x="330" y="346" class="t-muted" font-size="9" text-anchor="middle">hosting estático</text>
         </g>
 
-        <g id="node-gateway" data-node-id="gateway" data-node-label="API Gateway" tabindex="0" role="button" aria-label="Focus API Gateway, Kong / Traefik, Infraestrutura portável" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Kong / Traefik" data-node-context="Infraestrutura portável">
-          <title>API Gateway · Kong / Traefik · Infraestrutura portável</title>
+        <g id="node-gateway" data-node-id="gateway" data-node-label="API Gateway" tabindex="0" role="button" aria-label="Focus API Gateway, KrakenD, Infraestrutura portável" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="KrakenD" data-node-context="Infraestrutura portável">
+          <title>API Gateway · KrakenD · Infraestrutura portável</title>
           <rect x="490" y="300" width="170" height="68" rx="6" class="c-mask"/>
           <rect x="490" y="300" width="170" height="68" rx="6" class="c-cloud" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(496 306) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
           <text data-detail-anchor x="575" y="332" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API Gateway</text>
-        <text data-detail="context" x="575" y="348" class="t-muted" font-size="9" text-anchor="middle">Kong / Traefik</text>
+        <text data-detail="context" x="575" y="348" class="t-muted" font-size="9" text-anchor="middle">KrakenD</text>
         </g>
 
         <g id="node-vault" data-node-id="vault" data-node-label="Secret Store" tabindex="0" role="button" aria-label="Focus Secret Store, Vault / secrets nativos, Infraestrutura portável" aria-pressed="false" data-node-kind="security" data-node-sublabel="Vault / secrets nativos" data-node-context="Infraestrutura portável">
@@ -4649,26 +4650,38 @@
         <text data-detail="context" x="577.5" y="136" class="t-muted" font-size="9" text-anchor="middle">Vault / secrets nativos</text>
         </g>
 
-        <g id="node-video-service" data-node-id="video-service" data-node-label="Video Service" tabindex="0" role="button" aria-label="Focus Video Service, container poliglota, Infraestrutura portável" aria-pressed="false" data-node-kind="backend" data-node-sublabel="container poliglota" data-node-context="Infraestrutura portável">
-          <title>Video Service · container poliglota · Infraestrutura portável</title>
+        <g id="node-video-service" data-node-id="video-service" data-node-label="Video Service" tabindex="0" role="button" aria-label="Focus Video Service, Java + Spring Boot, Infraestrutura portável" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Java + Spring Boot" data-node-context="Infraestrutura portável">
+          <title>Video Service · Java + Spring Boot · Infraestrutura portável</title>
           <rect x="750" y="170" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="750" y="170" width="170" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(756 176) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-detail-anchor x="835" y="200" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Video Service</text>
-        <text data-detail="context" x="835" y="216" class="t-muted" font-size="9" text-anchor="middle">container poliglota</text>
+        <text data-detail="context" x="835" y="216" class="t-muted" font-size="9" text-anchor="middle">Java + Spring Boot</text>
         </g>
 
-        <g id="node-job-service" data-node-id="job-service" data-node-label="Job Service" tabindex="0" role="button" aria-label="Focus Job Service, container poliglota, Infraestrutura portável" aria-pressed="false" data-node-kind="backend" data-node-sublabel="container poliglota" data-node-context="Infraestrutura portável">
-          <title>Job Service · container poliglota · Infraestrutura portável</title>
+        <g id="node-job-service" data-node-id="job-service" data-node-label="Job Service" tabindex="0" role="button" aria-label="Focus Job Service, Java + Spring Boot, Infraestrutura portável" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Java + Spring Boot" data-node-context="Infraestrutura portável">
+          <title>Job Service · Java + Spring Boot · Infraestrutura portável</title>
           <rect x="750" y="330" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="750" y="330" width="170" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(756 336) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-detail-anchor x="835" y="360" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Job Service</text>
-        <text data-detail="context" x="835" y="376" class="t-muted" font-size="9" text-anchor="middle">container poliglota</text>
+        <text data-detail="context" x="835" y="376" class="t-muted" font-size="9" text-anchor="middle">Java + Spring Boot</text>
+        </g>
+
+        <g id="node-video-db" data-node-id="video-db" data-node-label="PostgreSQL Video" tabindex="0" role="button" aria-label="Focus PostgreSQL Video, metadados de vídeos, Infraestrutura portável" aria-pressed="false" data-node-kind="database" data-node-sublabel="metadados de vídeos" data-node-context="Infraestrutura portável">
+          <title>PostgreSQL Video · metadados de vídeos · Infraestrutura portável</title>
+          <rect x="1020" y="60" width="180" height="64" rx="6" class="c-mask"/>
+          <rect x="1020" y="60" width="180" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(1026 66) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-detail-anchor x="1110" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL Video</text>
+        <text data-detail="context" x="1110" y="106" class="t-muted" font-size="9" text-anchor="middle">metadados de vídeos</text>
         </g>
 
         <g id="node-minio" data-node-id="minio" data-node-label="Object Storage" tabindex="0" role="button" aria-label="Focus Object Storage, MinIO / S3 compatível, Infraestrutura portável" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="MinIO / S3 compatível" data-node-context="Infraestrutura portável">
@@ -4682,15 +4695,15 @@
         <text data-detail="context" x="1110" y="216" class="t-muted" font-size="9" text-anchor="middle">MinIO / S3 compatível</text>
         </g>
 
-        <g id="node-postgres" data-node-id="postgres" data-node-label="PostgreSQL" tabindex="0" role="button" aria-label="Focus PostgreSQL, jobs e resultados, Infraestrutura portável" aria-pressed="false" data-node-kind="database" data-node-sublabel="jobs e resultados" data-node-context="Infraestrutura portável">
-          <title>PostgreSQL · jobs e resultados · Infraestrutura portável</title>
+        <g id="node-postgres" data-node-id="postgres" data-node-label="PostgreSQL Job" tabindex="0" role="button" aria-label="Focus PostgreSQL Job, jobs e resultados, Infraestrutura portável" aria-pressed="false" data-node-kind="database" data-node-sublabel="jobs e resultados" data-node-context="Infraestrutura portável">
+          <title>PostgreSQL Job · jobs e resultados · Infraestrutura portável</title>
           <rect x="1020" y="330" width="180" height="64" rx="6" class="c-mask"/>
           <rect x="1020" y="330" width="180" height="64" rx="6" class="c-database" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(1026 336) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-detail-anchor x="1110" y="360" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL</text>
+          <text data-detail-anchor x="1110" y="360" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL Job</text>
         <text data-detail="context" x="1110" y="376" class="t-muted" font-size="9" text-anchor="middle">jobs e resultados</text>
         </g>
 
@@ -4774,31 +4787,35 @@
           <rect x="690" y="328" width="30" height="14" rx="3" class="c-mask"/>
           <text x="705" y="338" class="t-muted" font-size="8" text-anchor="middle">REST</text>
         </g>
-        <g data-detail="context" data-edge-from="video-service" data-edge-to="minio" data-edge-label="URL assinada" data-edge-key="5" data-edge-id="video-storage">
+        <g data-detail="context" data-edge-from="video-service" data-edge-to="video-db" data-edge-label="SQL" data-edge-key="5" data-edge-id="video-postgres">
+          <rect x="887.5" y="120" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="902.5" y="130" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
+        </g>
+        <g data-detail="context" data-edge-from="video-service" data-edge-to="minio" data-edge-label="URL assinada" data-edge-key="6" data-edge-id="video-storage">
           <rect x="936.2" y="182" width="67.6" height="14" rx="3" class="c-mask"/>
           <text x="970" y="192" class="t-muted" font-size="8" text-anchor="middle">URL assinada</text>
         </g>
-        <g data-detail="context" data-edge-from="job-service" data-edge-to="postgres" data-edge-label="SQL" data-edge-key="6" data-edge-id="job-postgres">
+        <g data-detail="context" data-edge-from="job-service" data-edge-to="postgres" data-edge-label="SQL" data-edge-key="7" data-edge-id="job-postgres">
           <rect x="955" y="342" width="30" height="14" rx="3" class="c-mask"/>
           <text x="970" y="352" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
         </g>
-        <g data-detail="context" data-edge-from="job-service" data-edge-to="rabbitmq" data-edge-label="processing.requested" data-edge-key="7" data-edge-id="job-rabbit">
+        <g data-detail="context" data-edge-from="job-service" data-edge-to="rabbitmq" data-edge-label="processing.requested" data-edge-key="8" data-edge-id="job-rabbit">
           <rect x="782" y="420" width="106" height="14" rx="3" class="c-mask"/>
           <text x="835" y="430" class="t-messagebus" font-size="8" text-anchor="middle">processing.requested</text>
         </g>
-        <g data-detail="context" data-edge-from="rabbitmq" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="8" data-edge-id="rabbit-worker">
+        <g data-detail="context" data-edge-from="rabbitmq" data-edge-to="processing-service" data-edge-label="consome" data-edge-key="9" data-edge-id="rabbit-worker">
           <rect x="948.2" y="521" width="43.6" height="14" rx="3" class="c-mask"/>
           <text x="970" y="531" class="t-messagebus" font-size="8" text-anchor="middle">consome</text>
         </g>
-        <g data-detail="context" data-edge-from="processing-service" data-edge-to="minio" data-edge-label="lê e grava" data-edge-key="9" data-edge-id="worker-storage">
+        <g data-detail="context" data-edge-from="processing-service" data-edge-to="minio" data-edge-label="lê e grava" data-edge-key="10" data-edge-id="worker-storage">
           <rect x="1201" y="420" width="58" height="14" rx="3" class="c-mask"/>
           <text x="1230" y="430" class="t-muted" font-size="8" text-anchor="middle">lê e grava</text>
         </g>
-        <g data-detail="context" data-edge-from="processing-service" data-edge-to="ai-adapter" data-edge-label="prompt" data-edge-key="10" data-edge-id="worker-ai">
+        <g data-detail="context" data-edge-from="processing-service" data-edge-to="ai-adapter" data-edge-label="prompt" data-edge-key="11" data-edge-id="worker-ai">
           <rect x="1220.6" y="522" width="38.8" height="14" rx="3" class="c-mask"/>
           <text x="1240" y="532" class="t-muted" font-size="8" text-anchor="middle">prompt</text>
         </g>
-        <g data-detail="context" data-edge-from="processing-service" data-edge-to="rabbitmq" data-edge-label="completed / failed" data-edge-key="11" data-edge-id="worker-result">
+        <g data-detail="context" data-edge-from="processing-service" data-edge-to="rabbitmq" data-edge-label="completed / failed" data-edge-key="12" data-edge-id="worker-result">
           <rect x="851.8" y="620" width="96.39999999999999" height="14" rx="3" class="c-mask"/>
           <text x="900" y="630" class="t-messagebus" font-size="8" text-anchor="middle">completed / failed</text>
         </g>

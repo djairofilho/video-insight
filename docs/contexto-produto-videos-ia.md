@@ -259,8 +259,8 @@ Responsabilidades:
 - Armazenamento dos artefatos.
 - Publicação de progresso, conclusão e falha.
 
-Pode usar C++, Python, Rust ou outra linguagem adequada. A arquitetura não
-exige que todos os serviços usem a mesma tecnologia.
+Usa Python para manter o ecossistema de mídia e IA isolado dos serviços de
+negócio, implementados em Java com Spring Boot.
 
 ### Fronteira resumida
 
@@ -283,7 +283,7 @@ REST é usado para:
 
 ### Comunicação assíncrona
 
-RabbitMQ ou outro message broker é usado para:
+RabbitMQ é usado para:
 
 ```text
 video.uploaded
