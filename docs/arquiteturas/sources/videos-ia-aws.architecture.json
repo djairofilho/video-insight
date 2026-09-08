@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Processamento de vídeos com IA na AWS",
+    "subtitle": "Upload direto, jobs assíncronos e workers escaláveis",
+    "output": "videos-ia-aws.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "viewBox": [1500, 840],
+    "views": [
+      { "id": "upload", "label": "Upload", "focus": ["user", "frontend", "gateway", "video-service", "s3"], "note": "O usuário recebe uma URL assinada e envia o arquivo diretamente ao S3." },
+      { "id": "processing", "label": "Processamento", "focus": ["job-service", "sqs", "processing-service", "s3", "bedrock"], "note": "O worker processa mídia e publica o resultado sem bloquear a requisição." },
+      { "id": "security-ops", "label": "Segurança e operação", "focus": ["auth0", "gateway", "secrets", "cloudwatch"], "note": "Auth0, Secrets Manager e CloudWatch cobrem segurança e observabilidade." }
+    ]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "Usuário", "sublabel": "navegador", "pos": [40, 300], "size": [140, 60] },
+    { "id": "auth0", "type": "security", "label": "Auth0", "sublabel": "OAuth2 + JWT", "pos": [250, 90], "size": [150, 64] },
+    { "id": "frontend", "type": "cloud", "label": "S3 + CloudFront", "sublabel": "frontend SPA", "pos": [250, 300], "size": [160, 64] },
+    { "id": "gateway", "type": "cloud", "label": "Amazon API Gateway", "sublabel": "JWT, rotas e limites", "pos": [490, 300], "size": [170, 68] },
+    { "id": "secrets", "type": "security", "label": "AWS Secrets Manager", "sublabel": "credenciais", "pos": [490, 90], "size": [170, 64] },
+    { "id": "video-service", "type": "backend", "label": "Video Service", "sublabel": "ECS + Fargate", "pos": [750, 170], "size": [160, 64] },
+    { "id": "job-service", "type": "backend", "label": "Job Service", "sublabel": "ECS + Fargate", "pos": [750, 330], "size": [160, 64] },
+    { "id": "s3", "type": "cloud", "label": "Amazon S3", "sublabel": "vídeos e resultados", "pos": [1010, 170], "size": [160, 64] },
+    { "id": "rds", "type": "database", "label": "Amazon RDS", "sublabel": "PostgreSQL para jobs", "pos": [1010, 330], "size": [160, 64] },
+    { "id": "sqs", "type": "messagebus", "label": "Amazon SQS", "sublabel": "fila + DLQ", "pos": [750, 510], "size": [160, 60] },
+    { "id": "processing-service", "type": "backend", "label": "Processing Service", "sublabel": "ECS worker + FFmpeg", "pos": [1010, 510], "size": [180, 64] },
+    { "id": "bedrock", "type": "external", "label": "Amazon Bedrock", "sublabel": "resumo e highlights", "pos": [1260, 510], "size": [160, 64] },
+    { "id": "cloudwatch", "type": "cloud", "label": "Amazon CloudWatch", "sublabel": "logs, métricas e alarmes", "pos": [1260, 170], "size": [160, 64] },
+    { "id": "transcribe", "type": "external", "label": "whisper.cpp", "sublabel": "transcrição no worker", "pos": [1010, 670], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS Region", "wraps": ["frontend", "gateway", "secrets", "video-service", "job-service", "s3", "rds", "sqs", "processing-service", "bedrock", "cloudwatch"], "pad": 24 }
+  ],
+  "connections": [
+    { "id": "user-frontend", "from": "user", "to": "frontend", "label": "HTTPS", "variant": "emphasis", "route": "orthogonal-h" },
+    { "id": "frontend-gateway", "from": "frontend", "to": "gateway", "label": "REST", "variant": "emphasis", "route": "orthogonal-h" },
+    { "id": "auth-gateway", "from": "auth0", "to": "gateway", "label": "JWT", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[325, 200], [575, 200]], "labelAt": [450, 190] },
+    { "id": "gateway-video", "from": "gateway", "to": "video-service", "label": "REST", "fromSide": "right", "toSide": "left", "via": [[705, 334], [705, 202]] },
+    { "id": "gateway-job", "from": "gateway", "to": "job-service", "label": "REST", "fromSide": "right", "toSide": "left", "via": [[705, 334], [705, 362]] },
+    { "id": "video-s3", "from": "video-service", "to": "s3", "label": "URL assinada" },
+    { "id": "job-rds", "from": "job-service", "to": "rds", "label": "SQL" },
+    { "id": "job-sqs", "from": "job-service", "to": "sqs", "label": "processing.requested", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [830, 430] },
+    { "id": "sqs-worker", "from": "sqs", "to": "processing-service", "label": "consome", "variant": "dashed", "route": "orthogonal-h" },
+    { "id": "worker-s3", "from": "processing-service", "to": "s3", "label": "lê e grava", "fromSide": "top", "toSide": "bottom", "via": [[1215, 510], [1215, 260], [1090, 260]], "labelAt": [1245, 355] },
+    { "id": "worker-bedrock", "from": "processing-service", "to": "bedrock", "label": "prompt" },
+    { "id": "worker-whisper", "from": "processing-service", "to": "transcribe", "label": "transcreve", "fromSide": "bottom", "toSide": "top", "labelAt": [1100, 620] },
+    { "id": "worker-result", "from": "processing-service", "to": "sqs", "label": "completed / failed", "variant": "dashed", "fromSide": "left", "toSide": "right", "via": [[950, 542], [950, 610], [830, 610], [830, 570]], "labelAt": [895, 630] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Upload", "items": ["API gera URL assinada", "Arquivo vai direto ao S3", "Gateway não carrega bytes grandes"] },
+    { "dot": "emerald", "title": "Processamento", "items": ["SQS desacopla requisição e worker", "FFmpeg e whisper.cpp rodam no container", "Bedrock resume e cria highlights"] },
+    { "dot": "rose", "title": "Operação", "items": ["DLQ para falhas permanentes", "CloudWatch mede fila e duração", "Secrets Manager protege chaves"] }
+  ]
+}

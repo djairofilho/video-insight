@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Processamento de vídeos com IA, arquitetura cloud-agnostic",
+    "subtitle": "Containers, armazenamento de objetos e mensageria portável",
+    "output": "videos-ia-agnostica.html",
+    "visual_preset": "editorial",
+    "quality_profile": "standard",
+    "viewBox": [1500, 840],
+    "views": [
+      { "id": "upload", "label": "Upload", "focus": ["user", "frontend", "gateway", "video-service", "minio"], "note": "O upload usa URL assinada e não atravessa o API Gateway." },
+      { "id": "processing", "label": "Processamento", "focus": ["job-service", "rabbitmq", "processing-service", "minio", "ai-adapter"], "note": "O worker combina FFmpeg, whisper.cpp e um adapter de IA." },
+      { "id": "portability", "label": "Portabilidade", "focus": ["platform", "postgres", "rabbitmq", "vault", "observability"], "note": "Os componentes podem rodar localmente ou em qualquer nuvem." }
+    ]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "Usuário", "sublabel": "navegador", "pos": [40, 300], "size": [140, 60] },
+    { "id": "auth0", "type": "security", "label": "Auth0", "sublabel": "OAuth2 + JWT", "pos": [250, 90], "size": [150, 64] },
+    { "id": "frontend", "type": "frontend", "label": "Frontend SPA", "sublabel": "hosting estático", "pos": [250, 300], "size": [160, 64] },
+    { "id": "gateway", "type": "cloud", "label": "API Gateway", "sublabel": "Kong / Traefik", "pos": [490, 300], "size": [170, 68] },
+    { "id": "vault", "type": "security", "label": "Secret Store", "sublabel": "Vault / secrets nativos", "pos": [490, 90], "size": [175, 64] },
+    { "id": "video-service", "type": "backend", "label": "Video Service", "sublabel": "container poliglota", "pos": [750, 170], "size": [170, 64] },
+    { "id": "job-service", "type": "backend", "label": "Job Service", "sublabel": "container poliglota", "pos": [750, 330], "size": [170, 64] },
+    { "id": "minio", "type": "cloud", "label": "Object Storage", "sublabel": "MinIO / S3 compatível", "pos": [1020, 170], "size": [180, 64] },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "jobs e resultados", "pos": [1020, 330], "size": [180, 64] },
+    { "id": "rabbitmq", "type": "messagebus", "label": "RabbitMQ", "sublabel": "fila + DLQ", "pos": [750, 510], "size": [170, 60] },
+    { "id": "processing-service", "type": "backend", "label": "Processing Service", "sublabel": "FFmpeg + whisper.cpp", "pos": [1020, 510], "size": [190, 64] },
+    { "id": "ai-adapter", "type": "external", "label": "LLM Adapter", "sublabel": "local ou API externa", "pos": [1270, 510], "size": [150, 64] },
+    { "id": "observability", "type": "cloud", "label": "Prometheus + Grafana", "sublabel": "métricas e dashboards", "pos": [1240, 170], "size": [180, 64] },
+    { "id": "platform", "type": "cloud", "label": "Container Platform", "sublabel": "Docker / Kubernetes", "pos": [1240, 330], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Infraestrutura portável", "wraps": ["frontend", "gateway", "vault", "video-service", "job-service", "minio", "postgres", "rabbitmq", "processing-service", "observability", "platform"], "pad": 24 }
+  ],
+  "connections": [
+    { "id": "user-frontend", "from": "user", "to": "frontend", "label": "HTTPS", "variant": "emphasis", "route": "orthogonal-h" },
+    { "id": "frontend-gateway", "from": "frontend", "to": "gateway", "label": "REST", "variant": "emphasis", "route": "orthogonal-h" },
+    { "id": "auth-gateway", "from": "auth0", "to": "gateway", "label": "JWT", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[325, 200], [575, 200]], "labelAt": [450, 190] },
+    { "id": "gateway-video", "from": "gateway", "to": "video-service", "label": "REST", "fromSide": "right", "toSide": "left", "via": [[705, 334], [705, 202]] },
+    { "id": "gateway-job", "from": "gateway", "to": "job-service", "label": "REST", "fromSide": "right", "toSide": "left", "via": [[705, 334], [705, 362]] },
+    { "id": "video-storage", "from": "video-service", "to": "minio", "label": "URL assinada" },
+    { "id": "job-postgres", "from": "job-service", "to": "postgres", "label": "SQL" },
+    { "id": "job-rabbit", "from": "job-service", "to": "rabbitmq", "label": "processing.requested", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [835, 430] },
+    { "id": "rabbit-worker", "from": "rabbitmq", "to": "processing-service", "label": "consome", "variant": "dashed", "route": "orthogonal-h" },
+    { "id": "worker-storage", "from": "processing-service", "to": "minio", "label": "lê e grava", "fromSide": "top", "toSide": "bottom", "via": [[1230, 510], [1230, 260], [1110, 260]], "labelAt": [1230, 430] },
+    { "id": "worker-ai", "from": "processing-service", "to": "ai-adapter", "label": "prompt" },
+    { "id": "worker-result", "from": "processing-service", "to": "rabbitmq", "label": "completed / failed", "variant": "dashed", "fromSide": "left", "toSide": "right", "via": [[960, 542], [960, 610], [835, 610], [835, 570]], "labelAt": [900, 630] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Portabilidade", "items": ["Containers em qualquer ambiente", "MinIO ou storage compatível com S3", "PostgreSQL e RabbitMQ"] },
+    { "dot": "emerald", "title": "Processamento", "items": ["FFmpeg extrai mídia", "whisper.cpp transcreve", "Adapter seleciona LLM local ou externo"] },
+    { "dot": "rose", "title": "Operação", "items": ["Auth0 continua obrigatório", "Vault ou secret store nativo", "Prometheus e Grafana"] }
+  ]
+}
