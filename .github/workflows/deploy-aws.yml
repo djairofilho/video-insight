@@ -1,0 +1,200 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/api-gateway/**
+      - services/video-service/**
+      - services/job-service/**
+      - services/processing-service/**
+      - infrastructure/aws/**
+      - .github/workflows/deploy-aws.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: video-insight-aws
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      gateway: ${{ steps.filter.outputs.gateway }}
+      video: ${{ steps.filter.outputs.video }}
+      job: ${{ steps.filter.outputs.job }}
+      processing: ${{ steps.filter.outputs.processing }}
+      core: ${{ steps.filter.outputs.core }}
+      observability: ${{ steps.filter.outputs.observability }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            gateway:
+              - 'apps/api-gateway/**'
+              - '.github/workflows/deploy-aws.yml'
+            video:
+              - 'services/video-service/**'
+              - '.github/workflows/deploy-aws.yml'
+            job:
+              - 'services/job-service/**'
+              - '.github/workflows/deploy-aws.yml'
+            processing:
+              - 'services/processing-service/**'
+              - '.github/workflows/deploy-aws.yml'
+            core:
+              - 'infrastructure/aws/core/**'
+              - '.github/workflows/deploy-aws.yml'
+            observability:
+              - 'infrastructure/aws/observability/**'
+              - '.github/workflows/deploy-aws.yml'
+
+  deploy-video:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.video == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and test image
+        run: docker build -t "video-insight/video-service:${GITHUB_SHA}" services/video-service
+      - name: Package image
+        run: docker save "video-insight/video-service:${GITHUB_SHA}" | gzip > /tmp/video-service.tar.gz
+      - &ssh_setup
+        name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.AWS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/video-insight
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/video-insight ~/.ssh/known_hosts
+      - name: Deploy Video Service
+        env:
+          HOST: ${{ vars.AWS_VIDEO_HOST }}
+        run: |
+          scp -i ~/.ssh/video-insight /tmp/video-service.tar.gz ubuntu@"$HOST":/tmp/video-service.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/video-service.tar.gz; sudo docker rm -f video-insight-video 2>/dev/null || true; sudo docker run -d --name video-insight-video --restart unless-stopped --memory 320m -p 8081:8080 video-insight/video-service:${GITHUB_SHA}; rm -f /tmp/video-service.tar.gz"
+          for _ in {1..20}; do
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
+            sleep 3
+          done
+          exit 1
+
+  deploy-job:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.job == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and test image
+        run: docker build -t "video-insight/job-service:${GITHUB_SHA}" services/job-service
+      - name: Package image
+        run: docker save "video-insight/job-service:${GITHUB_SHA}" | gzip > /tmp/job-service.tar.gz
+      - *ssh_setup
+      - name: Deploy Job Service
+        env:
+          HOST: ${{ vars.AWS_JOB_HOST }}
+        run: |
+          scp -i ~/.ssh/video-insight /tmp/job-service.tar.gz ubuntu@"$HOST":/tmp/job-service.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/job-service.tar.gz; sudo docker rm -f video-insight-job 2>/dev/null || true; sudo docker run -d --name video-insight-job --restart unless-stopped --memory 320m -p 8081:8080 video-insight/job-service:${GITHUB_SHA}; rm -f /tmp/job-service.tar.gz"
+          for _ in {1..20}; do
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
+            sleep 3
+          done
+          exit 1
+
+  deploy-processing:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.processing == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and test
+        working-directory: services/processing-service
+        run: |
+          python -m pip install '.[test]'
+          pytest
+          docker build -t "video-insight/processing-service:${GITHUB_SHA}" .
+      - name: Package image
+        run: docker save "video-insight/processing-service:${GITHUB_SHA}" | gzip > /tmp/processing-service.tar.gz
+      - *ssh_setup
+      - name: Deploy Processing Service
+        env:
+          HOST: ${{ vars.AWS_PROCESSING_HOST }}
+        run: |
+          scp -i ~/.ssh/video-insight /tmp/processing-service.tar.gz ubuntu@"$HOST":/tmp/processing-service.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/processing-service.tar.gz; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}; rm -f /tmp/processing-service.tar.gz"
+          for _ in {1..20}; do
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
+            sleep 3
+          done
+          exit 1
+
+  deploy-core:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - *ssh_setup
+      - name: Deploy databases, RabbitMQ and MinIO
+        env:
+          HOST: ${{ vars.AWS_CORE_HOST }}
+          VIDEO_DB_PASSWORD: ${{ secrets.VIDEO_DB_PASSWORD }}
+          JOB_DB_PASSWORD: ${{ secrets.JOB_DB_PASSWORD }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+        run: |
+          printf 'VIDEO_DB_PASSWORD=%s\nJOB_DB_PASSWORD=%s\nRABBITMQ_PASSWORD=%s\nMINIO_ROOT_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD" "$JOB_DB_PASSWORD" "$RABBITMQ_PASSWORD" "$MINIO_ROOT_PASSWORD" > /tmp/core.env
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'mkdir -p /opt/video-insight/core'
+          scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/core && sudo docker compose --env-file core.env up -d --remove-orphans && rm -f core.env'
+
+  deploy-observability:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.observability == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - *ssh_setup
+      - name: Deploy Prometheus and Grafana
+        env:
+          HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        run: |
+          printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" > /tmp/observability.env
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'mkdir -p /opt/video-insight/observability'
+          scp -i ~/.ssh/video-insight infrastructure/aws/observability/* /tmp/observability.env ubuntu@"$HOST":/opt/video-insight/observability/
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans && rm -f observability.env'
+
+  deploy-gateway:
+    needs: [changes, deploy-video, deploy-job, deploy-processing]
+    if: >-
+      always() &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.gateway == 'true' ||
+      needs.changes.outputs.video == 'true' || needs.changes.outputs.job == 'true' ||
+      needs.changes.outputs.processing == 'true') &&
+      !contains(needs.*.result, 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate and build gateway
+        run: docker build -t "video-insight/api-gateway:${GITHUB_SHA}" apps/api-gateway
+      - name: Package image
+        run: docker save "video-insight/api-gateway:${GITHUB_SHA}" | gzip > /tmp/api-gateway.tar.gz
+      - *ssh_setup
+      - name: Deploy KrakenD
+        env:
+          HOST: ${{ vars.AWS_GATEWAY_HOST }}
+        run: |
+          scp -i ~/.ssh/video-insight /tmp/api-gateway.tar.gz ubuntu@"$HOST":/tmp/api-gateway.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/api-gateway.tar.gz; sudo docker rm -f video-insight-gateway 2>/dev/null || true; sudo docker run -d --name video-insight-gateway --restart unless-stopped --memory 256m -p 80:8080 video-insight/api-gateway:${GITHUB_SHA}; rm -f /tmp/api-gateway.tar.gz"
+          for endpoint in video jobs processing; do
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "curl --fail --silent http://localhost/health/$endpoint"
+          done

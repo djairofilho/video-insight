@@ -93,3 +93,50 @@ jobs:
           docker run --rm -v "$PWD:/repo"
           zricethezav/gitleaks:v8.30.1
           detect --source=/repo --no-git --redact --no-banner
+
+  video-service:
+    name: Test Video Service
+    needs: changes
+    if: needs.changes.outputs.video_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t video-insight/video-service:test services/video-service
+
+  job-service:
+    name: Test Job Service
+    needs: changes
+    if: needs.changes.outputs.job_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t video-insight/job-service:test services/job-service
+
+  processing-service:
+    name: Test Processing Service
+    needs: changes
+    if: needs.changes.outputs.processing_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Run tests
+        working-directory: services/processing-service
+        run: |
+          python -m pip install '.[test]'
+          pytest
+      - run: docker build -t video-insight/processing-service:test services/processing-service
+
+  gateway:
+    name: Validate API Gateway
+    needs: changes
+    if: needs.changes.outputs.gateway == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t video-insight/api-gateway:test apps/api-gateway
+      - run: >-
+          docker run --rm video-insight/api-gateway:test
+          check -c /etc/krakend/krakend.json
