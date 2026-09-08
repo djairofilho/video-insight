@@ -1,0 +1,96 @@
+name: Validate repository
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect changed components
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      gateway: ${{ steps.filter.outputs.gateway }}
+      video_service: ${{ steps.filter.outputs.video_service }}
+      job_service: ${{ steps.filter.outputs.job_service }}
+      processing_service: ${{ steps.filter.outputs.processing_service }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+      infrastructure: ${{ steps.filter.outputs.infrastructure }}
+      documentation: ${{ steps.filter.outputs.documentation }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Detect paths
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: .github/paths-filter.yaml
+      - name: Summarize changes
+        shell: bash
+        run: |
+          {
+            echo '## Componentes alterados'
+            echo '- frontend: ${{ steps.filter.outputs.frontend }}'
+            echo '- gateway: ${{ steps.filter.outputs.gateway }}'
+            echo '- video_service: ${{ steps.filter.outputs.video_service }}'
+            echo '- job_service: ${{ steps.filter.outputs.job_service }}'
+            echo '- processing_service: ${{ steps.filter.outputs.processing_service }}'
+            echo '- contracts: ${{ steps.filter.outputs.contracts }}'
+            echo '- infrastructure: ${{ steps.filter.outputs.infrastructure }}'
+            echo '- documentation: ${{ steps.filter.outputs.documentation }}'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  specifications:
+    name: Validate specifications
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install JSON Schema validator
+        run: python -m pip install jsonschema==4.26.0
+      - name: Validate Markdown
+        run: npx --yes markdownlint-cli2@0.23.2 "**/*.md" "#.git/**"
+      - name: Validate JSON Schemas
+        run: python scripts/validate_json_schemas.py
+      - name: Validate OpenAPI
+        run: npx --yes @redocly/cli@2.51.2 lint --config redocly.yaml
+      - name: Validate Docker Compose
+        run: >-
+          docker compose --env-file .env.example
+          -f infrastructure/compose.yaml config --quiet
+
+  links:
+    name: Validate local links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          args: --offline --no-progress "**/*.md"
+          fail: true
+
+  secrets:
+    name: Detect secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Scan repository
+        uses: gitleaks/gitleaks-action@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

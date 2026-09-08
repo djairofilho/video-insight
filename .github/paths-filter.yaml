@@ -1,0 +1,35 @@
+frontend:
+  - apps/frontend/**
+
+gateway:
+  - apps/api-gateway/**
+
+video_service:
+  - services/video-service/**
+
+job_service:
+  - services/job-service/**
+
+processing_service:
+  - services/processing-service/**
+
+contracts:
+  - contracts/**
+  - redocly.yaml
+
+infrastructure:
+  - infrastructure/**
+  - .env.example
+
+documentation:
+  - README.md
+  - docs/**
+  - '**/*.md'
+
+repository:
+  - .editorconfig
+  - .gitattributes
+  - .gitignore
+  - .markdownlint.json
+  - .github/**
+  - scripts/**
