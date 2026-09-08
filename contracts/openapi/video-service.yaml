@@ -1,0 +1,283 @@
+openapi: 3.1.0
+info:
+  title: Video Insight - Video Service
+  version: 1.0.0
+  description: Contrato para cadastro, upload e consulta de vídeos.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /videos:
+    post:
+      operationId: createVideo
+      summary: Cadastra um vídeo antes do upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVideoRequest'
+      responses:
+        '201':
+          description: Vídeo cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      operationId: listVideos
+      summary: Lista os vídeos do usuário autenticado
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Página de vídeos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /videos/{videoId}:
+    parameters:
+      - $ref: '#/components/parameters/VideoId'
+    get:
+      operationId: getVideo
+      summary: Consulta os metadados de um vídeo
+      responses:
+        '200':
+          description: Vídeo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteVideo
+      summary: Exclui o vídeo e agenda a remoção de seus artefatos
+      responses:
+        '204':
+          description: Exclusão aceita
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /videos/{videoId}/upload-url:
+    parameters:
+      - $ref: '#/components/parameters/VideoId'
+    post:
+      operationId: createUploadUrl
+      summary: Gera uma URL temporária para upload direto
+      responses:
+        '200':
+          description: URL assinada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedUrl'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /videos/{videoId}/upload-complete:
+    parameters:
+      - $ref: '#/components/parameters/VideoId'
+    post:
+      operationId: completeUpload
+      summary: Confirma que o upload direto terminou
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteUploadRequest'
+      responses:
+        '200':
+          description: Upload confirmado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /videos/{videoId}/playback-url:
+    parameters:
+      - $ref: '#/components/parameters/VideoId'
+    post:
+      operationId: createPlaybackUrl
+      summary: Gera uma URL temporária para reprodução
+      responses:
+        '200':
+          description: URL assinada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedUrl'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    VideoId:
+      name: videoId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    CreateVideoRequest:
+      type: object
+      additionalProperties: false
+      required: [file_name, content_type, size_bytes]
+      properties:
+        file_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        content_type:
+          type: string
+          const: video/mp4
+        size_bytes:
+          type: integer
+          minimum: 1
+          maximum: 104857600
+    CompleteUploadRequest:
+      type: object
+      additionalProperties: false
+      required: [duration_seconds]
+      properties:
+        duration_seconds:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 600
+    Video:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - file_name
+        - content_type
+        - size_bytes
+        - upload_status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        content_type:
+          type: string
+        size_bytes:
+          type: integer
+        duration_seconds:
+          type: number
+          minimum: 0
+        upload_status:
+          type: string
+          enum: [pending, uploading, ready, failed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    VideoPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
+        next_cursor:
+          type: string
+    SignedUrl:
+      type: object
+      additionalProperties: false
+      required: [url, method, expires_at]
+      properties:
+        url:
+          type: string
+          format: uri
+        method:
+          type: string
+          enum: [GET, PUT]
+        expires_at:
+          type: string
+          format: date-time
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message, correlation_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        correlation_id:
+          type: string
+          format: uuid
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Token ausente ou inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Vídeo não encontrado para o usuário autenticado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Estado atual incompatível com a operação
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

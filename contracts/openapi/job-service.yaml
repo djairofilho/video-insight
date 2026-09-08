@@ -1,0 +1,357 @@
+openapi: 3.1.0
+info:
+  title: Video Insight - Job Service
+  version: 1.0.0
+  description: Contrato para criação, acompanhamento e resultado de jobs.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /videos/{videoId}/jobs:
+    parameters:
+      - $ref: '#/components/parameters/VideoId'
+    post:
+      operationId: createJob
+      summary: Cria uma solicitação assíncrona de processamento
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+      responses:
+        '202':
+          description: Job aceito e enfileirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /jobs/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      operationId: getJob
+      summary: Consulta estado, etapa e progresso de um job
+      responses:
+        '200':
+          description: Job encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /jobs/{jobId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      operationId: cancelJob
+      summary: Solicita o cancelamento de um job não finalizado
+      responses:
+        '202':
+          description: Cancelamento aceito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /jobs/{jobId}/retry:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      operationId: retryJob
+      summary: Cria uma nova tentativa para um job com falha
+      responses:
+        '202':
+          description: Nova tentativa aceita
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /jobs/{jobId}/result:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      operationId: getJobResult
+      summary: Consulta o resultado estruturado de um job concluído
+      responses:
+        '200':
+          description: Resultado do processamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /jobs/{jobId}/transcript:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+      - name: format
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [txt, json, srt]
+    get:
+      operationId: exportTranscript
+      summary: Gera uma URL temporária para exportar a transcrição
+      responses:
+        '200':
+          description: URL temporária do arquivo solicitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportUrl'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    VideoId:
+      name: videoId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Operation:
+      type: string
+      enum: [transcription, summary, chapters]
+    CreateJobRequest:
+      type: object
+      additionalProperties: false
+      required: [operations]
+      properties:
+        operations:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Operation'
+    Job:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - video_id
+        - operations
+        - status
+        - progress_percent
+        - attempt
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        video_id:
+          type: string
+          format: uuid
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        status:
+          type: string
+          enum: [queued, processing, completed, failed, cancelled]
+        stage:
+          type: string
+          enum:
+            - downloading
+            - extracting_audio
+            - transcribing
+            - summarizing
+            - creating_chapters
+            - uploading_artifacts
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        attempt:
+          type: integer
+          minimum: 1
+        error:
+          $ref: '#/components/schemas/JobError'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    JobError:
+      type: object
+      additionalProperties: false
+      required: [code, message, retryable]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        retryable:
+          type: boolean
+    TranscriptSegment:
+      type: object
+      additionalProperties: false
+      required: [start_seconds, end_seconds, text]
+      properties:
+        start_seconds:
+          type: number
+          minimum: 0
+        end_seconds:
+          type: number
+          minimum: 0
+        text:
+          type: string
+    Chapter:
+      type: object
+      additionalProperties: false
+      required: [title, start_seconds, end_seconds]
+      properties:
+        title:
+          type: string
+        start_seconds:
+          type: number
+          minimum: 0
+        end_seconds:
+          type: number
+          minimum: 0
+    ModelReference:
+      type: object
+      additionalProperties: false
+      required: [purpose, provider, model, version]
+      properties:
+        purpose:
+          type: string
+          enum: [transcription, summary, chapters]
+        provider:
+          type: string
+        model:
+          type: string
+        version:
+          type: string
+    JobResult:
+      type: object
+      additionalProperties: false
+      required: [job_id, video_id, transcript, models, completed_at]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        video_id:
+          type: string
+          format: uuid
+        transcript:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+        summary:
+          type: string
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Chapter'
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelReference'
+        completed_at:
+          type: string
+          format: date-time
+    ExportUrl:
+      type: object
+      additionalProperties: false
+      required: [url, expires_at]
+      properties:
+        url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message, correlation_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        correlation_id:
+          type: string
+          format: uuid
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Token ausente ou inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Recurso não encontrado para o usuário autenticado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Estado atual incompatível com a operação
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

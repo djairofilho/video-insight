@@ -1,0 +1,11 @@
+apis:
+  video-service:
+    root: contracts/openapi/video-service.yaml
+  job-service:
+    root: contracts/openapi/job-service.yaml
+
+extends:
+  - recommended
+
+rules:
+  info-license: off

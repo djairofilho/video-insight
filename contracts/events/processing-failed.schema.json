@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://video-insight.local/schemas/processing-failed.schema.json",
+  "title": "processing.failed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "event_version", "occurred_at", "correlation_id", "data"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "const": "processing.failed" },
+    "event_version": { "const": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "video_id", "attempt", "stage", "error_code", "error_message", "retryable"],
+      "properties": {
+        "job_id": { "type": "string", "format": "uuid" },
+        "video_id": { "type": "string", "format": "uuid" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "stage": {
+          "enum": [
+            "downloading",
+            "extracting_audio",
+            "transcribing",
+            "summarizing",
+            "creating_chapters",
+            "uploading_artifacts"
+          ]
+        },
+        "error_code": { "type": "string", "minLength": 1 },
+        "error_message": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "retryable": { "type": "boolean" }
+      }
+    }
+  }
+}

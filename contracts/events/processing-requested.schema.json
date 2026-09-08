@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://video-insight.local/schemas/processing-requested.schema.json",
+  "title": "processing.requested",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "event_version", "occurred_at", "correlation_id", "data"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "const": "processing.requested" },
+    "event_version": { "const": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "video_id", "storage_key", "operations", "attempt"],
+      "properties": {
+        "job_id": { "type": "string", "format": "uuid" },
+        "video_id": { "type": "string", "format": "uuid" },
+        "storage_key": { "type": "string", "minLength": 1 },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["transcription", "summary", "chapters"] }
+        },
+        "attempt": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

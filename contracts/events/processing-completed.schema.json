@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://video-insight.local/schemas/processing-completed.schema.json",
+  "title": "processing.completed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "event_version", "occurred_at", "correlation_id", "data"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "const": "processing.completed" },
+    "event_version": { "const": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "video_id", "attempt", "artifacts", "models"],
+      "properties": {
+        "job_id": { "type": "string", "format": "uuid" },
+        "video_id": { "type": "string", "format": "uuid" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "artifacts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["transcript_json_key"],
+          "properties": {
+            "transcript_json_key": { "type": "string", "minLength": 1 },
+            "transcript_txt_key": { "type": "string", "minLength": 1 },
+            "transcript_srt_key": { "type": "string", "minLength": 1 },
+            "summary_json_key": { "type": "string", "minLength": 1 },
+            "chapters_json_key": { "type": "string", "minLength": 1 }
+          }
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["purpose", "provider", "model", "version"],
+            "properties": {
+              "purpose": { "enum": ["transcription", "summary", "chapters"] },
+              "provider": { "type": "string", "minLength": 1 },
+              "model": { "type": "string", "minLength": 1 },
+              "version": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
