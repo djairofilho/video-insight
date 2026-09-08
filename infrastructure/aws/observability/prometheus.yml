@@ -2,12 +2,7 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: ec2-nodes
+  - job_name: prometheus
     static_configs:
       - targets:
-          - 172.31.7.117:9100
-          - 172.31.1.54:9100
-          - 172.31.13.221:9100
-          - 172.31.14.236:9100
-          - 172.31.8.165:9100
-          - 172.31.7.191:9100
+          - localhost:9090

@@ -1,8 +1,8 @@
 # Deploy na AWS
 
-A primeira entrega usa instâncias EC2 já fornecidas para a disciplina. Os
-workloads existentes são preservados; o Video Insight usa nomes próprios e a
-porta `8081` nos serviços internos.
+A primeira entrega usa instâncias EC2 já fornecidas para a disciplina. A
+implantação inicial substitui os workloads anteriores autorizados pelo grupo e
+usa contêineres identificados com o prefixo `video-insight`.
 
 | Responsável pela máquina | Componente nesta entrega | Endereço privado |
 |---|---|---|
@@ -14,14 +14,16 @@ porta `8081` nos serviços internos.
 | Leonardo Moretti | Prometheus e Grafana | `172.31.7.191` |
 
 O Gateway é a única entrada HTTP do produto e publica a porta `80`. Os três
-serviços são acessados pelo Gateway através da rede privada da VPC.
+serviços são acessados pelo Gateway através da rede privada da VPC. O Security
+Group da máquina de Djairo deve permitir TCP `80` para disponibilizar a API fora
+da VPC.
 
 ## Deploy automático
 
 O workflow `deploy-aws.yml` é executado após mudanças na branch `main` e aplica
 filtros por diretório. Cada serviço é compilado, testado, copiado por SSH e
-reiniciado com systemd somente quando seus arquivos mudam. O Gateway é entregue
-como contêiner KrakenD.
+substituído como contêiner Docker somente quando seus arquivos mudam. O Gateway
+também é entregue como contêiner KrakenD.
 
 O repositório precisa destas configurações no GitHub:
 

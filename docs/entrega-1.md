@@ -38,7 +38,8 @@ O fluxo planejado é:
    RabbitMQ.
 5. Processing Service consome a solicitação, usa MinIO e um adapter de IA e
    publica eventos de progresso, conclusão ou falha.
-6. Prometheus coleta métricas e o Grafana apresenta os dashboards.
+6. Prometheus coleta inicialmente suas próprias métricas e o Grafana recebe a
+   fonte de dados pronta; a instrumentação dos serviços evolui com a aplicação.
 
 O Processing Service não acessa PostgreSQL. Ele se integra a RabbitMQ, MinIO e
 ao provedor de IA; o Job Service persiste o estado comunicado pelos eventos.
@@ -56,6 +57,10 @@ ao provedor de IA; o Job Service persiste o estado comunicado pelos eventos.
 
 As comunicações internas usam os endereços privados da VPC. Senhas e a chave
 SSH são secrets do GitHub e não ficam no repositório.
+
+Para acesso pela internet, o Security Group da máquina de Djairo precisa
+permitir TCP `80`. Essa regra depende de uma identidade AWS com permissão para
+alterar grupos de segurança.
 
 ## Deploy automático
 
