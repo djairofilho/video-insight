@@ -194,7 +194,7 @@ jobs:
           HOST: ${{ vars.AWS_GATEWAY_HOST }}
         run: |
           scp -i ~/.ssh/video-insight /tmp/api-gateway.tar.gz ubuntu@"$HOST":/tmp/api-gateway.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/api-gateway.tar.gz; sudo docker rm -f video-insight-gateway 2>/dev/null || true; sudo docker run -d --name video-insight-gateway --restart unless-stopped --memory 256m -p 80:8080 video-insight/api-gateway:${GITHUB_SHA}; rm -f /tmp/api-gateway.tar.gz"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo ufw allow 8081/tcp; sudo docker load -i /tmp/api-gateway.tar.gz; sudo docker rm -f video-insight-gateway 2>/dev/null || true; sudo docker run -d --name video-insight-gateway --restart unless-stopped --memory 256m -p 8081:8080 video-insight/api-gateway:${GITHUB_SHA}; rm -f /tmp/api-gateway.tar.gz"
           for endpoint in video jobs processing; do
-            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "curl --fail --silent http://localhost/health/$endpoint"
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "curl --fail --silent http://localhost:8081/health/$endpoint"
           done
