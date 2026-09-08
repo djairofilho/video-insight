@@ -1,0 +1,41 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+tmp/
+data/
+
+# JavaScript and TypeScript
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Java and JVM
+.gradle/
+build/
+target/
+*.class
+
+# Test and tool caches
+.cache/
+.coverage
+htmlcov/
