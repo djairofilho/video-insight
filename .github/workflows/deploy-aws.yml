@@ -152,7 +152,7 @@ jobs:
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
           printf 'VIDEO_DB_PASSWORD=%s\nJOB_DB_PASSWORD=%s\nRABBITMQ_PASSWORD=%s\nMINIO_ROOT_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD" "$JOB_DB_PASSWORD" "$RABBITMQ_PASSWORD" "$MINIO_ROOT_PASSWORD" > /tmp/core.env
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'mkdir -p /opt/video-insight/core'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/core && sudo docker compose --env-file core.env up -d --remove-orphans && rm -f core.env'
 
@@ -169,7 +169,7 @@ jobs:
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
           printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" > /tmp/observability.env
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'mkdir -p /opt/video-insight/observability'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/observability'
           scp -i ~/.ssh/video-insight infrastructure/aws/observability/* /tmp/observability.env ubuntu@"$HOST":/opt/video-insight/observability/
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans && rm -f observability.env'
 
