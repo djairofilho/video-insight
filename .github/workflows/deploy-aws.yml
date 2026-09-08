@@ -171,7 +171,7 @@ jobs:
           printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" > /tmp/observability.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/observability'
           scp -i ~/.ssh/video-insight infrastructure/aws/observability/* /tmp/observability.env ubuntu@"$HOST":/opt/video-insight/observability/
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans && rm -f observability.env'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && rm -f observability.env'
 
   deploy-gateway:
     needs: [changes, deploy-video, deploy-job, deploy-processing]
