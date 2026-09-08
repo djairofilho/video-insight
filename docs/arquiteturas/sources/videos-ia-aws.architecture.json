@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Video Insight nas máquinas AWS da equipe",
-    "subtitle": "Seis instâncias EC2, comunicação privada e deploy automático",
+    "subtitle": "Seis instâncias EC2, dados via SSH e deploy automático",
     "output": "videos-ia-aws.html",
     "visual_preset": "blueprint",
     "quality_profile": "standard",
@@ -11,7 +11,7 @@
     "views": [
       { "id": "request", "label": "Entrada HTTP", "focus": ["user", "frontend", "gateway", "video-service", "job-service"], "note": "O KrakenD é a entrada única e encaminha chamadas pela rede privada." },
       { "id": "processing", "label": "Processamento assíncrono", "focus": ["job-service", "rabbitmq", "processing-service", "minio", "ai-adapter"], "note": "O Processing Service consome mensagens, trata a mídia e publica o resultado." },
-      { "id": "data", "label": "Dados isolados", "focus": ["video-service", "video-db", "job-service", "job-db", "minio"], "note": "Video e Job têm bancos PostgreSQL separados; o worker não acessa esses bancos." },
+      { "id": "data", "label": "Dados isolados", "focus": ["video-service", "video-db", "job-service", "job-db", "rabbitmq", "minio"], "note": "Os serviços alcançam somente suas dependências por túneis SSH persistentes na porta 22." },
       { "id": "operations", "label": "Deploy e operação", "focus": ["github-actions", "gateway", "video-service", "job-service", "processing-service", "observability"], "note": "GitHub Actions entrega cada componente alterado e a observabilidade acompanha as seis máquinas." }
     ]
   },
@@ -54,6 +54,7 @@
   "cards": [
     { "dot": "cyan", "title": "Distribuição", "items": ["Uma EC2 por serviço principal", "Uma EC2 para dados e mensageria", "Uma EC2 para observabilidade"] },
     { "dot": "emerald", "title": "Persistência", "items": ["Video e Job têm PostgreSQL separados", "Processing usa RabbitMQ e MinIO", "Processing não acessa PostgreSQL"] },
-    { "dot": "rose", "title": "Entrega contínua", "items": ["Push em main aciona GitHub Actions", "Filtros executam só o componente alterado", "Health checks encerram cada deploy"] }
+    { "dot": "rose", "title": "Entrega contínua", "items": ["Push em main aciona GitHub Actions", "Filtros executam só o componente alterado", "Health checks encerram cada deploy"] },
+    { "dot": "amber", "title": "Rede disponível", "items": ["Gateway público em :8081", "Dados atravessam túneis SSH :22", "Chaves limitadas por origem e destino"] }
   ]
 }

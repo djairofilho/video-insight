@@ -4498,10 +4498,10 @@
         <div class="pulse-dot"></div>
         <h1>Video Insight nas máquinas AWS da equipe</h1>
       </div>
-      <p class="subtitle">Seis instâncias EC2, comunicação privada e deploy automático</p>
+      <p class="subtitle">Seis instâncias EC2, dados via SSH e deploy automático</p>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"request","label":"Entrada HTTP","focus":["user","frontend","gateway","video-service","job-service"],"note":"O KrakenD é a entrada única e encaminha chamadas pela rede privada."},{"id":"processing","label":"Processamento assíncrono","focus":["job-service","rabbitmq","processing-service","minio","ai-adapter"],"note":"O Processing Service consome mensagens, trata a mídia e publica o resultado."},{"id":"data","label":"Dados isolados","focus":["video-service","video-db","job-service","job-db","minio"],"note":"Video e Job têm bancos PostgreSQL separados; o worker não acessa esses bancos."},{"id":"operations","label":"Deploy e operação","focus":["github-actions","gateway","video-service","job-service","processing-service","observability"],"note":"GitHub Actions entrega cada componente alterado e a observabilidade acompanha as seis máquinas."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"request","label":"Entrada HTTP","focus":["user","frontend","gateway","video-service","job-service"],"note":"O KrakenD é a entrada única e encaminha chamadas pela rede privada."},{"id":"processing","label":"Processamento assíncrono","focus":["job-service","rabbitmq","processing-service","minio","ai-adapter"],"note":"O Processing Service consome mensagens, trata a mídia e publica o resultado."},{"id":"data","label":"Dados isolados","focus":["video-service","video-db","job-service","job-db","rabbitmq","minio"],"note":"Os serviços alcançam somente suas dependências por túneis SSH persistentes na porta 22."},{"id":"operations","label":"Deploy e operação","focus":["github-actions","gateway","video-service","job-service","processing-service","observability"],"note":"GitHub Actions entrega cada componente alterado e a observabilidade acompanha as seis máquinas."}]</script>
 
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
@@ -4546,7 +4546,7 @@
     <div class="diagram-container" data-detail-level="map">
       <svg viewBox="0 0 1560 900" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="blueprint" data-quality-profile="standard">
         <title id="archify-diagram-title">Video Insight nas máquinas AWS da equipe</title>
-        <desc id="archify-diagram-description">Seis instâncias EC2, comunicação privada e deploy automático</desc>
+        <desc id="archify-diagram-description">Seis instâncias EC2, dados via SSH e deploy automático</desc>
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -5063,6 +5063,18 @@
           <li>&bull; Push em main aciona GitHub Actions</li>
           <li>&bull; Filtros executam só o componente alterado</li>
           <li>&bull; Health checks encerram cada deploy</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>Rede disponível</h3>
+        </div>
+        <ul>
+          <li>&bull; Gateway público em :8081</li>
+          <li>&bull; Dados atravessam túneis SSH :22</li>
+          <li>&bull; Chaves limitadas por origem e destino</li>
         </ul>
       </div>
     </div>

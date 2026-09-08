@@ -19,12 +19,26 @@ Group compartilhado permite TCP `8081`, usado como alternativa porque a porta
 `80` está bloqueada na camada de rede da AWS. Nos três serviços internos, a
 entrada `8081` deve ser restringida ao Gateway (`172.31.7.117`).
 
+## Conectividade de dados
+
+Como o grupo não pode alterar o Security Group, PostgreSQL, RabbitMQ e MinIO
+são alcançados pelos serviços através de túneis SSH persistentes na porta `22`.
+As unidades systemd e os endpoints usados pelos contêineres estão documentados
+em [`tunnels/README.md`](tunnels/README.md).
+
+Cada túnel reinicia automaticamente e usa uma chave exclusiva, armazenada
+somente na máquina de origem. Em Ruan, essas chaves permitem encaminhamento
+apenas para as portas necessárias.
+
 ## Deploy automático
 
 O workflow `deploy-aws.yml` é executado após mudanças na branch `main` e aplica
 filtros por diretório. Cada serviço é compilado, testado, copiado por SSH e
 substituído como contêiner Docker somente quando seus arquivos mudam. O Gateway
 também é entregue como contêiner KrakenD.
+
+O mesmo workflow instala e reinicia as unidades de túnel dos três serviços. A
+criação inicial das chaves permanece uma operação de bootstrap das máquinas.
 
 O repositório precisa destas configurações no GitHub:
 

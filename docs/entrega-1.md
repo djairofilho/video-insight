@@ -33,11 +33,11 @@ O fluxo planejado é:
 
 1. O frontend chama o KrakenD.
 2. O Gateway encaminha vídeos ao Video Service e jobs ao Job Service.
-3. Video Service mantém seu PostgreSQL e usa o MinIO para vídeos e artefatos.
-4. Job Service mantém outro PostgreSQL e publica `processing.requested` no
-   RabbitMQ.
-5. Processing Service consome a solicitação, usa MinIO e um adapter de IA e
-   publica eventos de progresso, conclusão ou falha.
+3. Video Service alcança seu PostgreSQL e o MinIO por túneis SSH persistentes.
+4. Job Service alcança seu PostgreSQL e o RabbitMQ pelos mesmos túneis e publica
+   `processing.requested`.
+5. Processing Service acessa RabbitMQ e MinIO pelos túneis, usa um adapter de IA
+   e publica eventos de progresso, conclusão ou falha.
 6. Prometheus coleta inicialmente suas próprias métricas e o Grafana recebe a
    fonte de dados pronta; a instrumentação dos serviços evolui com a aplicação.
 
@@ -55,8 +55,10 @@ ao provedor de IA; o Job Service persiste o estado comunicado pelos eventos.
 | Ruan | Dois PostgreSQL, RabbitMQ e MinIO | `5433`, `5434`, `5672`, `9000` |
 | Leonardo Moretti | Prometheus e Grafana | `9090`, `3000` |
 
-As comunicações internas usam os endereços privados da VPC. Senhas e a chave
-SSH são secrets do GitHub e não ficam no repositório.
+As chamadas HTTP usam os endereços privados da VPC. Como as portas de dados são
+bloqueadas pelo Security Group e o grupo não pode alterá-lo, PostgreSQL,
+RabbitMQ e MinIO são alcançados por túneis SSH persistentes na porta `22`.
+Senhas e chaves privadas não ficam no repositório.
 
 Para acesso pela internet, o KrakenD usa `http://3.227.9.20:8081`. A porta `80`
 continua bloqueada na camada de rede da AWS. A exposição pública de `8081` nas
