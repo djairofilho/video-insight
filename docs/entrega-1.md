@@ -48,7 +48,7 @@ ao provedor de IA; o Job Service persiste o estado comunicado pelos eventos.
 
 | Máquina | Componente | Porta do produto |
 |---|---|---|
-| Djairo | KrakenD | `80` |
+| Djairo | KrakenD | `8081` |
 | Matheus Pereira | Video Service | `8081` |
 | Marcus | Job Service | `8081` |
 | Eduardo Marcelino | Processing Service | `8081` |
@@ -58,9 +58,10 @@ ao provedor de IA; o Job Service persiste o estado comunicado pelos eventos.
 As comunicações internas usam os endereços privados da VPC. Senhas e a chave
 SSH são secrets do GitHub e não ficam no repositório.
 
-Para acesso pela internet, o Security Group da máquina de Djairo precisa
-permitir TCP `80`. Essa regra depende de uma identidade AWS com permissão para
-alterar grupos de segurança.
+Para acesso pela internet, o KrakenD usa `http://3.227.9.20:8081`. A porta `80`
+continua bloqueada na camada de rede da AWS. A exposição pública de `8081` nas
+máquinas dos serviços deve ser restringida ao Gateway por uma identidade AWS
+com permissão para alterar grupos de segurança.
 
 ## Deploy automático
 

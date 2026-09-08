@@ -13,10 +13,11 @@ usa contêineres identificados com o prefixo `video-insight`.
 | Ruan | PostgreSQL, RabbitMQ e MinIO | `172.31.8.165` |
 | Leonardo Moretti | Prometheus e Grafana | `172.31.7.191` |
 
-O Gateway é a única entrada HTTP do produto e publica a porta `80`. Os três
+O Gateway é a única entrada HTTP do produto e publica a porta `8081`. Os três
 serviços são acessados pelo Gateway através da rede privada da VPC. O Security
-Group da máquina de Djairo deve permitir TCP `80` para disponibilizar a API fora
-da VPC.
+Group compartilhado permite TCP `8081`, usado como alternativa porque a porta
+`80` está bloqueada na camada de rede da AWS. Nos três serviços internos, a
+entrada `8081` deve ser restringida ao Gateway (`172.31.7.117`).
 
 ## Deploy automático
 

@@ -18,7 +18,7 @@
   "components": [
     { "id": "user", "type": "external", "label": "Usuário", "sublabel": "navegador", "pos": [25, 367], "size": [130, 60] },
     { "id": "frontend", "type": "frontend", "label": "Frontend SPA", "sublabel": "TypeScript", "pos": [210, 367], "size": [150, 60] },
-    { "id": "gateway", "type": "cloud", "label": "KrakenD", "sublabel": "Djairo · porta 80", "pos": [430, 365], "size": [170, 64], "tag": "172.31.7.117" },
+    { "id": "gateway", "type": "cloud", "label": "KrakenD", "sublabel": "Djairo · porta 8081", "pos": [430, 365], "size": [170, 64], "tag": "172.31.7.117" },
     { "id": "github-actions", "type": "cloud", "label": "GitHub Actions", "sublabel": "CI/CD por diretório", "pos": [430, 90], "size": [170, 64], "tag": "deploy por SSH" },
     { "id": "video-service", "type": "backend", "label": "Video Service", "sublabel": "Matheus · Java", "pos": [685, 170], "size": [180, 64], "tag": "172.31.1.54:8081" },
     { "id": "job-service", "type": "backend", "label": "Job Service", "sublabel": "Marcus · Java", "pos": [685, 365], "size": [180, 64], "tag": "172.31.13.221:8081" },
