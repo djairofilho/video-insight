@@ -79,7 +79,7 @@ jobs:
           HOST: ${{ vars.AWS_VIDEO_HOST }}
         run: |
           scp -i ~/.ssh/video-insight /tmp/video-service.tar.gz ubuntu@"$HOST":/tmp/video-service.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/video-service.tar.gz; sudo docker rm -f video-insight-video 2>/dev/null || true; sudo docker run -d --name video-insight-video --restart unless-stopped --memory 320m -p 8081:8080 video-insight/video-service:${GITHUB_SHA}; rm -f /tmp/video-service.tar.gz"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/video-service.tar.gz; sudo docker rm -f video-insight-video 2>/dev/null || true; sudo docker run -d --name video-insight-video --restart unless-stopped --memory 320m -p 8081:8080 video-insight/video-service:${GITHUB_SHA}; rm -f /tmp/video-service.tar.gz; sudo docker image prune -af"
           for _ in {1..20}; do
             ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
             sleep 3
@@ -102,7 +102,7 @@ jobs:
           HOST: ${{ vars.AWS_JOB_HOST }}
         run: |
           scp -i ~/.ssh/video-insight /tmp/job-service.tar.gz ubuntu@"$HOST":/tmp/job-service.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/job-service.tar.gz; sudo docker rm -f video-insight-job 2>/dev/null || true; sudo docker run -d --name video-insight-job --restart unless-stopped --memory 320m -p 8081:8080 video-insight/job-service:${GITHUB_SHA}; rm -f /tmp/job-service.tar.gz"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/job-service.tar.gz; sudo docker rm -f video-insight-job 2>/dev/null || true; sudo docker run -d --name video-insight-job --restart unless-stopped --memory 320m -p 8081:8080 video-insight/job-service:${GITHUB_SHA}; rm -f /tmp/job-service.tar.gz; sudo docker image prune -af"
           for _ in {1..20}; do
             ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
             sleep 3
@@ -129,7 +129,7 @@ jobs:
           HOST: ${{ vars.AWS_PROCESSING_HOST }}
         run: |
           scp -i ~/.ssh/video-insight /tmp/processing-service.tar.gz ubuntu@"$HOST":/tmp/processing-service.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/processing-service.tar.gz; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}; rm -f /tmp/processing-service.tar.gz"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/processing-service.tar.gz; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}; rm -f /tmp/processing-service.tar.gz; sudo docker image prune -af"
           for _ in {1..20}; do
             ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
             sleep 3
@@ -154,7 +154,7 @@ jobs:
           printf 'VIDEO_DB_PASSWORD=%s\nJOB_DB_PASSWORD=%s\nRABBITMQ_PASSWORD=%s\nMINIO_ROOT_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD" "$JOB_DB_PASSWORD" "$RABBITMQ_PASSWORD" "$MINIO_ROOT_PASSWORD" > /tmp/core.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/core && sudo docker compose --env-file core.env up -d --remove-orphans && rm -f core.env'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/core && sudo docker compose --env-file core.env up -d --remove-orphans && rm -f core.env && sudo docker image prune -af'
 
   deploy-observability:
     needs: changes
@@ -171,7 +171,7 @@ jobs:
           printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" > /tmp/observability.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/observability'
           scp -i ~/.ssh/video-insight infrastructure/aws/observability/* /tmp/observability.env ubuntu@"$HOST":/opt/video-insight/observability/
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && rm -f observability.env'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && rm -f observability.env && sudo docker image prune -af'
 
   deploy-gateway:
     needs: [changes, deploy-video, deploy-job, deploy-processing]
@@ -194,7 +194,7 @@ jobs:
           HOST: ${{ vars.AWS_GATEWAY_HOST }}
         run: |
           scp -i ~/.ssh/video-insight /tmp/api-gateway.tar.gz ubuntu@"$HOST":/tmp/api-gateway.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo ufw allow 8081/tcp; sudo docker load -i /tmp/api-gateway.tar.gz; sudo docker rm -f video-insight-gateway 2>/dev/null || true; sudo docker run -d --name video-insight-gateway --restart unless-stopped --memory 256m -p 8081:8080 video-insight/api-gateway:${GITHUB_SHA}; rm -f /tmp/api-gateway.tar.gz"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo ufw allow 8081/tcp; sudo docker load -i /tmp/api-gateway.tar.gz; sudo docker rm -f video-insight-gateway 2>/dev/null || true; sudo docker run -d --name video-insight-gateway --restart unless-stopped --memory 256m -p 8081:8080 video-insight/api-gateway:${GITHUB_SHA}; rm -f /tmp/api-gateway.tar.gz; sudo docker image prune -af"
           for endpoint in video jobs processing; do
             ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "curl --fail --silent http://localhost:8081/health/$endpoint"
           done
