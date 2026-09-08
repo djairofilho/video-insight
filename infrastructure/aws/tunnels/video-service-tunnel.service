@@ -1,0 +1,13 @@
+[Unit]
+Description=Video Insight tunnel for Video Service dependencies
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ssh -NT -i /etc/video-insight/tunnel_ed25519 -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/etc/video-insight/known_hosts -L 172.17.0.1:15433:172.31.8.165:5433 -L 172.17.0.1:19000:172.31.8.165:9000 video-tunnel@172.31.8.165
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
