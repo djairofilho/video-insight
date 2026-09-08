@@ -1,0 +1,77 @@
+name: video-insight-core
+
+services:
+  video-db:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_DB: video_insight_videos
+      POSTGRES_USER: video_service
+      POSTGRES_PASSWORD: ${VIDEO_DB_PASSWORD}
+    ports:
+      - "172.31.8.165:5433:5432"
+    volumes:
+      - video-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U video_service -d video_insight_videos']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  job-db:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_DB: video_insight_jobs
+      POSTGRES_USER: job_service
+      POSTGRES_PASSWORD: ${JOB_DB_PASSWORD}
+    ports:
+      - "172.31.8.165:5434:5432"
+    volumes:
+      - job-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U job_service -d video_insight_jobs']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4.3.5-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: video_insight
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "172.31.8.165:5672:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: video_insight
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "172.31.8.165:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://localhost:9000/minio/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  video-db-data:
+  job-db-data:
+  rabbitmq-data:
+  minio-data:

@@ -11,8 +11,8 @@ O Docker Compose fornece:
 - Prometheus;
 - Grafana com o Prometheus provisionado como fonte de dados.
 
-Configurações de deploy em nuvem serão adicionadas somente depois da escolha do
-ambiente final.
+O deploy da primeira entrega usa seis instâncias EC2 e está documentado em
+[`aws/README.md`](aws/README.md).
 
 ## Iniciar o ambiente
 
