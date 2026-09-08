@@ -1,0 +1,46 @@
+{
+  "$schema": "https://www.krakend.io/schema/v3.json",
+  "version": 3,
+  "name": "Video Insight API Gateway",
+  "port": 8080,
+  "timeout": "3s",
+  "cache_ttl": "0s",
+  "endpoints": [
+    {
+      "endpoint": "/health/video",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/health",
+          "encoding": "json",
+          "host": ["http://172.31.1.54:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/health/jobs",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/health",
+          "encoding": "json",
+          "host": ["http://172.31.13.221:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/health/processing",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/health",
+          "encoding": "json",
+          "host": ["http://172.31.14.236:8081"]
+        }
+      ]
+    }
+  ]
+}
