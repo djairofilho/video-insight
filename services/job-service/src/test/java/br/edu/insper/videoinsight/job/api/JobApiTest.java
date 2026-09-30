@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 class JobApiTest extends IntegrationTest {
-    private static final String KEY = "idempotency-key-0001";
+    private static final String IDEMPOTENCY = "pedido-repetido-0001";
     private static final String ALL_OPERATIONS = "{\"operations\":[\"summary\",\"transcription\"]}";
 
     @Test
@@ -40,7 +40,7 @@ class JobApiTest extends IntegrationTest {
         videoIsReady(videoId);
 
         mockMvc.perform(post("/api/v1/videos/{videoId}/jobs", videoId)
-                        .header("Idempotency-Key", KEY)
+                        .header("Idempotency-Key", IDEMPOTENCY)
                         .header("X-Correlation-Id", correlationId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ALL_OPERATIONS))
@@ -71,8 +71,8 @@ class JobApiTest extends IntegrationTest {
         var videoId = UUID.randomUUID();
         videoIsReady(videoId);
 
-        var first = json(postJob(videoId, KEY, ALL_OPERATIONS).andExpect(status().isAccepted()));
-        var second = json(postJob(videoId, KEY, "{\"operations\":[\"transcription\",\"summary\"]}")
+        var first = json(postJob(videoId, IDEMPOTENCY, ALL_OPERATIONS).andExpect(status().isAccepted()));
+        var second = json(postJob(videoId, IDEMPOTENCY, "{\"operations\":[\"transcription\",\"summary\"]}")
                 .andExpect(status().isAccepted()));
 
         assertThat(second.get("id")).isEqualTo(first.get("id"));
@@ -85,9 +85,9 @@ class JobApiTest extends IntegrationTest {
     void reusingIdempotencyKeyForAnotherRequestIsAConflict() throws Exception {
         var videoId = UUID.randomUUID();
         videoIsReady(videoId);
-        postJob(videoId, KEY, ALL_OPERATIONS).andExpect(status().isAccepted());
+        postJob(videoId, IDEMPOTENCY, ALL_OPERATIONS).andExpect(status().isAccepted());
 
-        postJob(videoId, KEY, "{\"operations\":[\"chapters\"]}")
+        postJob(videoId, IDEMPOTENCY, "{\"operations\":[\"chapters\"]}")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("IDEMPOTENCY_KEY_REUSED"));
     }
@@ -97,7 +97,7 @@ class JobApiTest extends IntegrationTest {
         var videoId = UUID.randomUUID();
         when(videoClient.findVideo(videoId)).thenReturn(Optional.empty());
 
-        postJob(videoId, KEY, ALL_OPERATIONS)
+        postJob(videoId, IDEMPOTENCY, ALL_OPERATIONS)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("VIDEO_NOT_FOUND"))
                 .andExpect(jsonPath("$.correlation_id").isNotEmpty());
@@ -109,7 +109,7 @@ class JobApiTest extends IntegrationTest {
         var videoId = UUID.randomUUID();
         when(videoClient.findVideo(videoId)).thenReturn(Optional.of(new VideoSummary(videoId, "uploading")));
 
-        postJob(videoId, KEY, ALL_OPERATIONS)
+        postJob(videoId, IDEMPOTENCY, ALL_OPERATIONS)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("VIDEO_NOT_READY"));
     }
@@ -120,7 +120,7 @@ class JobApiTest extends IntegrationTest {
         when(videoClient.findVideo(videoId))
                 .thenThrow(new VideoServiceUnavailableException(new RuntimeException("timeout")));
 
-        postJob(videoId, KEY, ALL_OPERATIONS)
+        postJob(videoId, IDEMPOTENCY, ALL_OPERATIONS)
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("VIDEO_SERVICE_UNAVAILABLE"));
     }
@@ -130,11 +130,11 @@ class JobApiTest extends IntegrationTest {
         var videoId = UUID.randomUUID();
         videoIsReady(videoId);
 
-        postJob(videoId, KEY, "{\"operations\":[]}").andExpect(status().isBadRequest())
+        postJob(videoId, IDEMPOTENCY, "{\"operations\":[]}").andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
-        postJob(videoId, KEY, "{\"operations\":[\"translation\"]}").andExpect(status().isBadRequest());
-        postJob(videoId, KEY, "{\"operations\":[\"summary\",\"summary\"]}").andExpect(status().isBadRequest());
-        postJob(videoId, KEY, "{not json").andExpect(status().isBadRequest());
+        postJob(videoId, IDEMPOTENCY, "{\"operations\":[\"translation\"]}").andExpect(status().isBadRequest());
+        postJob(videoId, IDEMPOTENCY, "{\"operations\":[\"summary\",\"summary\"]}").andExpect(status().isBadRequest());
+        postJob(videoId, IDEMPOTENCY, "{not json").andExpect(status().isBadRequest());
         postJob(videoId, "short", ALL_OPERATIONS).andExpect(status().isBadRequest());
         mockMvc.perform(post("/api/v1/videos/{videoId}/jobs", videoId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -142,7 +142,7 @@ class JobApiTest extends IntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Requisição inválida: header Idempotency-Key ausente"));
         mockMvc.perform(post("/api/v1/videos/not-a-uuid/jobs")
-                        .header("Idempotency-Key", KEY)
+                        .header("Idempotency-Key", IDEMPOTENCY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ALL_OPERATIONS))
                 .andExpect(status().isBadRequest());
