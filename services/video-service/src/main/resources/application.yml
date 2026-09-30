@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: video-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/video_insight_videos}
+    username: ${DB_USER:video_service}
+    password: ${DB_PASSWORD:local-video-password}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 50
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+video-service:
+  storage:
+    endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
+    public-endpoint: ${STORAGE_PUBLIC_ENDPOINT:http://localhost:9000}
+    region: ${STORAGE_REGION:us-east-1}
+    access-key: ${STORAGE_ACCESS_KEY:video_insight}
+    secret-key: ${STORAGE_SECRET_KEY:local-minio-password}
+    bucket: ${STORAGE_BUCKET:videos}
+    presign-ttl: 15m
