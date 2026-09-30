@@ -4,8 +4,11 @@
   "title": "Resumo do conteúdo (summary_json_key)",
   "type": "object",
   "additionalProperties": false,
-  "required": ["summary"],
+  "required": ["text"],
   "properties": {
-    "summary": { "type": "string", "minLength": 1 }
+    "content_kind": {
+      "enum": ["meeting", "lecture", "tutorial", "interview", "presentation", "other"]
+    },
+    "text": { "type": "string", "minLength": 1, "description": "Resumo em Markdown." }
   }
 }

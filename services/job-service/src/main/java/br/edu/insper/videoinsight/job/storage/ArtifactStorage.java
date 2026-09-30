@@ -17,9 +17,8 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Lê os artefatos produzidos pelo Processing Service e gera URLs temporárias de download.
  *
- * <p>Os formatos estão em {@code contracts/artifacts}. A leitura aceita tanto o objeto documentado (por exemplo
- * {@code {"segments": [...]}}) quanto a lista direta, enquanto o formato final não é fechado com o Processing
- * Service.
+ * <p>Os formatos estão em {@code contracts/artifacts}. Campos que o contrato da API não expõe, como
+ * {@code language} e os {@code blocks} dos capítulos, são ignorados.
  */
 @Component
 public class ArtifactStorage {
@@ -49,13 +48,13 @@ public class ArtifactStorage {
         return mapper.convertValue(listField(read(key), "chapters", key), CHAPTERS);
     }
 
+    /** O Processing Service grava {@code {"content_kind": ..., "text": ...}}; o contrato expõe só o texto. */
     public String readSummary(String key) {
-        var node = read(key);
-        var summary = node.isString() ? node : node.path("summary");
-        if (!summary.isString()) {
-            throw new ArtifactFormatException("Artefato " + key + " não contém o campo summary.");
+        var text = read(key).path("text");
+        if (!text.isString()) {
+            throw new ArtifactFormatException("Artefato " + key + " não contém o campo text.");
         }
-        return summary.stringValue();
+        return text.stringValue();
     }
 
     public PresignedUrl presignDownload(String key, String fileName) {

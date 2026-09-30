@@ -33,35 +33,40 @@ conter regras de negócio nem bibliotecas compartilhadas entre os serviços.
 
 ## Mensageria
 
-> **Proposta provisória**, implementada pelo Job Service e ainda a validar com
-> o Processing Service. Os nomes são configuráveis no Job Service.
+Topologia combinada entre Job Service e Processing Service.
 
 | Item | Valor |
 |---|---|
-| Exchange de eventos | `video-insight.events` (tipo `topic`, durável) |
+| Exchange de eventos | `video-insight.processing` (tipo `topic`, durável) |
 | Routing key | igual ao `event_type`, por exemplo `processing.requested` |
 | Fila do Processing Service | `processing-service.requests`, ligada a `processing.requested` |
+| DLX da fila do Processing Service | `video-insight.processing.dlx` (tipo `topic`) |
+| DLQ do Processing Service | `processing-service.requests.dlq`, ligada à DLX com `#` |
 | Fila do Job Service | `job-service.processing-events`, ligada aos demais eventos |
-| Exchange de mensagens rejeitadas | `video-insight.dlx` (tipo `direct`) |
-| Filas de mensagens rejeitadas | nome da fila seguido de `.dlq` |
+| DLX da fila do Job Service | `video-insight.dlx` (tipo `direct`) |
+| DLQ do Job Service | `job-service.processing-events.dlq` |
 
 - As mensagens são JSON persistentes (`content_type: application/json`) com
   `message_id` igual ao `event_id`.
-- As duas filas usam `x-dead-letter-exchange: video-insight.dlx` e
-  `x-dead-letter-routing-key` igual ao nome da DLQ. Quem declarar uma fila deve
-  usar exatamente esses argumentos, ou o RabbitMQ recusa a declaração.
-- O Job Service declara toda a topologia, inclusive a fila de solicitações,
-  para que nenhuma solicitação se perca antes de o worker se conectar.
+- `processing-service.requests` é declarada com
+  `x-dead-letter-exchange: video-insight.processing.dlx` e sem
+  `x-dead-letter-routing-key`. Quem declarar essa fila deve usar exatamente
+  esses argumentos, ou o RabbitMQ recusa a declaração.
+- Cada serviço usa sua própria DLX, para que as mensagens rejeitadas de um não
+  caiam na DLQ do outro.
+- O `correlation_id` do `processing.requested` se repete em todos os eventos
+  do job.
 - Os consumidores devem ser idempotentes: a mesma mensagem pode chegar mais de
-  uma vez.
+  uma vez, e uma tentativa já concluída pode ter `processing.completed`
+  republicado.
 
 ## Armazenamento de objetos
 
-> **Proposta provisória**, a validar com Video Service e Processing Service.
-
-- Bucket: `video-insight`.
-- Vídeo original: `videos/{video_id}/original.mp4`. O Job Service envia esse
-  valor em `storage_key`.
-- As chaves dos artefatos são escolhidas pelo Processing Service e informadas
-  em `processing.completed`.
-- Os formatos dos artefatos JSON estão em [`artifacts`](artifacts/).
+- Vídeo original: bucket `videos`, na chave `{video_id}/original.mp4`. O Job
+  Service envia essa chave em `storage_key`; o Video Service deve gravar o
+  arquivo no mesmo lugar.
+- Artefatos: bucket `artifacts`, com chaves `jobs/{job_id}/attempt-{n}/...`
+  escolhidas pelo Processing Service e informadas em `processing.completed`.
+- Os formatos dos artefatos JSON estão em [`artifacts`](artifacts/). O
+  formato dos `blocks` dos capítulos está no
+  [README do Processing Service](../services/processing-service/README.md).

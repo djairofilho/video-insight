@@ -60,7 +60,7 @@ class JobApiTest extends IntegrationTest {
         var payload = mapper.readTree(events.getFirst().getPayload());
         assertThat(payload.get("event_type").stringValue()).isEqualTo("processing.requested");
         assertThat(payload.get("correlation_id").stringValue()).isEqualTo(correlationId);
-        assertThat(payload.at("/data/storage_key").stringValue()).isEqualTo("videos/" + videoId + "/original.mp4");
+        assertThat(payload.at("/data/storage_key").stringValue()).isEqualTo(videoId + "/original.mp4");
         assertThat(payload.at("/data/attempt").intValue()).isEqualTo(1);
         assertThat(attempts.findAll()).singleElement()
                 .satisfies(attempt -> assertThat(attempt.getStatus()).isEqualTo(JobStatus.QUEUED));

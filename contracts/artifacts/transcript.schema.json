@@ -6,6 +6,8 @@
   "additionalProperties": false,
   "required": ["segments"],
   "properties": {
+    "language": { "type": "string" },
+    "duration_seconds": { "type": "number", "minimum": 0 },
     "segments": {
       "type": "array",
       "items": {

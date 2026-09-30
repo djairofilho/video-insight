@@ -46,10 +46,10 @@ etapa 3; nesta etapa os endpoints não exigem token.
 | `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | `localhost:5672` |
 | `STORAGE_ENDPOINT` | `http://localhost:9000` |
 | `STORAGE_PUBLIC_ENDPOINT` | `http://localhost:9000`, usado nas URLs assinadas |
-| `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET` | credenciais locais do MinIO, bucket `video-insight` |
+| `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET` | credenciais locais do MinIO, bucket `artifacts` |
 | `VIDEO_SERVICE_URL` | `http://localhost:8081` |
-| `VIDEO_STORAGE_KEY_TEMPLATE` | `videos/{videoId}/original.mp4` |
-| `MESSAGING_EXCHANGE`, `MESSAGING_EVENTS_QUEUE`, `MESSAGING_REQUESTS_QUEUE`, `MESSAGING_DLX` | nomes de [`contracts/README.md`](../../contracts/README.md) |
+| `VIDEO_STORAGE_KEY_TEMPLATE` | `{videoId}/original.mp4`, chave no bucket `videos` |
+| `MESSAGING_EXCHANGE`, `MESSAGING_EVENTS_QUEUE`, `MESSAGING_REQUESTS_QUEUE`, `MESSAGING_DLX`, `MESSAGING_REQUESTS_DLX` | nomes de [`contracts/README.md`](../../contracts/README.md) |
 
 O estado das dependências fica em `/actuator/health`. O `GET /health` continua
 disponível para o deploy.

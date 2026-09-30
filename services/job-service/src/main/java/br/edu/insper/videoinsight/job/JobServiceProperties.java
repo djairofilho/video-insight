@@ -11,7 +11,12 @@ public record JobServiceProperties(
         VideoService videoService,
         Storage storage) {
 
-    public record Messaging(String exchange, String eventsQueue, String requestsQueue, String deadLetterExchange) {
+    public record Messaging(
+            String exchange,
+            String eventsQueue,
+            String requestsQueue,
+            String deadLetterExchange,
+            String requestsDeadLetterExchange) {
         public String deadLetterQueue(String queue) {
             return queue + ".dlq";
         }

@@ -29,7 +29,7 @@ class OutboxPublisherTest extends IntegrationTest {
         assertThat(publisher.publishPending()).isZero();
 
         var message = ArgumentCaptor.forClass(Message.class);
-        verify(rabbitTemplate).send(eq("video-insight.events"), eq("processing.requested"), message.capture());
+        verify(rabbitTemplate).send(eq("video-insight.processing"), eq("processing.requested"), message.capture());
         var properties = message.getValue().getMessageProperties();
         assertThat(properties.getContentType()).isEqualTo("application/json");
         assertThat(properties.getDeliveryMode()).isEqualTo(MessageDeliveryMode.PERSISTENT);

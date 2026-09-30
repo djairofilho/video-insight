@@ -49,17 +49,18 @@ management:
 
 job-service:
   messaging:
-    exchange: ${MESSAGING_EXCHANGE:video-insight.events}
+    exchange: ${MESSAGING_EXCHANGE:video-insight.processing}
     events-queue: ${MESSAGING_EVENTS_QUEUE:job-service.processing-events}
     requests-queue: ${MESSAGING_REQUESTS_QUEUE:processing-service.requests}
     dead-letter-exchange: ${MESSAGING_DLX:video-insight.dlx}
+    requests-dead-letter-exchange: ${MESSAGING_REQUESTS_DLX:video-insight.processing.dlx}
   outbox:
     scheduler-enabled: true
     poll-interval: ${OUTBOX_POLL_INTERVAL:1s}
     batch-size: 50
   video-service:
     base-url: ${VIDEO_SERVICE_URL:http://localhost:8081}
-    storage-key-template: ${VIDEO_STORAGE_KEY_TEMPLATE:videos/{videoId}/original.mp4}
+    storage-key-template: ${VIDEO_STORAGE_KEY_TEMPLATE:{videoId}/original.mp4}
     timeout: 3s
   storage:
     endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
@@ -67,5 +68,5 @@ job-service:
     region: ${STORAGE_REGION:us-east-1}
     access-key: ${STORAGE_ACCESS_KEY:video_insight}
     secret-key: ${STORAGE_SECRET_KEY:local-minio-password}
-    bucket: ${STORAGE_BUCKET:video-insight}
+    bucket: ${STORAGE_BUCKET:artifacts}
     presign-ttl: 15m

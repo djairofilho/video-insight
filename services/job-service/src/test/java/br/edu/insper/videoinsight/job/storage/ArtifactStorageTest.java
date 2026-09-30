@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.json.JsonMapper;
 
+/** Usa o formato real dos artefatos gravados pelo Processing Service. */
 class ArtifactStorageTest {
     private final S3Client s3Client = mock(S3Client.class);
     private ArtifactStorage storage;
@@ -30,7 +31,7 @@ class ArtifactStorageTest {
     void setUp() {
         var properties = new JobServiceProperties(null, null, null, new JobServiceProperties.Storage(
                 URI.create("http://minio:9000"), URI.create("http://localhost:9000"), "us-east-1",
-                "access", "secret-key", "video-insight", Duration.ofMinutes(15)));
+                "access", "secret-key", "artifacts", Duration.ofMinutes(15)));
         var config = new StorageConfig();
         var mapper = JsonMapper.builder().propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE).build();
         storage = new ArtifactStorage(s3Client, config.s3Presigner(properties), mapper, properties);
@@ -38,29 +39,36 @@ class ArtifactStorageTest {
     }
 
     @Test
-    void readsTranscriptAsDocumentedObjectOrPlainList() {
-        stub("{\"segments\":[{\"start_seconds\":0,\"end_seconds\":2.5,\"text\":\"Olá\"}]}");
+    void readsTranscriptIgnoringExtraFields() {
+        stub("""
+                {"language": "pt", "duration_seconds": 419.6,
+                 "segments": [{"start_seconds": 0.0, "end_seconds": 2.5, "text": "Olá"}]}
+                """);
         assertThat(storage.readTranscript("t.json")).containsExactly(new TranscriptSegment(0, 2.5, "Olá"));
 
-        stub("[{\"start_seconds\":1,\"end_seconds\":2,\"text\":\"Tchau\"}]");
-        assertThat(storage.readTranscript("t.json")).containsExactly(new TranscriptSegment(1, 2, "Tchau"));
-
-        stub("{\"text\":\"sem lista\"}");
+        stub("{\"language\": \"pt\"}");
         assertThatThrownBy(() -> storage.readTranscript("t.json")).isInstanceOf(ArtifactFormatException.class);
     }
 
     @Test
-    void readsChaptersAndSummary() {
-        stub("{\"chapters\":[{\"title\":\"Início\",\"start_seconds\":0,\"end_seconds\":60}]}");
+    void readsChaptersIgnoringBlocks() {
+        stub("""
+                {"chapters": [{"title": "Início", "start_seconds": 0, "end_seconds": 60,
+                  "blocks": [{"type": "paragraph", "text": "Abertura."},
+                             {"type": "callout", "variant": "important", "title": "Nota", "text": "Atenção."},
+                             {"type": "flow", "title": "Etapas",
+                              "steps": [{"label": "A"}, {"label": "B", "detail": "depois"}]}]}]}
+                """);
+
         assertThat(storage.readChapters("c.json")).containsExactly(new Chapter("Início", 0, 60));
+    }
 
-        stub("{\"summary\":\"Resumo da aula.\"}");
-        assertThat(storage.readSummary("s.json")).isEqualTo("Resumo da aula.");
+    @Test
+    void readsSummaryText() {
+        stub("{\"content_kind\": \"lecture\", \"text\": \"Resumo em **markdown**.\"}");
+        assertThat(storage.readSummary("s.json")).isEqualTo("Resumo em **markdown**.");
 
-        stub("\"Resumo direto.\"");
-        assertThat(storage.readSummary("s.json")).isEqualTo("Resumo direto.");
-
-        stub("{\"resumo\":\"campo errado\"}");
+        stub("{\"summary\": \"campo antigo\"}");
         assertThatThrownBy(() -> storage.readSummary("s.json")).isInstanceOf(ArtifactFormatException.class);
     }
 
@@ -68,10 +76,10 @@ class ArtifactStorageTest {
     void presignsDownloadsWithThePublicEndpoint() {
         var before = Instant.now();
 
-        var url = storage.presignDownload("artifacts/job/transcript.txt", "transcricao.txt");
+        var url = storage.presignDownload("jobs/j1/attempt-1/transcript.txt", "transcricao.txt");
 
         assertThat(url.url().toString())
-                .startsWith("http://localhost:9000/video-insight/artifacts/job/transcript.txt?")
+                .startsWith("http://localhost:9000/artifacts/jobs/j1/attempt-1/transcript.txt?")
                 .contains("X-Amz-Signature=")
                 .contains("response-content-disposition=");
         assertThat(url.expiresAt()).isBetween(before.plusSeconds(890), before.plusSeconds(910));
