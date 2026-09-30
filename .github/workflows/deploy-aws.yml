@@ -99,6 +99,9 @@ jobs:
     needs: changes
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.job == 'true'
     runs-on: ubuntu-latest
+    concurrency:
+      group: video-insight-leonardo
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
       - name: Build and test image
@@ -108,13 +111,14 @@ jobs:
       - *ssh_setup
       - name: Install Job Service dependency tunnel
         env:
-          HOST: ${{ vars.AWS_JOB_HOST }}
+          HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
         run: |
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo test -r /etc/video-insight/tunnel_ed25519 && sudo test -r /etc/video-insight/known_hosts'
           scp -i ~/.ssh/video-insight infrastructure/aws/tunnels/job-service-tunnel.service ubuntu@"$HOST":/tmp/video-insight-core-tunnel.service
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo install -m 644 /tmp/video-insight-core-tunnel.service /etc/systemd/system/video-insight-core-tunnel.service; rm -f /tmp/video-insight-core-tunnel.service; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15434 proto tcp; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15672 proto tcp; sudo systemctl daemon-reload; sudo systemctl enable video-insight-core-tunnel.service; sudo systemctl restart video-insight-core-tunnel.service"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo install -m 644 /tmp/video-insight-core-tunnel.service /etc/systemd/system/video-insight-core-tunnel.service; rm -f /tmp/video-insight-core-tunnel.service; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15434 proto tcp; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15672 proto tcp; sudo systemctl daemon-reload; sudo systemctl enable video-insight-core-tunnel.service; sudo systemctl restart video-insight-core-tunnel.service; sudo systemctl is-active --quiet video-insight-core-tunnel.service"
       - name: Deploy Job Service
         env:
-          HOST: ${{ vars.AWS_JOB_HOST }}
+          HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
         run: |
           scp -i ~/.ssh/video-insight /tmp/job-service.tar.gz ubuntu@"$HOST":/tmp/job-service.tar.gz
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/job-service.tar.gz; sudo docker rm -f video-insight-job 2>/dev/null || true; sudo docker run -d --name video-insight-job --restart unless-stopped --memory 320m -p 8081:8080 video-insight/job-service:${GITHUB_SHA}; rm -f /tmp/job-service.tar.gz; sudo docker image prune -af"
@@ -181,6 +185,9 @@ jobs:
     needs: changes
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.observability == 'true'
     runs-on: ubuntu-latest
+    concurrency:
+      group: video-insight-leonardo
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
       - *ssh_setup
