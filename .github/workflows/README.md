@@ -4,7 +4,7 @@ O workflow `validate-repository.yml` verifica documentação, links locais,
 contratos, Docker Compose, imagens dos serviços e presença acidental de
 secrets.
 
-O workflow `deploy-aws.yml` entrega os componentes alterados às seis instâncias
+O workflow `deploy-aws.yml` entrega os componentes alterados às cinco instâncias
 EC2 após pushes para `main`. Ele também pode ser iniciado manualmente para
 refazer o deploy completo. Nos três serviços, o workflow também instala e
 reinicia os túneis SSH usados para acessar as dependências na máquina de Ruan.

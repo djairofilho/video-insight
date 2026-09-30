@@ -9,9 +9,9 @@ Docker (`172.17.0.1`).
 |---|---|---|
 | Matheus Pereira | `172.17.0.1:15433` | Video PostgreSQL `5433` |
 | Matheus Pereira | `172.17.0.1:19000` | MinIO `9000` |
-| Marcus | `172.17.0.1:15434` | Job PostgreSQL `5434` |
-| Marcus | `172.17.0.1:15672` | RabbitMQ `5672` |
-| Marcus | `172.17.0.1:19000` | MinIO `9000` |
+| Leonardo Moretti | `172.17.0.1:15434` | Job PostgreSQL `5434` |
+| Leonardo Moretti | `172.17.0.1:15672` | RabbitMQ `5672` |
+| Leonardo Moretti | `172.17.0.1:19000` | MinIO `9000` |
 | Eduardo Marcelino | `172.17.0.1:15672` | RabbitMQ `5672` |
 | Eduardo Marcelino | `172.17.0.1:19000` | MinIO `9000` |
 
