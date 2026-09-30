@@ -1,5 +1,8 @@
 from uuid import uuid4
 
+import docker
+import pytest
+
 from processing_service.messaging.events import ProcessingRequested
 
 
@@ -26,3 +29,13 @@ def make_request(
             },
         }
     )
+
+
+def _docker_available() -> bool:
+    try:
+        return bool(docker.from_env().ping())
+    except Exception:
+        return False
+
+
+requires_docker = pytest.mark.skipif(not _docker_available(), reason="Docker indisponível")
