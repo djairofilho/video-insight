@@ -145,6 +145,8 @@ jobs:
           python -m pip install '.[test]'
           pytest
           docker build -t "video-insight/processing-service:${GITHUB_SHA}" .
+          docker run --rm "video-insight/processing-service:${GITHUB_SHA}" ffmpeg -version >/dev/null
+          docker run --rm "video-insight/processing-service:${GITHUB_SHA}" ffprobe -version >/dev/null
       - name: Package image
         run: docker save "video-insight/processing-service:${GITHUB_SHA}" | gzip > /tmp/processing-service.tar.gz
       - *ssh_setup
