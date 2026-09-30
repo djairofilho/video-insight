@@ -4,6 +4,7 @@ from uuid import uuid4
 import docker
 import pytest
 
+from processing_service.content_intelligence.agent import Tool, ToolCall, ToolResult
 from processing_service.content_intelligence.models import Chapter, ParagraphBlock, Summary
 from processing_service.domain import (
     ModelReference,
@@ -138,3 +139,35 @@ def _docker_available() -> bool:
 
 
 requires_docker = pytest.mark.skipif(not _docker_available(), reason="Docker indisponível")
+
+
+class ScriptedChatModel:
+    provider = "scripted"
+    model = "scripted-model"
+    version = "scripted-model-001"
+
+    def __init__(self, *turns: list[ToolCall]) -> None:
+        self.turns = list(turns)
+        self.sent: list[tuple[str | None, tuple[ToolResult, ...]]] = []
+        self.system_prompt: str | None = None
+        self.tools: tuple[Tool, ...] = ()
+        self.served: list[tuple[str, str]] = []
+
+    def open_session(self, system_prompt: str, tools) -> "ScriptedChatModel":
+        self.system_prompt = system_prompt
+        self.tools = tuple(tools)
+        return self
+
+    def send(self, *, text: str | None = None, results=()) -> list[ToolCall]:
+        self.sent.append((text, tuple(results)))
+        self.served.append((self.model, self.version))
+        return self.turns.pop(0) if self.turns else []
+
+    def results_for(self, name: str) -> list[dict]:
+        return [
+            result.content for _, results in self.sent for result in results if result.call.name == name
+        ]
+
+
+def call(name: str, **arguments) -> ToolCall:
+    return ToolCall(id=f"call-{name}", name=name, arguments=arguments)
