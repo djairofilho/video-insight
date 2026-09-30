@@ -123,7 +123,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Run tests
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends ffmpeg
+      - name: Run tests with coverage gate
         working-directory: services/processing-service
         run: |
           python -m pip install '.[test]'
