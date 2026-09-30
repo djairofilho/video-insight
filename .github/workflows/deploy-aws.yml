@@ -130,6 +130,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends ffmpeg
       - name: Build and test
         working-directory: services/processing-service
         run: |
@@ -148,9 +153,26 @@ jobs:
       - name: Deploy Processing Service
         env:
           HOST: ${{ vars.AWS_PROCESSING_HOST }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          umask 077
+          printf '%s\n' \
+            "RABBITMQ_HOST=172.17.0.1" \
+            "RABBITMQ_PORT=15672" \
+            "RABBITMQ_USER=video_insight" \
+            "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" \
+            "MINIO_ENDPOINT=172.17.0.1:19000" \
+            "MINIO_ACCESS_KEY=video_insight" \
+            "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+            "GROQ_API_KEY=$GROQ_API_KEY" \
+            "GEMINI_API_KEY=$GEMINI_API_KEY" > /tmp/processing.env
           scp -i ~/.ssh/video-insight /tmp/processing-service.tar.gz ubuntu@"$HOST":/tmp/processing-service.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/processing-service.tar.gz; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}; rm -f /tmp/processing-service.tar.gz; sudo docker image prune -af"
+          scp -i ~/.ssh/video-insight /tmp/processing.env ubuntu@"$HOST":processing.env
+          rm -f /tmp/processing.env
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; chmod 600 ~/processing.env; sudo docker load -i /tmp/processing-service.tar.gz; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m --env-file ~/processing.env -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}; rm -f /tmp/processing-service.tar.gz ~/processing.env; sudo docker image prune -af"
           for _ in {1..20}; do
             ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
             sleep 3
