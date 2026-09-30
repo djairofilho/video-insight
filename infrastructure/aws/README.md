@@ -58,4 +58,13 @@ O repositório precisa destas configurações no GitHub:
 - secrets `VIDEO_DB_PASSWORD`, `JOB_DB_PASSWORD`, `RABBITMQ_PASSWORD`,
   `MINIO_ROOT_PASSWORD` e `GRAFANA_ADMIN_PASSWORD`.
 
+O Job Service recebe suas variáveis por `/opt/video-insight/job/job.env`, gerado
+pelo workflow a partir dos secrets. Ele chama o Video Service em
+`172.31.1.54:8081`, então a restrição da porta `8081` do Video Service deve
+liberar também o Job Service (`172.31.7.191`).
+
+As URLs de download geradas pelo Job Service apontam para o MinIO, que não é
+público na AWS. Elas só funcionam fora da VPC quando houver um endereço público
+para o MinIO, configurado em `STORAGE_PUBLIC_ENDPOINT`.
+
 Chaves privadas, senhas e arquivos `.env` não pertencem ao Git.
