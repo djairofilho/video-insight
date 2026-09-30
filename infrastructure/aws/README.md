@@ -38,6 +38,10 @@ também é entregue como contêiner KrakenD.
 
 O mesmo workflow instala e reinicia as unidades de túnel dos três serviços. A
 criação inicial das chaves permanece uma operação de bootstrap das máquinas.
+O MinIO é empacotado no CI com o binário da
+[versão oficial](https://github.com/minio/minio/releases/tag/RELEASE.2025-09-07T16-13-09Z),
+verificado por SHA-256, e carregado em Ruan antes do Docker Compose.
+
 Na máquina de Leonardo, o Job Service usa a porta `8081`, enquanto Prometheus e
 Grafana continuam nas portas `9090` e `3000`. Antes do primeiro deploy do Job
 Service, configure nela a chave e o `known_hosts` do túnel para Ruan, conforme

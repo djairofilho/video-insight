@@ -168,6 +168,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - *ssh_setup
+      - name: Package verified MinIO release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          binary=minio.linux-amd64.RELEASE.2025-09-07T16-13-09Z
+          gh release download RELEASE.2025-09-07T16-13-09Z --repo minio/minio --pattern "$binary" --dir /tmp
+          printf '%s  %s\n' '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f' "/tmp/$binary" | sha256sum -c -
+          install -m 755 "/tmp/$binary" infrastructure/aws/core/minio/minio
+          docker build -t video-insight/minio:RELEASE.2025-09-07T16-13-09Z infrastructure/aws/core/minio
+          docker save video-insight/minio:RELEASE.2025-09-07T16-13-09Z | gzip > /tmp/minio-image.tar.gz
+          rm -f infrastructure/aws/core/minio/minio "/tmp/$binary"
       - name: Deploy databases, RabbitMQ and MinIO
         env:
           HOST: ${{ vars.AWS_CORE_HOST }}
@@ -176,10 +188,18 @@ jobs:
           RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
+          set -e
+          umask 077
+          cleanup() {
+            rm -f /tmp/core.env /tmp/minio-image.tar.gz
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'rm -f /opt/video-insight/core/core.env /tmp/minio-image.tar.gz' || true
+          }
+          trap cleanup EXIT
           printf 'VIDEO_DB_PASSWORD=%s\nJOB_DB_PASSWORD=%s\nRABBITMQ_PASSWORD=%s\nMINIO_ROOT_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD" "$JOB_DB_PASSWORD" "$RABBITMQ_PASSWORD" "$MINIO_ROOT_PASSWORD" > /tmp/core.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/core && sudo docker compose --env-file core.env up -d --remove-orphans && rm -f core.env && sudo docker image prune -af'
+          scp -i ~/.ssh/video-insight /tmp/minio-image.tar.gz ubuntu@"$HOST":/tmp/minio-image.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker compose --env-file core.env up -d --remove-orphans; sudo docker image prune -af'
 
   deploy-observability:
     needs: changes
@@ -196,10 +216,17 @@ jobs:
           HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
+          set -e
+          umask 077
+          cleanup() {
+            rm -f /tmp/observability.env
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'rm -f /opt/video-insight/observability/observability.env' || true
+          }
+          trap cleanup EXIT
           printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" > /tmp/observability.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/observability'
           scp -i ~/.ssh/video-insight infrastructure/aws/observability/* /tmp/observability.env ubuntu@"$HOST":/opt/video-insight/observability/
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && rm -f observability.env && sudo docker image prune -af'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && sudo docker image prune -af'
 
   deploy-gateway:
     needs: [changes, deploy-video, deploy-job, deploy-processing]
