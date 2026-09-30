@@ -150,6 +150,10 @@ jobs:
       - name: Package image
         run: docker save "video-insight/processing-service:${GITHUB_SHA}" | gzip > /tmp/processing-service.tar.gz
       - *ssh_setup
+      - name: Reclaim space on Processing Service host
+        env:
+          HOST: ${{ vars.AWS_PROCESSING_HOST }}
+        run: ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'bash -s' < infrastructure/aws/processing/reclaim-vscode-cache.sh
       - name: Install Processing Service dependency tunnel
         env:
           HOST: ${{ vars.AWS_PROCESSING_HOST }}
