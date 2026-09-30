@@ -199,7 +199,7 @@ jobs:
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
           scp -i ~/.ssh/video-insight /tmp/minio-image.tar.gz ubuntu@"$HOST":/tmp/minio-image.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker compose --env-file core.env up -d --remove-orphans; sudo docker image prune -af'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker run --rm --user 0:0 --entrypoint chown -v video-insight-core_minio-data:/data video-insight/minio:RELEASE.2025-09-07T16-13-09Z -R 10001:10001 /data; sudo docker compose --env-file core.env up -d --remove-orphans --wait --wait-timeout 180; sudo docker image prune -af'
 
   deploy-observability:
     needs: changes
