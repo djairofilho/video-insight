@@ -162,7 +162,13 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          set -euo pipefail
           umask 077
+          cleanup() {
+            rm -f /tmp/processing.env /tmp/processing-service.tar.gz
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'rm -f ~/processing.env' || true
+          }
+          trap cleanup EXIT
           printf '%s\n' \
             "RABBITMQ_HOST=172.17.0.1" \
             "RABBITMQ_PORT=15672" \
@@ -173,12 +179,15 @@ jobs:
             "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
             "GROQ_API_KEY=$GROQ_API_KEY" \
             "GEMINI_API_KEY=$GEMINI_API_KEY" > /tmp/processing.env
-          scp -i ~/.ssh/video-insight /tmp/processing-service.tar.gz ubuntu@"$HOST":/tmp/processing-service.tar.gz
           scp -i ~/.ssh/video-insight /tmp/processing.env ubuntu@"$HOST":processing.env
-          rm -f /tmp/processing.env
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; chmod 600 ~/processing.env; sudo docker load -i /tmp/processing-service.tar.gz; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m --env-file ~/processing.env -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}; rm -f /tmp/processing-service.tar.gz ~/processing.env; sudo docker image prune -af"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'chmod 600 ~/processing.env; sudo docker image prune -af'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo docker load' < /tmp/processing-service.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker run --rm --entrypoint /bin/true video-insight/processing-service:${GITHUB_SHA}; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m --env-file ~/processing.env -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}"
           for _ in {1..20}; do
-            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
+            if ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health'; then
+              ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo docker image prune -af'
+              exit 0
+            fi
             sleep 3
           done
           exit 1
