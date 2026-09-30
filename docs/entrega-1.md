@@ -88,3 +88,49 @@ Markdown, links, contratos, Docker Compose, imagens dos serviços e secrets.
 Os links das execuções de CI/CD e o estado final das instâncias devem ser
 consultados na página de Actions do repositório, que mantém o histórico de cada
 deploy.
+
+## Atendimento ao enunciado
+
+| Requisito da etapa | Evidência no repositório | Situação nesta entrega |
+|---|---|---|
+| Ideia do projeto e escopo | [Contexto do produto](contexto-produto-videos-ia.md) e ADR 001 | Definido |
+| Três ou mais serviços | `services/video-service`, `services/job-service` e `services/processing-service` | Estrutura criada |
+| Diagrama de arquitetura | [Diagrama AWS](arquiteturas/videos-ia-aws.html) e [diagrama cloud-agnostic](arquiteturas/videos-ia-agnostica.html) | Disponível |
+| Comunicação entre serviços | KrakenD, REST, RabbitMQ e eventos versionados | Definida e parcialmente comprovada por health checks |
+| Bancos e dependências | PostgreSQL separado por serviço, RabbitMQ e MinIO | Definidos em Docker Compose e AWS |
+| Repositórios e execução | Monorepo com Dockerfiles e READMEs por componente | Configurado |
+| Deploy automático | [Workflow de deploy AWS](../.github/workflows/deploy-aws.yml) | Configurado para `main` |
+| Testes automatizados | Testes iniciais dos endpoints de saúde e validações no CI | Base criada; cobertura evolui na etapa 2 |
+| Secrets | GitHub Secrets, GitHub Variables e `.env.example` sem credenciais reais | Configurado |
+
+Autenticação e autorização com Auth0, monitoramento completo, testes de carga e
+os testes de integração da aplicação estão previstos para as próximas etapas,
+conforme o cronograma do enunciado. Nesta primeira entrega, a arquitetura já
+reserva os pontos de integração necessários.
+
+## Padrões de projeto previstos
+
+As fronteiras definidas nesta entrega permitem aplicar os padrões exigidos pela
+disciplina em problemas reais do domínio:
+
+- **API Gateway:** ponto único de entrada e roteamento;
+- **Adapter:** isolamento do provedor de transcrição e resumo;
+- **Strategy:** seleção da implementação de transcrição ou de inteligência de
+  conteúdo;
+- **Factory:** criação de jobs, eventos e adaptadores conforme a operação;
+- **Singleton:** componentes compartilhados de configuração e infraestrutura,
+  quando a implementação exigir uma única instância por aplicação;
+- **Idempotent Consumer:** proteção contra reentrega de mensagens;
+- **Retry e DLQ:** tratamento de falhas temporárias e mensagens que não podem
+  ser processadas.
+
+## Próximas etapas
+
+1. Implementar as operações de vídeo, jobs, upload e processamento previstas nos
+   contratos OpenAPI.
+2. Expandir os testes unitários, de integração, contrato e ponta a ponta,
+   buscando a cobertura mínima exigida na disciplina.
+3. Integrar Auth0 para autenticação e autorização, sem criar um serviço próprio
+   de identidade.
+4. Implementar o frontend, testes de carga e instrumentação completa com
+   Prometheus e Grafana.

@@ -35,6 +35,9 @@ build/
 target/
 *.class
 
+# Local previews
+services/processing-service/preview/
+
 # Test and tool caches
 .cache/
 .coverage

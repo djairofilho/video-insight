@@ -11,12 +11,18 @@ Docker (`172.17.0.1`).
 | Matheus Pereira | `172.17.0.1:19000` | MinIO `9000` |
 | Leonardo Moretti | `172.17.0.1:15434` | Job PostgreSQL `5434` |
 | Leonardo Moretti | `172.17.0.1:15672` | RabbitMQ `5672` |
+| Leonardo Moretti | `172.17.0.1:19000` | MinIO `9000` |
 | Eduardo Marcelino | `172.17.0.1:15672` | RabbitMQ `5672` |
 | Eduardo Marcelino | `172.17.0.1:19000` | MinIO `9000` |
 
 Cada origem usa uma chave Ed25519 própria em
 `/etc/video-insight/tunnel_ed25519`. As chaves autorizadas em Ruan limitam o
 encaminhamento aos destinos da tabela e não são armazenadas no Git.
+
+O Job Service usa o MinIO para ler os artefatos de resultado. A chave do túnel
+do Job Service em Ruan precisa autorizar também o destino `9000`; até isso ser
+feito, o serviço funciona, mas `GET /jobs/{id}/result` e a conclusão de jobs
+falham ao ler os artefatos.
 
 Os serviços de aplicação devem usar os endpoints locais da tabela. Nenhuma
 porta de banco de dados, mensageria ou storage é aberta para a internet.

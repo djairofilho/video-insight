@@ -38,6 +38,12 @@ também é entregue como contêiner KrakenD.
 
 O mesmo workflow instala e reinicia as unidades de túnel dos três serviços. A
 criação inicial das chaves permanece uma operação de bootstrap das máquinas.
+O MinIO é empacotado no CI com o binário da
+[versão oficial](https://github.com/minio/minio/releases/tag/RELEASE.2025-09-07T16-13-09Z),
+verificado por SHA-256, e carregado em Ruan antes do Docker Compose.
+O workflow ajusta a propriedade do volume do MinIO para o usuário do contêiner
+e espera os quatro componentes centrais ficarem saudáveis antes de concluir.
+
 Na máquina de Leonardo, o Job Service usa a porta `8081`, enquanto Prometheus e
 Grafana continuam nas portas `9090` e `3000`. Antes do primeiro deploy do Job
 Service, configure nela a chave e o `known_hosts` do túnel para Ruan, conforme
@@ -51,5 +57,14 @@ O repositório precisa destas configurações no GitHub:
   `AWS_CORE_HOST` e `AWS_OBSERVABILITY_HOST`;
 - secrets `VIDEO_DB_PASSWORD`, `JOB_DB_PASSWORD`, `RABBITMQ_PASSWORD`,
   `MINIO_ROOT_PASSWORD` e `GRAFANA_ADMIN_PASSWORD`.
+
+O Job Service recebe suas variáveis por `/opt/video-insight/job/job.env`, gerado
+pelo workflow a partir dos secrets. Ele chama o Video Service em
+`172.31.1.54:8081`, então a restrição da porta `8081` do Video Service deve
+liberar também o Job Service (`172.31.7.191`).
+
+As URLs de download geradas pelo Job Service apontam para o MinIO, que não é
+público na AWS. Elas só funcionam fora da VPC quando houver um endereço público
+para o MinIO, configurado em `STORAGE_PUBLIC_ENDPOINT`.
 
 Chaves privadas, senhas e arquivos `.env` não pertencem ao Git.

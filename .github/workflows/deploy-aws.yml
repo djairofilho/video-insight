@@ -115,13 +115,33 @@ jobs:
         run: |
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo test -r /etc/video-insight/tunnel_ed25519 && sudo test -r /etc/video-insight/known_hosts'
           scp -i ~/.ssh/video-insight infrastructure/aws/tunnels/job-service-tunnel.service ubuntu@"$HOST":/tmp/video-insight-core-tunnel.service
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo install -m 644 /tmp/video-insight-core-tunnel.service /etc/systemd/system/video-insight-core-tunnel.service; rm -f /tmp/video-insight-core-tunnel.service; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15434 proto tcp; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15672 proto tcp; sudo systemctl daemon-reload; sudo systemctl enable video-insight-core-tunnel.service; sudo systemctl restart video-insight-core-tunnel.service; sudo systemctl is-active --quiet video-insight-core-tunnel.service"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo install -m 644 /tmp/video-insight-core-tunnel.service /etc/systemd/system/video-insight-core-tunnel.service; rm -f /tmp/video-insight-core-tunnel.service; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15434 proto tcp; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 15672 proto tcp; sudo ufw allow in on docker0 from 172.17.0.0/16 to 172.17.0.1 port 19000 proto tcp; sudo systemctl daemon-reload; sudo systemctl enable video-insight-core-tunnel.service; sudo systemctl restart video-insight-core-tunnel.service; sudo systemctl is-active --quiet video-insight-core-tunnel.service"
       - name: Deploy Job Service
         env:
           HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
+          JOB_DB_PASSWORD: ${{ secrets.JOB_DB_PASSWORD }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
+          # Dependências alcançadas pelos túneis SSH na ponte do Docker (infrastructure/aws/tunnels).
+          {
+            echo 'DB_URL=jdbc:postgresql://172.17.0.1:15434/video_insight_jobs'
+            echo 'DB_USER=job_service'
+            printf 'DB_PASSWORD=%s\n' "$JOB_DB_PASSWORD"
+            echo 'RABBITMQ_HOST=172.17.0.1'
+            echo 'RABBITMQ_PORT=15672'
+            echo 'RABBITMQ_USER=video_insight'
+            printf 'RABBITMQ_PASSWORD=%s\n' "$RABBITMQ_PASSWORD"
+            echo 'STORAGE_ENDPOINT=http://172.17.0.1:19000'
+            echo 'STORAGE_ACCESS_KEY=video_insight'
+            printf 'STORAGE_SECRET_KEY=%s\n' "$MINIO_ROOT_PASSWORD"
+            echo 'VIDEO_SERVICE_URL=http://172.31.1.54:8081'
+          } > /tmp/job.env
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu -m 700 /opt/video-insight/job'
+          scp -i ~/.ssh/video-insight /tmp/job.env ubuntu@"$HOST":/opt/video-insight/job/job.env
+          rm -f /tmp/job.env
           scp -i ~/.ssh/video-insight /tmp/job-service.tar.gz ubuntu@"$HOST":/tmp/job-service.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/job-service.tar.gz; sudo docker rm -f video-insight-job 2>/dev/null || true; sudo docker run -d --name video-insight-job --restart unless-stopped --memory 320m -p 8081:8080 video-insight/job-service:${GITHUB_SHA}; rm -f /tmp/job-service.tar.gz; sudo docker image prune -af"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; chmod 600 /opt/video-insight/job/job.env; sudo docker load -i /tmp/job-service.tar.gz; sudo docker rm -f video-insight-job 2>/dev/null || true; sudo docker run -d --name video-insight-job --restart unless-stopped --memory 320m --env-file /opt/video-insight/job/job.env -p 8081:8080 video-insight/job-service:${GITHUB_SHA}; rm -f /tmp/job-service.tar.gz; sudo docker image prune -af"
           for _ in {1..20}; do
             ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
             sleep 3
@@ -134,15 +154,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends ffmpeg
       - name: Build and test
         working-directory: services/processing-service
         run: |
           python -m pip install '.[test]'
           pytest
           docker build -t "video-insight/processing-service:${GITHUB_SHA}" .
+          docker run --rm "video-insight/processing-service:${GITHUB_SHA}" ffmpeg -version >/dev/null
+          docker run --rm "video-insight/processing-service:${GITHUB_SHA}" ffprobe -version >/dev/null
       - name: Package image
         run: docker save "video-insight/processing-service:${GITHUB_SHA}" | gzip > /tmp/processing-service.tar.gz
       - *ssh_setup
+      - name: Reclaim space on Processing Service host
+        env:
+          HOST: ${{ vars.AWS_PROCESSING_HOST }}
+        run: ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'bash -s' < infrastructure/aws/processing/reclaim-vscode-cache.sh
       - name: Install Processing Service dependency tunnel
         env:
           HOST: ${{ vars.AWS_PROCESSING_HOST }}
@@ -152,11 +183,37 @@ jobs:
       - name: Deploy Processing Service
         env:
           HOST: ${{ vars.AWS_PROCESSING_HOST }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          scp -i ~/.ssh/video-insight /tmp/processing-service.tar.gz ubuntu@"$HOST":/tmp/processing-service.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/processing-service.tar.gz; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}; rm -f /tmp/processing-service.tar.gz; sudo docker image prune -af"
+          set -euo pipefail
+          umask 077
+          cleanup() {
+            rm -f /tmp/processing.env /tmp/processing-service.tar.gz
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'rm -f ~/processing.env' || true
+          }
+          trap cleanup EXIT
+          printf '%s\n' \
+            "RABBITMQ_HOST=172.17.0.1" \
+            "RABBITMQ_PORT=15672" \
+            "RABBITMQ_USER=video_insight" \
+            "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" \
+            "MINIO_ENDPOINT=172.17.0.1:19000" \
+            "MINIO_ACCESS_KEY=video_insight" \
+            "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+            "GROQ_API_KEY=$GROQ_API_KEY" \
+            "GEMINI_API_KEY=$GEMINI_API_KEY" > /tmp/processing.env
+          scp -i ~/.ssh/video-insight /tmp/processing.env ubuntu@"$HOST":processing.env
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'chmod 600 ~/processing.env; sudo docker image prune -af'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo docker load' < /tmp/processing-service.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker run --rm --entrypoint /bin/true video-insight/processing-service:${GITHUB_SHA}; sudo docker rm -f video-insight-processing 2>/dev/null || true; sudo docker run -d --name video-insight-processing --restart unless-stopped --memory 320m --env-file ~/processing.env -p 8081:8080 video-insight/processing-service:${GITHUB_SHA}"
           for _ in {1..20}; do
-            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
+            if ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health'; then
+              ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo docker image prune -af'
+              exit 0
+            fi
             sleep 3
           done
           exit 1
@@ -168,6 +225,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - *ssh_setup
+      - name: Package verified MinIO release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          binary=minio.linux-amd64.RELEASE.2025-09-07T16-13-09Z
+          gh release download RELEASE.2025-09-07T16-13-09Z --repo minio/minio --pattern "$binary" --dir /tmp
+          printf '%s  %s\n' '7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f' "/tmp/$binary" | sha256sum -c -
+          install -m 755 "/tmp/$binary" infrastructure/aws/core/minio/minio
+          docker build -t video-insight/minio:RELEASE.2025-09-07T16-13-09Z infrastructure/aws/core/minio
+          docker save video-insight/minio:RELEASE.2025-09-07T16-13-09Z | gzip > /tmp/minio-image.tar.gz
+          rm -f infrastructure/aws/core/minio/minio "/tmp/$binary"
       - name: Deploy databases, RabbitMQ and MinIO
         env:
           HOST: ${{ vars.AWS_CORE_HOST }}
@@ -176,10 +245,18 @@ jobs:
           RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
+          set -e
+          umask 077
+          cleanup() {
+            rm -f /tmp/core.env /tmp/minio-image.tar.gz
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'rm -f /opt/video-insight/core/core.env /tmp/minio-image.tar.gz' || true
+          }
+          trap cleanup EXIT
           printf 'VIDEO_DB_PASSWORD=%s\nJOB_DB_PASSWORD=%s\nRABBITMQ_PASSWORD=%s\nMINIO_ROOT_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD" "$JOB_DB_PASSWORD" "$RABBITMQ_PASSWORD" "$MINIO_ROOT_PASSWORD" > /tmp/core.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/core && sudo docker compose --env-file core.env up -d --remove-orphans && rm -f core.env && sudo docker image prune -af'
+          scp -i ~/.ssh/video-insight /tmp/minio-image.tar.gz ubuntu@"$HOST":/tmp/minio-image.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker run --rm --user 0:0 --entrypoint chown -v video-insight-core_minio-data:/data video-insight/minio:RELEASE.2025-09-07T16-13-09Z -R 10001:10001 /data; sudo docker compose --env-file core.env up -d --remove-orphans --wait --wait-timeout 180; sudo docker image prune -af'
 
   deploy-observability:
     needs: changes
@@ -196,10 +273,17 @@ jobs:
           HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
+          set -e
+          umask 077
+          cleanup() {
+            rm -f /tmp/observability.env
+            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'rm -f /opt/video-insight/observability/observability.env' || true
+          }
+          trap cleanup EXIT
           printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" > /tmp/observability.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/observability'
           scp -i ~/.ssh/video-insight infrastructure/aws/observability/* /tmp/observability.env ubuntu@"$HOST":/opt/video-insight/observability/
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && rm -f observability.env && sudo docker image prune -af'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && sudo docker image prune -af'
 
   deploy-gateway:
     needs: [changes, deploy-video, deploy-job, deploy-processing]
