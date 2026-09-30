@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://video-insight.local/schemas/artifacts/summary.schema.json",
+  "title": "Resumo do conteúdo (summary_json_key)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary"],
+  "properties": {
+    "summary": { "type": "string", "minLength": 1 }
+  }
+}

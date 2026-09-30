@@ -26,6 +26,13 @@ docker compose --env-file .env -f infrastructure/compose.yaml ps
 
 No Linux ou macOS, substitua `Copy-Item` por `cp`.
 
+Para subir também o Job Service, compilado a partir do código local, adicione
+o profile `app`:
+
+```powershell
+docker compose --env-file .env -f infrastructure/compose.yaml --profile app up -d --build
+```
+
 ## Endereços locais
 
 | Componente | Endereço padrão |
@@ -38,6 +45,7 @@ No Linux ou macOS, substitua `Copy-Item` por `cp`.
 | Console do MinIO | `http://localhost:9001` |
 | Prometheus | `http://localhost:9090` |
 | Grafana | `http://localhost:3000` |
+| Job Service (profile `app`) | `http://localhost:8082` |
 
 Os usuários, senhas e portas podem ser alterados no arquivo `.env`. Os valores
 do `.env.example` destinam-se exclusivamente ao desenvolvimento local.

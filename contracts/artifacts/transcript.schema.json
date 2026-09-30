@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://video-insight.local/schemas/artifacts/transcript.schema.json",
+  "title": "Transcrição com timestamps (transcript_json_key)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["segments"],
+  "properties": {
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start_seconds", "end_seconds", "text"],
+        "properties": {
+          "start_seconds": { "type": "number", "minimum": 0 },
+          "end_seconds": { "type": "number", "minimum": 0 },
+          "text": { "type": "string" }
+        }
+      }
+    }
+  }
+}
