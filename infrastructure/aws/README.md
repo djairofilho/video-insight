@@ -8,10 +8,9 @@ usa contêineres identificados com o prefixo `video-insight`.
 |---|---|---|
 | Djairo | KrakenD API Gateway | `172.31.7.117` |
 | Matheus Pereira | Video Service | `172.31.1.54` |
-| Marcus | Job Service | `172.31.13.221` |
 | Eduardo Marcelino | Processing Service | `172.31.14.236` |
 | Ruan | PostgreSQL, RabbitMQ e MinIO | `172.31.8.165` |
-| Leonardo Moretti | Prometheus e Grafana | `172.31.7.191` |
+| Leonardo Moretti | Job Service, Prometheus e Grafana | `172.31.7.191` |
 
 O Gateway é a única entrada HTTP do produto e publica a porta `8081`. Os três
 serviços são acessados pelo Gateway através da rede privada da VPC. O Security
@@ -39,13 +38,17 @@ também é entregue como contêiner KrakenD.
 
 O mesmo workflow instala e reinicia as unidades de túnel dos três serviços. A
 criação inicial das chaves permanece uma operação de bootstrap das máquinas.
+Na máquina de Leonardo, o Job Service usa a porta `8081`, enquanto Prometheus e
+Grafana continuam nas portas `9090` e `3000`. Antes do primeiro deploy do Job
+Service, configure nela a chave e o `known_hosts` do túnel para Ruan, conforme
+[`tunnels/README.md`](tunnels/README.md).
 
 O repositório precisa destas configurações no GitHub:
 
 - secret `AWS_SSH_PRIVATE_KEY`;
 - secret `AWS_KNOWN_HOSTS`;
-- variables `AWS_GATEWAY_HOST`, `AWS_VIDEO_HOST`, `AWS_JOB_HOST` e
-  `AWS_PROCESSING_HOST`, `AWS_CORE_HOST` e `AWS_OBSERVABILITY_HOST`;
+- variables `AWS_GATEWAY_HOST`, `AWS_VIDEO_HOST`, `AWS_PROCESSING_HOST`,
+  `AWS_CORE_HOST` e `AWS_OBSERVABILITY_HOST`;
 - secrets `VIDEO_DB_PASSWORD`, `JOB_DB_PASSWORD`, `RABBITMQ_PASSWORD`,
   `MINIO_ROOT_PASSWORD` e `GRAFANA_ADMIN_PASSWORD`.
 
