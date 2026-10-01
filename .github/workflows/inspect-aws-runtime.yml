@@ -46,8 +46,6 @@ jobs:
             set -u
             printf "tunnel status: "
             systemctl is-active video-insight-core-tunnel.service || true
-            printf "tunnel storage health: "
-            curl --silent --show-error --max-time 5 -o /dev/null -w "%{http_code}\n" http://172.17.0.1:19000/minio/health/live || true
             printf "private storage health: "
             curl --silent --show-error --max-time 5 -o /dev/null -w "%{http_code}\n" http://172.31.8.165:8081/minio/health/live || true
             printf "tunnel journal:\n"
