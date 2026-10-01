@@ -1,8 +1,10 @@
 # Testes ponta a ponta
 
 Exercitam Video Service, Job Service e Processing Service juntos, com
-PostgreSQL, RabbitMQ e MinIO reais. As chamadas vão direto aos serviços,
-porque o API Gateway ainda só roteia os health checks.
+PostgreSQL, RabbitMQ e MinIO reais. Por padrão, as chamadas vão direto aos
+serviços locais. Na AWS, defina `E2E_VIDEO_SERVICE_URL` e
+`E2E_JOB_SERVICE_URL` com a mesma URL pública do Gateway; as URLs assinadas
+usam a API S3 pública do MinIO.
 
 | Arquivo | O que cobre |
 |---|---|
