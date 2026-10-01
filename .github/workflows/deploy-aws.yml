@@ -86,9 +86,23 @@ jobs:
       - name: Deploy Video Service
         env:
           HOST: ${{ vars.AWS_VIDEO_HOST }}
+          VIDEO_DB_PASSWORD: ${{ secrets.VIDEO_DB_PASSWORD }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
+          # Dependências alcançadas pelos túneis SSH na ponte do Docker (infrastructure/aws/tunnels).
+          {
+            echo 'DB_URL=jdbc:postgresql://172.17.0.1:15433/video_insight_videos'
+            echo 'DB_USER=video_service'
+            printf 'DB_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD"
+            echo 'STORAGE_ENDPOINT=http://172.17.0.1:19000'
+            echo 'STORAGE_ACCESS_KEY=video_insight'
+            printf 'STORAGE_SECRET_KEY=%s\n' "$MINIO_ROOT_PASSWORD"
+          } > /tmp/video.env
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu -m 700 /opt/video-insight/video'
+          scp -i ~/.ssh/video-insight /tmp/video.env ubuntu@"$HOST":/opt/video-insight/video/video.env
+          rm -f /tmp/video.env
           scp -i ~/.ssh/video-insight /tmp/video-service.tar.gz ubuntu@"$HOST":/tmp/video-service.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo docker load -i /tmp/video-service.tar.gz; sudo docker rm -f video-insight-video 2>/dev/null || true; sudo docker run -d --name video-insight-video --restart unless-stopped --memory 320m -p 8081:8080 video-insight/video-service:${GITHUB_SHA}; rm -f /tmp/video-service.tar.gz; sudo docker image prune -af"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; chmod 600 /opt/video-insight/video/video.env; sudo docker load -i /tmp/video-service.tar.gz; sudo docker rm -f video-insight-video 2>/dev/null || true; sudo docker run -d --name video-insight-video --restart unless-stopped --memory 320m --env-file /opt/video-insight/video/video.env -p 8081:8080 video-insight/video-service:${GITHUB_SHA}; rm -f /tmp/video-service.tar.gz; sudo docker image prune -af"
           for _ in {1..20}; do
             ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --fail --silent http://localhost:8081/health' && exit 0
             sleep 3
