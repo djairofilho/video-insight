@@ -86,6 +86,7 @@ jobs:
       - name: Deploy Video Service
         env:
           HOST: ${{ vars.AWS_VIDEO_HOST }}
+          CORE_HOST: ${{ vars.AWS_CORE_HOST }}
           VIDEO_DB_PASSWORD: ${{ secrets.VIDEO_DB_PASSWORD }}
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
@@ -95,6 +96,7 @@ jobs:
             echo 'DB_USER=video_service'
             printf 'DB_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD"
             echo 'STORAGE_ENDPOINT=http://172.17.0.1:19000'
+            printf 'STORAGE_PUBLIC_ENDPOINT=http://%s:8081\n' "$CORE_HOST"
             echo 'STORAGE_ACCESS_KEY=video_insight'
             printf 'STORAGE_SECRET_KEY=%s\n' "$MINIO_ROOT_PASSWORD"
           } > /tmp/video.env
@@ -133,6 +135,7 @@ jobs:
       - name: Deploy Job Service
         env:
           HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
+          CORE_HOST: ${{ vars.AWS_CORE_HOST }}
           JOB_DB_PASSWORD: ${{ secrets.JOB_DB_PASSWORD }}
           RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
@@ -147,6 +150,7 @@ jobs:
             echo 'RABBITMQ_USER=video_insight'
             printf 'RABBITMQ_PASSWORD=%s\n' "$RABBITMQ_PASSWORD"
             echo 'STORAGE_ENDPOINT=http://172.17.0.1:19000'
+            printf 'STORAGE_PUBLIC_ENDPOINT=http://%s:8081\n' "$CORE_HOST"
             echo 'STORAGE_ACCESS_KEY=video_insight'
             printf 'STORAGE_SECRET_KEY=%s\n' "$MINIO_ROOT_PASSWORD"
             echo 'VIDEO_SERVICE_URL=http://172.31.1.54:8081'
@@ -270,7 +274,7 @@ jobs:
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
           scp -i ~/.ssh/video-insight /tmp/minio-image.tar.gz ubuntu@"$HOST":/tmp/minio-image.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker run --rm --user 0:0 --entrypoint chown -v video-insight-core_minio-data:/data video-insight/minio:RELEASE.2025-09-07T16-13-09Z -R 10001:10001 /data; sudo docker compose --env-file core.env up -d --remove-orphans --wait --wait-timeout 180; sudo docker image prune -af'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo ufw allow 8081/tcp; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker run --rm --user 0:0 --entrypoint chown -v video-insight-core_minio-data:/data video-insight/minio:RELEASE.2025-09-07T16-13-09Z -R 10001:10001 /data; sudo docker compose --env-file core.env up -d --remove-orphans --wait --wait-timeout 180; sudo docker image prune -af'
 
   deploy-observability:
     needs: changes
