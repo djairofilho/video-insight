@@ -10,10 +10,13 @@ Ponto único de entrada HTTP para o frontend.
 - Aplicar CORS, limites de requisição e identificadores de correlação.
 - Expor métricas de tráfego, latência e erros.
 
-O Gateway não conterá regras de negócio, não acessará bancos e não receberá o
-conteúdo dos vídeos. A implementação escolhida é o KrakenD Community Edition.
-Nesta primeira entrega, as rotas `/health/video`, `/health/jobs` e
-`/health/processing` comprovam a comunicação entre as máquinas AWS.
+O Gateway não contém regras de negócio, não acessa bancos e não recebe o
+conteúdo dos vídeos. A implementação usa KrakenD Community Edition. Além das
+rotas `/health/video`, `/health/jobs` e `/health/processing`, o Gateway publica
+as APIs de Vídeos e Jobs sob `/api/v1`. As rotas de negócio usam `no-op` para
+preservar os códigos HTTP, corpos e cabeçalhos dos serviços. O CORS aceita
+chamadas sem credenciais do navegador; autenticação JWT e limites de requisição
+entram em uma etapa posterior.
 
 ## Executar
 

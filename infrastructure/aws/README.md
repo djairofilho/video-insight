@@ -12,11 +12,13 @@ usa contêineres identificados com o prefixo `video-insight`.
 | Ruan | PostgreSQL, RabbitMQ e MinIO | `172.31.8.165` |
 | Leonardo Moretti | Job Service, Prometheus e Grafana | `172.31.7.191` |
 
-O Gateway é a única entrada HTTP do produto e publica a porta `8081`. Os três
-serviços são acessados pelo Gateway através da rede privada da VPC. O Security
-Group compartilhado permite TCP `8081`, usado como alternativa porque a porta
-`80` está bloqueada na camada de rede da AWS. Nos três serviços internos, a
-entrada `8081` deve ser restringida ao Gateway (`172.31.7.117`).
+O Gateway publica as APIs na porta `8081`. Os três serviços são acessados pelo
+Gateway através da rede privada da VPC. O MinIO publica somente sua API S3 na
+porta `8081` da máquina de Ruan para upload e download por URLs assinadas; o
+console permanece restrito a `127.0.0.1:9001`. O Security Group compartilhado
+permite TCP `8081`, usado porque a porta `80` está bloqueada na camada de rede
+da AWS. Nos serviços internos, a entrada `8081` deve ser restringida ao Gateway
+(`172.31.7.117`), exceto a consulta do Job Service ao Video Service.
 
 ## Conectividade de dados
 
@@ -56,15 +58,19 @@ O repositório precisa destas configurações no GitHub:
 - variables `AWS_GATEWAY_HOST`, `AWS_VIDEO_HOST`, `AWS_PROCESSING_HOST`,
   `AWS_CORE_HOST` e `AWS_OBSERVABILITY_HOST`;
 - secrets `VIDEO_DB_PASSWORD`, `JOB_DB_PASSWORD`, `RABBITMQ_PASSWORD`,
-  `MINIO_ROOT_PASSWORD` e `GRAFANA_ADMIN_PASSWORD`.
+  `MINIO_ROOT_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`, `GROQ_API_KEY` e
+  `GEMINI_API_KEY`.
 
 O Job Service recebe suas variáveis por `/opt/video-insight/job/job.env`, gerado
 pelo workflow a partir dos secrets. Ele chama o Video Service em
 `172.31.1.54:8081`, então a restrição da porta `8081` do Video Service deve
 liberar também o Job Service (`172.31.7.191`).
 
-As URLs de download geradas pelo Job Service apontam para o MinIO, que não é
-público na AWS. Elas só funcionam fora da VPC quando houver um endereço público
-para o MinIO, configurado em `STORAGE_PUBLIC_ENDPOINT`.
+O workflow configura `STORAGE_PUBLIC_ENDPOINT` no Video Service e no Job Service
+com `http://<AWS_CORE_HOST>:8081`. As URLs assinadas usam esse endereço público;
+o acesso interno dos serviços ao MinIO continua pelos túneis SSH. Os buckets
+permanecem privados, e o navegador envia o arquivo diretamente ao MinIO com a
+URL assinada. A API pública usa HTTP nesta infraestrutura da disciplina; para
+uso fora desse ambiente, configure um nome de domínio e HTTPS.
 
 Chaves privadas, senhas e arquivos `.env` não pertencem ao Git.

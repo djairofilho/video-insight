@@ -54,10 +54,11 @@ entram na etapa 3; nesta etapa os endpoints não exigem token.
 | `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET` | credenciais locais do MinIO, bucket `videos` |
 
 Os padrões são os valores de desenvolvimento do `.env.example`. Na AWS, o
-deploy gera o arquivo de ambiente a partir dos GitHub Secrets e aponta para os
-túneis de [`infrastructure/aws/tunnels`](../../infrastructure/aws/tunnels/README.md).
-Nessa rede, o MinIO não é acessível pelo navegador, então o upload por URL
-assinada na AWS ainda depende de uma mudança na infraestrutura.
+deploy gera o arquivo de ambiente a partir dos GitHub Secrets. O serviço acessa
+o MinIO pelos túneis de
+[`infrastructure/aws/tunnels`](../../infrastructure/aws/tunnels/README.md),
+enquanto `STORAGE_PUBLIC_ENDPOINT` aponta para a API S3 pública na porta `8081`
+da máquina de Ruan, usada nas URLs assinadas para o navegador.
 
 O estado das dependências fica em `/actuator/health`. O `GET /health` continua
 disponível para o deploy.
