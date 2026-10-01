@@ -1,0 +1,39 @@
+name: Inspect AWS runtime
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.AWS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/video-insight
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/video-insight ~/.ssh/known_hosts
+
+      - name: Inspect Processing Service
+        env:
+          HOST: ${{ vars.AWS_PROCESSING_HOST }}
+        run: |
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" \
+            'sudo docker logs --since 30m --tail 250 video-insight-processing 2>&1' |
+            sed -E 's/gsk_[[:alnum:]]+/[REDACTED]/g; s/AQ\.[[:alnum:]_-]+/[REDACTED]/g' |
+            tail -n 180
+
+      - name: Inspect Job Service
+        env:
+          HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
+        run: |
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" \
+            'sudo docker logs --since 30m --tail 250 video-insight-job 2>&1' |
+            sed -E 's/gsk_[[:alnum:]]+/[REDACTED]/g; s/AQ\.[[:alnum:]_-]+/[REDACTED]/g' |
+            tail -n 180
