@@ -22,8 +22,11 @@ da AWS. Nos serviços internos, a entrada `8081` deve ser restringida ao Gateway
 
 ## Conectividade de dados
 
-Como o grupo não pode alterar o Security Group, PostgreSQL, RabbitMQ e MinIO
-são alcançados pelos serviços através de túneis SSH persistentes na porta `22`.
+Como o grupo não pode alterar o Security Group, PostgreSQL e RabbitMQ são
+alcançados pelos serviços através de túneis SSH persistentes na porta `22`.
+Video Service e Processing Service também usam túneis para o MinIO. O Job
+Service lê os artefatos pelo endereço privado `172.31.8.165:8081`, já liberado
+para as URLs assinadas, pois sua chave SSH não permite encaminhar a porta `9000`.
 As unidades systemd e os endpoints usados pelos contêineres estão documentados
 em [`tunnels/README.md`](tunnels/README.md).
 
@@ -68,7 +71,8 @@ liberar também o Job Service (`172.31.7.191`).
 
 O workflow configura `STORAGE_PUBLIC_ENDPOINT` no Video Service e no Job Service
 com `http://<AWS_CORE_HOST>:8081`. As URLs assinadas usam esse endereço público;
-o acesso interno dos serviços ao MinIO continua pelos túneis SSH. Os buckets
+Video Service e Processing Service acessam o MinIO pelos túneis SSH, enquanto
+Job Service usa o endereço privado do Core. Os buckets
 permanecem privados, e o navegador envia o arquivo diretamente ao MinIO com a
 URL assinada. A API pública usa HTTP nesta infraestrutura da disciplina; para
 uso fora desse ambiente, configure um nome de domínio e HTTPS.
