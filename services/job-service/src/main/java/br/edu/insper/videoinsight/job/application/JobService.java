@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -113,6 +114,24 @@ public class JobService {
         return findJob(jobId);
     }
 
+    /**
+     * Jobs de um vídeo, do mais recente para o mais antigo. Não consulta o Video Service: um vídeo sem jobs ou
+     * inexistente devolve uma página vazia.
+     */
+    @Transactional(readOnly = true)
+    public JobPage listJobs(UUID videoId, int limit, String cursor) {
+        // Um item a mais indica se existe próxima página.
+        var page = cursor == null
+                ? jobs.findByVideoIdOrderByCreatedAtDescIdDesc(videoId, Limit.of(limit + 1))
+                : findPageAfter(videoId, JobCursor.decode(cursor), limit + 1);
+        if (page.size() <= limit) {
+            return new JobPage(page, null);
+        }
+        var items = page.subList(0, limit);
+        var last = items.getLast();
+        return new JobPage(items, new JobCursor(last.getCreatedAt(), last.getId()).encode());
+    }
+
     @Transactional
     public Job cancelJob(UUID jobId) {
         var job = findJob(jobId);
@@ -163,6 +182,10 @@ public class JobService {
         }
         return results.findById(job.getId())
                 .orElseThrow(() -> ApiException.conflict("JOB_NOT_COMPLETED", "O resultado ainda não está disponível."));
+    }
+
+    private List<Job> findPageAfter(UUID videoId, JobCursor cursor, int limit) {
+        return jobs.findPageByVideoAfter(videoId, cursor.createdAt(), cursor.id(), Limit.of(limit));
     }
 
     private Job findJob(UUID jobId) {
