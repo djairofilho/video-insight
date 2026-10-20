@@ -20,7 +20,7 @@ All three services implement their parts (see each service README). The RabbitMQ
   - No authentication yet: Auth0/OAuth2 and per-user ownership are planned for delivery 3 (the course's stage plan is in `Trabalho - Projeto de Software.pdf`); Prometheus metrics for delivery 4.
   - Uses Jackson 3 (`tools.jackson.*`; annotations still `com.fasterxml.jackson.annotation`) with global snake_case.
 - **Processing Service** (`services/processing-service`, Python 3.12 / FastAPI, hatchling): a worker, not a public API. Work arrives only via RabbitMQ; the HTTP app exists only for the health check. Internal modules under `src/processing_service/`: `media` (FFmpeg), `transcription` (STT, TXT/SRT), `content_intelligence` (summary, chapters), `messaging` (idempotent consumer, event publishing). It writes artifacts to MinIO and communicates state only through events — it must not write to the other services' databases.
-- **Frontend** (`apps/frontend`): placeholder, TypeScript, framework not yet chosen. Talks only to the Gateway.
+- **Frontend** (`apps/frontend`, React 19 / TypeScript / Vite / React Compiler, MUI, React Router): talks only to the Gateway; uploads go straight to MinIO via signed URL (XHR for progress); jobs are followed by `setTimeout` polling. `src/mocks/handlers.ts` is an in-memory MSW Gateway shared by the tests and `npm run dev:mock`. Auth0 plugs into `src/services/authService.ts` (token provider, session checker).
 
 Key boundaries: each business service owns its database (no shared DB); long-running work is triggered by messaging, never by holding HTTP requests open; `contracts/` holds no shared libraries or business logic.
 
@@ -44,6 +44,10 @@ python -m pip install '.[test]'
 pytest
 pytest tests/test_health.py::test_health
 uvicorn processing_service.app:app --port 8080   # needs src on PYTHONPATH or the package installed
+
+# Frontend (from apps/frontend)
+npm run lint && npm test && npm run build
+npx vitest run src/pages/pages.test.tsx -t 'Resultado'
 
 # Gateway config check
 docker build -t video-insight/api-gateway apps/api-gateway
