@@ -33,6 +33,11 @@ o profile `app`:
 docker compose --env-file .env -f infrastructure/compose.yaml --profile app up -d --build
 ```
 
+A MinIO deixou de publicar imagens no quay.io e no Docker Hub. Por isso a
+imagem local é construída a partir do binário oficial da release, conferido
+por SHA-256 ([`minio/Dockerfile`](minio/Dockerfile)), como no deploy da AWS. O
+primeiro `up` faz esse build automaticamente.
+
 ## Endereços locais
 
 | Componente | Endereço padrão |

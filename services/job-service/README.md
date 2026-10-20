@@ -28,12 +28,17 @@ manipula arquivos de mídia. Ele implementa
    eventos de tentativas antigas ou de jobs finalizados são ignorados.
    Mensagens inválidas vão para a DLQ.
 4. Em `processing.completed`, o serviço lê do MinIO os artefatos JSON indicados
-   no evento e guarda o resultado estruturado em `job_results`.
+   no evento e guarda o resultado estruturado em `job_results`. Os `blocks` dos
+   capítulos são repassados sem interpretação.
 5. `retry` cria uma nova tentativa e preserva a anterior em `job_attempts`.
    `cancel` finaliza o job, e eventos posteriores do worker são descartados.
 
 A repetição do header `Idempotency-Key` com o mesmo pedido devolve o job já
 criado; com um pedido diferente, a resposta é `409`.
+
+`GET /api/v1/videos/{videoId}/jobs` lista os jobs de um vídeo, do mais recente
+para o mais antigo, com cursor opaco (`next_cursor`). Ele não consulta o Video
+Service: um vídeo sem jobs devolve `items` vazio.
 
 A autenticação com Auth0 e a restrição de cada job ao seu dono entram na
 etapa 3; nesta etapa os endpoints não exigem token.
