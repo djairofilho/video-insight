@@ -4,6 +4,8 @@ import br.edu.insper.videoinsight.job.application.JobResultView;
 import br.edu.insper.videoinsight.job.application.JobService;
 import br.edu.insper.videoinsight.job.storage.PresignedUrl;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +35,14 @@ public class JobController {
             @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody CreateJobRequest request) {
         return JobResponse.from(jobService.createJob(videoId, idempotencyKey, request.operations()));
+    }
+
+    @GetMapping("/videos/{videoId}/jobs")
+    public JobPageResponse listJobs(
+            @PathVariable UUID videoId,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit,
+            @RequestParam(required = false) String cursor) {
+        return JobPageResponse.from(jobService.listJobs(videoId, limit, cursor));
     }
 
     @GetMapping("/jobs/{jobId}")
