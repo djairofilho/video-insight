@@ -11,6 +11,32 @@ paths:
   /videos/{videoId}/jobs:
     parameters:
       - $ref: '#/components/parameters/VideoId'
+    get:
+      operationId: listJobs
+      summary: Lista os jobs de um vídeo, do mais recente para o mais antigo
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Página de jobs; vazia quando o vídeo não tem jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
     post:
       operationId: createJob
       summary: Cria uma solicitação assíncrona de processamento
@@ -228,6 +254,17 @@ components:
         updated_at:
           type: string
           format: date-time
+    JobPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        next_cursor:
+          type: string
     JobError:
       type: object
       additionalProperties: false
@@ -265,6 +302,20 @@ components:
         end_seconds:
           type: number
           minimum: 0
+        blocks:
+          type: array
+          description: >-
+            Texto e diagramas do capítulo, repassados de chapters.json. Os formatos de cada tipo estão no README do
+            Processing Service; clientes devem ignorar tipos desconhecidos.
+          items:
+            $ref: '#/components/schemas/ChapterBlock'
+    ChapterBlock:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [paragraph, callout, flow, cycle, comparison, tree]
     ModelReference:
       type: object
       additionalProperties: false
