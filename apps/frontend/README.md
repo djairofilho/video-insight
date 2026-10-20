@@ -6,8 +6,7 @@ navegação por timestamp.
 
 Usa React 19, TypeScript, Vite, React Compiler, MUI e React Router. Conversa
 somente com o API Gateway; o arquivo de vídeo vai direto do navegador para o
-armazenamento pela URL assinada, sem passar pelo backend. O passo a passo das
-decisões está em [`GUIA-CONSTRUCAO.md`](GUIA-CONSTRUCAO.md).
+armazenamento pela URL assinada, sem passar pelo backend.
 
 ## Telas
 
