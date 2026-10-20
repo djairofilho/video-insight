@@ -51,7 +51,7 @@ class ArtifactStorageTest {
     }
 
     @Test
-    void readsChaptersIgnoringBlocks() {
+    void readsChaptersKeepingBlocks() {
         stub("""
                 {"chapters": [{"title": "Início", "start_seconds": 0, "end_seconds": 60,
                   "blocks": [{"type": "paragraph", "text": "Abertura."},
@@ -60,7 +60,15 @@ class ArtifactStorageTest {
                               "steps": [{"label": "A"}, {"label": "B", "detail": "depois"}]}]}]}
                 """);
 
-        assertThat(storage.readChapters("c.json")).containsExactly(new Chapter("Início", 0, 60));
+        var chapter = storage.readChapters("c.json").getFirst();
+        assertThat(chapter.title()).isEqualTo("Início");
+        assertThat(chapter.endSeconds()).isEqualTo(60);
+        assertThat(chapter.blocks()).extracting(block -> block.get("type").stringValue())
+                .containsExactly("paragraph", "callout", "flow");
+        assertThat(chapter.blocks().get(2).at("/steps/1/detail").stringValue()).isEqualTo("depois");
+
+        stub("{\"chapters\": [{\"title\": \"Sem blocos\", \"start_seconds\": 0, \"end_seconds\": 10}]}");
+        assertThat(storage.readChapters("c.json")).containsExactly(new Chapter("Sem blocos", 0, 10));
     }
 
     @Test

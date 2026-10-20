@@ -181,6 +181,24 @@
       ]
     },
     {
+      "endpoint": "/api/v1/videos/{videoId}/jobs",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "input_query_strings": [
+        "limit",
+        "cursor"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/api/v1/videos/{videoId}/jobs",
+          "encoding": "no-op",
+          "host": [
+            "http://172.31.7.191:8081"
+          ]
+        }
+      ]
+    },
+    {
       "endpoint": "/api/v1/jobs/{jobId}",
       "method": "GET",
       "output_encoding": "no-op",
