@@ -23,6 +23,8 @@ import br.edu.insper.videoinsight.job.video.VideoServiceUnavailableException;
 import br.edu.insper.videoinsight.job.video.VideoSummary;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -170,6 +172,52 @@ class JobApiTest extends IntegrationTest {
     }
 
     @Test
+    void listsJobsOfAVideoNewestFirstWithCursor() throws Exception {
+        var videoId = UUID.randomUUID();
+        videoIsReady(videoId);
+        var ids = new ArrayList<String>();
+        for (int i = 0; i < 3; i++) {
+            var job = json(postJob(videoId, UUID.randomUUID().toString(), ALL_OPERATIONS));
+            ids.add(job.get("id").stringValue());
+        }
+        createJob();
+
+        var first = json(mockMvc.perform(get("/api/v1/videos/{videoId}/jobs", videoId).param("limit", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].video_id").value(videoId.toString()))
+                .andExpect(jsonPath("$.next_cursor").isNotEmpty()));
+        var second = json(mockMvc.perform(get("/api/v1/videos/{videoId}/jobs", videoId)
+                        .param("limit", "2")
+                        .param("cursor", first.get("next_cursor").stringValue()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.next_cursor").doesNotExist()));
+
+        var listed = new ArrayList<String>();
+        first.get("items").forEach(item -> listed.add(item.get("id").stringValue()));
+        second.get("items").forEach(item -> listed.add(item.get("id").stringValue()));
+        assertThat(listed).containsExactlyInAnyOrderElementsOf(ids);
+        var createdAt = listed.stream()
+                .map(id -> jobs.findById(UUID.fromString(id)).orElseThrow().getCreatedAt())
+                .toList();
+        assertThat(createdAt).isSortedAccordingTo(Comparator.reverseOrder());
+    }
+
+    @Test
+    void listsNoJobsForUnknownVideoAndRejectsInvalidParameters() throws Exception {
+        mockMvc.perform(get("/api/v1/videos/{videoId}/jobs", UUID.randomUUID()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isEmpty())
+                .andExpect(jsonPath("$.next_cursor").doesNotExist());
+        mockMvc.perform(get("/api/v1/videos/{videoId}/jobs", UUID.randomUUID()).param("cursor", "inválido"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Cursor inválido."));
+        mockMvc.perform(get("/api/v1/videos/{videoId}/jobs", UUID.randomUUID()).param("limit", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void cancelsUnfinishedJobsOnlyOnce() throws Exception {
         var jobId = createJob();
 
@@ -220,7 +268,9 @@ class JobApiTest extends IntegrationTest {
         when(artifactStorage.readTranscript("t.json"))
                 .thenReturn(List.of(new TranscriptSegment(0, 4.5, "Olá, turma.")));
         when(artifactStorage.readSummary("s.json")).thenReturn("Aula introdutória.");
-        when(artifactStorage.readChapters("c.json")).thenReturn(List.of(new Chapter("Introdução", 0, 4.5)));
+        var blocks = List.of(mapper.readTree("{\"type\": \"paragraph\", \"text\": \"Abertura.\"}"));
+        when(artifactStorage.readChapters("c.json")).thenReturn(List.of(
+                new Chapter("Introdução", 0, 4.5, blocks), new Chapter("Sem blocos", 4.5, 9)));
         completeJob(jobId, new ProcessingCompleted.Artifacts("t.json", "t.txt", null, "s.json", "c.json"));
 
         mockMvc.perform(get("/api/v1/jobs/{jobId}/result", jobId))
@@ -231,6 +281,9 @@ class JobApiTest extends IntegrationTest {
                 .andExpect(jsonPath("$.transcript[0].text").value("Olá, turma."))
                 .andExpect(jsonPath("$.summary").value("Aula introdutória."))
                 .andExpect(jsonPath("$.chapters[0].title").value("Introdução"))
+                .andExpect(jsonPath("$.chapters[0].blocks[0].type").value("paragraph"))
+                .andExpect(jsonPath("$.chapters[0].blocks[0].text").value("Abertura."))
+                .andExpect(jsonPath("$.chapters[1].blocks").doesNotExist())
                 .andExpect(jsonPath("$.models").isArray())
                 .andExpect(jsonPath("$.completed_at").isNotEmpty());
     }
