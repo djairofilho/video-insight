@@ -143,3 +143,28 @@ jobs:
       - run: >-
           docker run --rm video-insight/api-gateway:test
           check -c /etc/krakend/krakend.json
+
+  frontend:
+    name: Test frontend
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: https://api.example.com/api/v1
+          VITE_AUTH0_DOMAIN: example.auth0.com
+          VITE_AUTH0_CLIENT_ID: ci-placeholder
+          VITE_AUTH0_AUDIENCE: https://video-insight-api

@@ -1,17 +1,14 @@
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
+import { safeReturnTo } from '../auth/returnTo'
+import { AuthLoginButton } from '../auth/AuthLoginButton'
+import { Alert, Box, Paper, Stack, Typography } from '@mui/material'
 import { Logo } from '../components/layout/Logo'
-import { Link as RouterLink, useLocation } from 'react-router'
+import { useLocation } from 'react-router'
 import { isAuthEnabled } from '../services/authService'
 
-/**
- * Tela de entrada. O fluxo OAuth2/PKCE com o Auth0 é conectado em `authService`; até lá, a aplicação funciona sem
- * login e esta tela apenas leva de volta aos vídeos.
- */
 export function LoginPage() {
   const location = useLocation()
   const state = location.state as { from?: string; expired?: boolean } | null
-  const destination = state?.from ?? '/videos'
+  const destination = safeReturnTo(state?.from)
 
   return (
     <Box sx={{ minHeight: '100svh', display: 'grid', placeItems: 'center', p: 2 }}>
@@ -28,16 +25,17 @@ export function LoginPage() {
           </Box>
           {state?.expired && <Alert severity="warning">Sua sessão expirou. Entre novamente.</Alert>}
           {isAuthEnabled() ? (
-            <Button variant="contained" size="large" startIcon={<LockOutlinedIcon />} disabled>
-              Entrar com Auth0
-            </Button>
+            <Stack spacing={2}>
+              <AuthLoginButton returnTo={destination} />
+              <AuthLoginButton returnTo={destination} signup />
+              <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+                Crie sua conta ou entre com e-mail e senha. O cadastro e a recuperação de senha são feitos na página segura de autenticação.
+              </Typography>
+            </Stack>
           ) : (
-            <>
-              <Alert severity="info">A autenticação ainda não está configurada neste ambiente.</Alert>
-              <Button component={RouterLink} to={destination} variant="contained" size="large">
-                Continuar sem login
-              </Button>
-            </>
+            <Alert severity="error">
+              Autenticação não configurada. Preencha VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID e VITE_AUTH0_AUDIENCE no arquivo .env.local e reinicie o frontend.
+            </Alert>
           )}
         </Stack>
       </Paper>

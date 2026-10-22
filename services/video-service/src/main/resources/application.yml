@@ -44,3 +44,9 @@ video-service:
     secret-key: ${STORAGE_SECRET_KEY:local-minio-password}
     bucket: ${STORAGE_BUCKET:videos}
     presign-ttl: 15m
+
+# Somente desenvolvimento local pode desativar autenticação. O deploy define AUTH_ENABLED=true.
+auth:
+  enabled: ${AUTH_ENABLED:false}
+  issuer: ${AUTH_ISSUER:}
+  audience: ${AUTH_AUDIENCE:}

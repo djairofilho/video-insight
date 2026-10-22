@@ -40,7 +40,13 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   if (json !== undefined) {
     requestHeaders.set('Content-Type', 'application/json')
   }
-  const token = await getAccessToken()
+  let token: string | null
+  try {
+    token = await getAccessToken()
+  } catch {
+    notifyUnauthorized()
+    throw new ApiError('Sua sessão expirou. Entre novamente.', 401)
+  }
   if (token) {
     requestHeaders.set('Authorization', `Bearer ${token}`)
   }

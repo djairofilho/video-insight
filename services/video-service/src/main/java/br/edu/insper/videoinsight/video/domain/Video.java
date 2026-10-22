@@ -21,6 +21,8 @@ public class Video {
     @Id
     private UUID id;
 
+    private String ownerId = "local-development";
+
     @Column(nullable = false)
     private String fileName;
 
@@ -96,6 +98,10 @@ public class Video {
             throw new InvalidVideoStateException("O upload deste vídeo já foi finalizado.");
         }
     }
+
+    public String getOwnerId() { return ownerId; }
+
+    public void assignOwner(String subject) { ownerId = subject; }
 
     public UUID getId() {
         return id;

@@ -11,7 +11,7 @@ vi.mock('../services/authService', async (importOriginal) => ({
 
 describe('rotas protegidas', () => {
   it('redireciona para o login sem sessão válida', async () => {
-    const { router } = renderRoute('/videos')
+    const { router } = renderRoute('/videos', false)
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
     expect(await screen.findByRole('heading', { name: 'Entre para ver seus vídeos' })).toBeInTheDocument()
     expect(router.state.location.state).toEqual({ from: '/videos' })

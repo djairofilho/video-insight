@@ -69,12 +69,10 @@ pelo workflow a partir dos secrets. Ele chama o Video Service em
 `172.31.1.54:8081`, então a restrição da porta `8081` do Video Service deve
 liberar também o Job Service (`172.31.7.191`).
 
-O workflow configura `STORAGE_PUBLIC_ENDPOINT` no Video Service e no Job Service
-com `http://<AWS_CORE_HOST>:8081`. As URLs assinadas usam esse endereço público;
-Video Service e Processing Service acessam o MinIO pelos túneis SSH, enquanto
-Job Service usa o endereço privado do Core. Os buckets
-permanecem privados, e o navegador envia o arquivo diretamente ao MinIO com a
-URL assinada. A API pública usa HTTP nesta infraestrutura da disciplina; para
-uso fora desse ambiente, configure um nome de domínio e HTTPS.
+O workflow exige autenticação e endpoints públicos HTTPS. Veja o guia de
+[Auth0, HTTPS e frontend na EC2](../../docs/autenticacao-e-deploy.md) para criar
+o tenant, configurar as novas variables do GitHub e publicar o frontend.
+`STORAGE_PUBLIC_ENDPOINT` é fornecido por variable do GitHub e usado pelos dois
+serviços que emitem URLs assinadas. Os buckets permanecem privados.
 
 Chaves privadas, senhas e arquivos `.env` não pertencem ao Git.

@@ -1,13 +1,17 @@
+import { useAuth0 } from '@auth0/auth0-react'
+import { isAuthEnabled } from '../../services/authService'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { Box, Button, Link, Stack } from '@mui/material'
 import { NavLink, Outlet, Link as RouterLink, useLocation } from 'react-router'
 import { brand } from '../../app/theme'
 import { Logo } from './Logo'
+import { UserProfile } from './UserProfile'
 
 /** Largura do conteúdo: a mesma em todas as telas, com margens iguais dos dois lados. */
 export const CONTENT_MAX_WIDTH = 1280
 
 export function AppLayout() {
+  const { logout } = useAuth0()
   const { pathname } = useLocation()
   const onUploadPage = pathname === '/videos/new'
 
@@ -36,7 +40,7 @@ export function AppLayout() {
         <Stack
           direction="row"
           spacing={{ xs: 1.5, sm: 4 }}
-          sx={{ maxWidth: CONTENT_MAX_WIDTH, mx: 'auto', px: { xs: 2, sm: 3 }, height: { xs: 60, sm: 68 }, alignItems: 'center' }}
+          sx={{ maxWidth: CONTENT_MAX_WIDTH, mx: 'auto', px: { xs: 2, sm: 3 }, height: { xs: 'auto', sm: 68 }, minHeight: 60, py: { xs: 1, sm: 0 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, rowGap: 1, alignItems: 'center' }}
         >
           <Box component={RouterLink} to="/videos" aria-label="Video Insight, ir para meus vídeos" sx={{ textDecoration: 'none', display: 'flex' }}>
             <Logo />
@@ -45,6 +49,12 @@ export function AppLayout() {
             <NavItem to="/videos" label="Meus vídeos" />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
+          {isAuthEnabled() && (
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', minWidth: 0 }}>
+              <UserProfile />
+              <Button onClick={() => void logout({ logoutParams: { returnTo: window.location.origin } })}>Sair</Button>
+            </Stack>
+          )}
           {!onUploadPage && (
             <Button component={RouterLink} to="/videos/new" variant="contained" startIcon={<AddRoundedIcon />}>
               Enviar vídeo

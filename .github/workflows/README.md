@@ -15,3 +15,10 @@ correspondente for alterado.
 
 Não há revisão obrigatória, CODEOWNERS ou proteção de branch configurada nesta
 etapa.
+
+O job `deploy-frontend` compila a SPA Vite/React e publica uma imagem Nginx por
+SSH na EC2 definida por `AWS_FRONTEND_HOST`. Ele executa testes e verifica as
+rotas da SPA antes e depois da troca, com restauração do contêiner anterior em
+caso de falha. As configurações Auth0 e URLs são fornecidas por Variables;
+o frontend reutiliza os secrets SSH existentes. A lista completa está no
+[guia de autenticação e deploy](../../docs/autenticacao-e-deploy.md).

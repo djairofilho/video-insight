@@ -5,6 +5,7 @@ import br.edu.insper.videoinsight.video.domain.VideoRepository;
 import br.edu.insper.videoinsight.video.storage.SignedUrl;
 import br.edu.insper.videoinsight.video.storage.VideoStorage;
 import java.time.Clock;
+import br.edu.insper.videoinsight.video.security.CurrentUser;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -35,7 +36,9 @@ public class VideoService {
     }
 
     public Video create(String fileName, String contentType, long sizeBytes) {
-        return videos.save(Video.create(fileName, contentType, sizeBytes, clock.instant()));
+        var video = Video.create(fileName, contentType, sizeBytes, clock.instant());
+        video.assignOwner(CurrentUser.subject());
+        return videos.save(video);
     }
 
     @Transactional(readOnly = true)
@@ -47,7 +50,7 @@ public class VideoService {
     public VideoPage list(int limit, String cursor) {
         // Um item a mais indica se existe próxima página.
         var page = cursor == null
-                ? videos.findAllByOrderByCreatedAtDescIdDesc(Limit.of(limit + 1))
+                ? videos.findByOwnerIdOrderByCreatedAtDescIdDesc(CurrentUser.subject(), Limit.of(limit + 1))
                 : findPageAfter(VideoCursor.decode(cursor), limit + 1);
         if (page.size() <= limit) {
             return new VideoPage(page, null);
@@ -119,11 +122,12 @@ public class VideoService {
     }
 
     private List<Video> findPageAfter(VideoCursor cursor, int limit) {
-        return videos.findPageAfter(cursor.createdAt(), cursor.id(), Limit.of(limit));
+        return videos.findOwnedPageAfter(CurrentUser.subject(), cursor.createdAt(), cursor.id(), Limit.of(limit));
     }
 
     private Video find(UUID videoId) {
         return videos.findById(videoId)
+                .filter(video -> CurrentUser.subject().equals(video.getOwnerId()))
                 .orElseThrow(() -> ApiException.notFound("VIDEO_NOT_FOUND", "Vídeo não encontrado."));
     }
 }

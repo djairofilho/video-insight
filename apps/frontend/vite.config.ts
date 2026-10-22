@@ -1,7 +1,7 @@
 /// <reference types="vitest/config" />
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 
 // No modo `mock` (npm run dev:mock) o Gateway é simulado no navegador pelo MSW, sem depender de arquivo .env.
 const mockEnv = {
@@ -18,7 +18,18 @@ const localGateway = {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode, command }) => {
+  if (command === 'build' && mode === 'production') {
+    const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env }
+    for (const key of ['VITE_AUTH0_DOMAIN', 'VITE_AUTH0_CLIENT_ID', 'VITE_AUTH0_AUDIENCE']) {
+      if (!env[key]?.trim()) throw new Error(`${key} é obrigatório no build de produção`)
+    }
+    if (!env.VITE_API_BASE_URL?.startsWith('https://')) {
+      throw new Error('VITE_API_BASE_URL precisa usar HTTPS em produção')
+    }
+    if (env.VITE_USE_MOCKS === 'true') throw new Error('Mocks não podem ser publicados em produção')
+  }
+  return ({
   define:
     mode === 'mock'
       ? mockEnv
@@ -41,4 +52,5 @@ export default defineConfig(({ mode }) => ({
       exclude: ['src/main.tsx', 'src/mocks/browser.ts', 'src/test/**', 'src/**/*.test.{ts,tsx}'],
     },
   },
-}))
+})
+})

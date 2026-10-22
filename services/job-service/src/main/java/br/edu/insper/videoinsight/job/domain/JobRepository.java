@@ -21,4 +21,14 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
             order by j.createdAt desc, j.id desc
             """)
     List<Job> findPageByVideoAfter(UUID videoId, Instant createdAt, UUID id, Limit limit);
+    Optional<Job> findByOwnerIdAndIdempotencyKey(String ownerId, String idempotencyKey);
+
+    List<Job> findByOwnerIdAndVideoIdOrderByCreatedAtDescIdDesc(String ownerId, UUID videoId, Limit limit);
+
+    @Query("""
+            select j from Job j where j.ownerId = :ownerId and j.videoId = :videoId
+            and (j.createdAt < :createdAt or (j.createdAt = :createdAt and j.id < :id))
+            order by j.createdAt desc, j.id desc
+            """)
+    List<Job> findOwnedPageByVideoAfter(String ownerId, UUID videoId, Instant createdAt, UUID id, Limit limit);
 }

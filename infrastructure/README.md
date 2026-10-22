@@ -58,3 +58,38 @@ docker compose --env-file .env -f infrastructure/compose.yaml down
 
 Adicionar `--volumes` remove permanentemente os dados locais e deve ser feito
 somente quando essa exclusão for intencional.
+
+## Imagem local do MinIO
+
+O Compose constrói o MinIO a partir dos binários oficiais do release GitHub,
+verificados por SHA-256, em `minio/Dockerfile`. O build suporta AMD64 e ARM64
+(Apple Silicon), sem depender das imagens indisponíveis no Quay/Docker Hub.
+A primeira execução precisa de acesso ao GitHub e ao registry da imagem Debian.
+Nenhum login no Quay é necessário. Para reconstruir explicitamente:
+
+```bash
+docker compose --env-file .env -f infrastructure/compose.yaml build minio
+```
+
+## Serviços Java com configuração local
+
+Na raiz, execute em terminais separados:
+
+```bash
+bash scripts/run-local-service.sh video
+bash scripts/run-local-service.sh job
+```
+
+O script lê `.env` e `apps/frontend/.env.local`, configura as credenciais locais,
+ativa Auth0 e usa a porta `MINIO_API_PORT` também no cliente Java e nas URLs
+assinadas. O Maven Wrapper do Video Service executa os dois projetos.
+
+Se PHP-FPM ou outro processo ocupar 9000 no host, altere `MINIO_API_PORT=19000`
+no `.env` e recrie apenas MinIO, preservando os dados:
+
+```bash
+docker compose --env-file .env -f infrastructure/compose.yaml up -d --no-build minio
+```
+
+Reinicie os serviços Java com os scripts acima após alterar portas ou credenciais.
+O console MinIO continua em 9001, a menos que `MINIO_CONSOLE_PORT` seja alterado.

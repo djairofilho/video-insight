@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: HTTPS endpoints for the existing Video Insight EC2 origins (no custom domain)
+Parameters:
+  GatewayDnsName:
+    Type: String
+    Description: Public EC2 DNS hostname of KrakenD, without scheme or port
+  StorageDnsName:
+    Type: String
+    Description: Public EC2 DNS hostname of MinIO, without scheme or port
+  FrontendDnsName:
+    Type: String
+    Description: Public EC2 DNS hostname of Nginx, without scheme or port
+  FrontendPort:
+    Type: Number
+    Default: 8081
+    MinValue: 1024
+    MaxValue: 65535
+Resources:
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Video Insight React SPA on EC2
+        PriceClass: PriceClass_100
+        HttpVersion: http2
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        Origins:
+          - Id: frontend
+            DomainName: !Ref FrontendDnsName
+            CustomOriginConfig:
+              HTTPPort: !Ref FrontendPort
+              OriginProtocolPolicy: http-only
+        DefaultCacheBehavior:
+          TargetOriginId: frontend
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          MinTTL: 0
+          DefaultTTL: 0
+          MaxTTL: 0
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ErrorCachingMinTTL: 0
+  GatewayDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Video Insight API (uncached)
+        PriceClass: PriceClass_100
+        HttpVersion: http2
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        Origins:
+          - Id: gateway
+            DomainName: !Ref GatewayDnsName
+            CustomOriginConfig:
+              HTTPPort: 8081
+              OriginProtocolPolicy: http-only
+        DefaultCacheBehavior:
+          TargetOriginId: gateway
+          ViewerProtocolPolicy: https-only
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+          CachedMethods: [GET, HEAD]
+          MinTTL: 0
+          DefaultTTL: 0
+          MaxTTL: 0
+          ForwardedValues:
+            QueryString: true
+            Headers: ['*']
+            Cookies:
+              Forward: none
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ErrorCachingMinTTL: 0
+  StorageDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Video Insight private MinIO signed URLs (uncached)
+        PriceClass: PriceClass_100
+        HttpVersion: http2
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        Origins:
+          - Id: storage
+            DomainName: !Ref StorageDnsName
+            CustomOriginConfig:
+              HTTPPort: 8081
+              OriginProtocolPolicy: http-only
+        DefaultCacheBehavior:
+          TargetOriginId: storage
+          ViewerProtocolPolicy: https-only
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+          CachedMethods: [GET, HEAD]
+          MinTTL: 0
+          DefaultTTL: 0
+          MaxTTL: 0
+          ForwardedValues:
+            QueryString: true
+            Headers: ['*']
+            Cookies:
+              Forward: none
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ErrorCachingMinTTL: 0
+Outputs:
+  FrontendOrigin:
+    Value: !Sub https://${FrontendDistribution.DomainName}
+  ApiBaseUrl:
+    Value: !Sub https://${GatewayDistribution.DomainName}/api/v1
+  StoragePublicEndpoint:
+    Value: !Sub https://${StorageDistribution.DomainName}

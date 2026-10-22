@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Implementa {@code contracts/openapi/job-service.yaml}. A autenticação com Auth0 entra na etapa 3. */
+/** Implementa {@code contracts/openapi/job-service.yaml}. O serviço valida JWT Auth0 e restringe recursos ao proprietário. */
 @RestController
 @RequestMapping("/api/v1")
 public class JobController {

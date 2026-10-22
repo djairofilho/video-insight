@@ -18,6 +18,8 @@ public class Job {
     @Id
     private UUID id;
 
+    private String ownerId = "local-development";
+
     @Column(nullable = false)
     private UUID videoId;
 
@@ -135,6 +137,10 @@ public class Job {
     public boolean hasSameRequest(UUID otherVideoId, List<Operation> otherOperations) {
         return videoId.equals(otherVideoId) && operations.equals(otherOperations);
     }
+
+    public String getOwnerId() { return ownerId; }
+
+    public void assignOwner(String subject) { ownerId = subject; }
 
     public UUID getId() {
         return id;

@@ -3,15 +3,16 @@ import { render } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '../app/routes'
+import { SessionContext } from '../auth/session'
 import { theme } from '../app/theme'
 
 /** Renderiza a aplicação inteira numa rota, com as mesmas rotas de produção. */
-export function renderRoute(path: string) {
+export function renderRoute(path: string, authenticated = true) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   const view = render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <RouterProvider router={router} />
+      <SessionContext.Provider value={authenticated}><RouterProvider router={router} /></SessionContext.Provider>
     </ThemeProvider>,
   )
   return { ...view, router }

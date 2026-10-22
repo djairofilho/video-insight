@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - apps/frontend/**
       - apps/api-gateway/**
       - services/video-service/**
       - services/job-service/**
@@ -23,6 +24,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
       gateway: ${{ steps.filter.outputs.gateway }}
       video: ${{ steps.filter.outputs.video }}
       job: ${{ steps.filter.outputs.job }}
@@ -35,6 +37,10 @@ jobs:
         uses: dorny/paths-filter@v4
         with:
           filters: |
+            frontend:
+              - 'apps/frontend/**'
+              - 'infrastructure/aws/frontend/**'
+              - '.github/workflows/deploy-aws.yml'
             gateway:
               - 'apps/api-gateway/**'
               - '.github/workflows/deploy-aws.yml'
@@ -57,9 +63,36 @@ jobs:
               - 'infrastructure/aws/observability/**'
               - '.github/workflows/deploy-aws.yml'
 
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require production authentication and HTTPS
+        env:
+          AUTH_ISSUER: ${{ vars.AUTH_ISSUER }}
+          AUTH_AUDIENCE: ${{ vars.AUTH_AUDIENCE }}
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+          STORAGE_PUBLIC_ENDPOINT: ${{ vars.STORAGE_PUBLIC_ENDPOINT }}
+        run: |
+          python3 - <<'PYTHON'
+          import os
+          from urllib.parse import urlparse
+          for key in ('AUTH_ISSUER', 'FRONTEND_ORIGIN', 'STORAGE_PUBLIC_ENDPOINT'):
+              value = os.environ[key]
+              parsed = urlparse(value)
+              if parsed.scheme != 'https' or not parsed.hostname or parsed.query or parsed.fragment:
+                  raise SystemExit(f'{key} deve ser uma URL HTTPS válida')
+          if not os.environ['AUTH_ISSUER'].endswith('/'):
+              raise SystemExit('AUTH_ISSUER precisa terminar com /')
+          if not os.environ['AUTH_AUDIENCE'].strip():
+              raise SystemExit('AUTH_AUDIENCE é obrigatório')
+          PYTHON
+
   deploy-video:
-    needs: changes
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.video == 'true'
+    needs: [changes, preflight, deploy-core]
+    if: >-
+      always() && needs.preflight.result == 'success' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.video == 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -86,17 +119,23 @@ jobs:
       - name: Deploy Video Service
         env:
           HOST: ${{ vars.AWS_VIDEO_HOST }}
-          CORE_HOST: ${{ vars.AWS_CORE_HOST }}
+          STORAGE_PUBLIC_ENDPOINT: ${{ vars.STORAGE_PUBLIC_ENDPOINT }}
+          AUTH_ISSUER: ${{ vars.AUTH_ISSUER }}
+          AUTH_AUDIENCE: ${{ vars.AUTH_AUDIENCE }}
           VIDEO_DB_PASSWORD: ${{ secrets.VIDEO_DB_PASSWORD }}
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
+          umask 077
           # Dependências alcançadas pelos túneis SSH na ponte do Docker (infrastructure/aws/tunnels).
           {
             echo 'DB_URL=jdbc:postgresql://172.17.0.1:15433/video_insight_videos'
             echo 'DB_USER=video_service'
             printf 'DB_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD"
             echo 'STORAGE_ENDPOINT=http://172.17.0.1:19000'
-            printf 'STORAGE_PUBLIC_ENDPOINT=http://%s:8081\n' "$CORE_HOST"
+            printf 'STORAGE_PUBLIC_ENDPOINT=%s\n' "$STORAGE_PUBLIC_ENDPOINT"
+            echo 'AUTH_ENABLED=true'
+            printf 'AUTH_ISSUER=%s\n' "$AUTH_ISSUER"
+            printf 'AUTH_AUDIENCE=%s\n' "$AUTH_AUDIENCE"
             echo 'STORAGE_ACCESS_KEY=video_insight'
             printf 'STORAGE_SECRET_KEY=%s\n' "$MINIO_ROOT_PASSWORD"
           } > /tmp/video.env
@@ -112,8 +151,11 @@ jobs:
           exit 1
 
   deploy-job:
-    needs: changes
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.job == 'true'
+    needs: [changes, preflight, deploy-core]
+    if: >-
+      always() && needs.preflight.result == 'success' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.job == 'true')
     runs-on: ubuntu-latest
     concurrency:
       group: video-insight-leonardo
@@ -135,11 +177,14 @@ jobs:
       - name: Deploy Job Service
         env:
           HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
-          CORE_HOST: ${{ vars.AWS_CORE_HOST }}
+          STORAGE_PUBLIC_ENDPOINT: ${{ vars.STORAGE_PUBLIC_ENDPOINT }}
+          AUTH_ISSUER: ${{ vars.AUTH_ISSUER }}
+          AUTH_AUDIENCE: ${{ vars.AUTH_AUDIENCE }}
           JOB_DB_PASSWORD: ${{ secrets.JOB_DB_PASSWORD }}
           RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
+          umask 077
           # Banco e RabbitMQ usam túneis SSH; MinIO usa o endereço privado do Core.
           {
             echo 'DB_URL=jdbc:postgresql://172.17.0.1:15434/video_insight_jobs'
@@ -150,7 +195,10 @@ jobs:
             echo 'RABBITMQ_USER=video_insight'
             printf 'RABBITMQ_PASSWORD=%s\n' "$RABBITMQ_PASSWORD"
             echo 'STORAGE_ENDPOINT=http://172.31.8.165:8081'
-            printf 'STORAGE_PUBLIC_ENDPOINT=http://%s:8081\n' "$CORE_HOST"
+            printf 'STORAGE_PUBLIC_ENDPOINT=%s\n' "$STORAGE_PUBLIC_ENDPOINT"
+            echo 'AUTH_ENABLED=true'
+            printf 'AUTH_ISSUER=%s\n' "$AUTH_ISSUER"
+            printf 'AUTH_AUDIENCE=%s\n' "$AUTH_AUDIENCE"
             echo 'STORAGE_ACCESS_KEY=video_insight'
             printf 'STORAGE_SECRET_KEY=%s\n' "$MINIO_ROOT_PASSWORD"
             echo 'VIDEO_SERVICE_URL=http://172.31.1.54:8081'
@@ -167,8 +215,11 @@ jobs:
           exit 1
 
   deploy-processing:
-    needs: changes
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.processing == 'true'
+    needs: [changes, preflight, deploy-core]
+    if: >-
+      always() && needs.preflight.result == 'success' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.processing == 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -237,7 +288,7 @@ jobs:
           exit 1
 
   deploy-core:
-    needs: changes
+    needs: [changes, preflight]
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.core == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -258,6 +309,7 @@ jobs:
       - name: Deploy databases, RabbitMQ and MinIO
         env:
           HOST: ${{ vars.AWS_CORE_HOST }}
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
           VIDEO_DB_PASSWORD: ${{ secrets.VIDEO_DB_PASSWORD }}
           JOB_DB_PASSWORD: ${{ secrets.JOB_DB_PASSWORD }}
           RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
@@ -271,13 +323,14 @@ jobs:
           }
           trap cleanup EXIT
           printf 'VIDEO_DB_PASSWORD=%s\nJOB_DB_PASSWORD=%s\nRABBITMQ_PASSWORD=%s\nMINIO_ROOT_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD" "$JOB_DB_PASSWORD" "$RABBITMQ_PASSWORD" "$MINIO_ROOT_PASSWORD" > /tmp/core.env
+          printf 'FRONTEND_ORIGIN=%s\n' "$FRONTEND_ORIGIN" >> /tmp/core.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
           scp -i ~/.ssh/video-insight /tmp/minio-image.tar.gz ubuntu@"$HOST":/tmp/minio-image.tar.gz
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo ufw allow 8081/tcp; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker run --rm --user 0:0 --entrypoint chown -v video-insight-core_minio-data:/data video-insight/minio:RELEASE.2025-09-07T16-13-09Z -R 10001:10001 /data; sudo docker compose --env-file core.env up -d --remove-orphans --wait --wait-timeout 180; sudo docker image prune -af'
 
   deploy-observability:
-    needs: changes
+    needs: [changes, preflight]
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.observability == 'true'
     runs-on: ubuntu-latest
     concurrency:
@@ -304,18 +357,24 @@ jobs:
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && sudo docker image prune -af'
 
   deploy-gateway:
-    needs: [changes, deploy-video, deploy-job, deploy-processing]
+    needs: [changes, preflight, deploy-video, deploy-job, deploy-processing]
     if: >-
       always() &&
       (github.event_name == 'workflow_dispatch' || needs.changes.outputs.gateway == 'true' ||
       needs.changes.outputs.video == 'true' || needs.changes.outputs.job == 'true' ||
       needs.changes.outputs.processing == 'true') &&
-      !contains(needs.*.result, 'failure')
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Validate and build gateway
-        run: docker build -t "video-insight/api-gateway:${GITHUB_SHA}" apps/api-gateway
+      - name: Configure, validate and build gateway
+        env:
+          FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+        run: |
+          python3 apps/api-gateway/configure.py
+          docker build -t "video-insight/api-gateway:${GITHUB_SHA}" apps/api-gateway
+          docker run --rm "video-insight/api-gateway:${GITHUB_SHA}" check -c /etc/krakend/krakend.json
       - name: Package image
         run: docker save "video-insight/api-gateway:${GITHUB_SHA}" | gzip > /tmp/api-gateway.tar.gz
       - *ssh_setup
@@ -326,5 +385,81 @@ jobs:
           scp -i ~/.ssh/video-insight /tmp/api-gateway.tar.gz ubuntu@"$HOST":/tmp/api-gateway.tar.gz
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo ufw allow 8081/tcp; sudo docker load -i /tmp/api-gateway.tar.gz; sudo docker rm -f video-insight-gateway 2>/dev/null || true; sudo docker run -d --name video-insight-gateway --restart unless-stopped --memory 256m -p 8081:8080 video-insight/api-gateway:${GITHUB_SHA}; rm -f /tmp/api-gateway.tar.gz; sudo docker image prune -af"
           for endpoint in video jobs processing; do
-            ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "curl --fail --silent http://localhost:8081/health/$endpoint"
+            healthy=false
+            for _ in {1..20}; do
+              if ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "curl --fail --silent http://localhost:8081/health/$endpoint"; then
+                healthy=true
+                break
+              fi
+              sleep 3
+            done
+            test "$healthy" = true
           done
+          status=$(ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'curl --silent --output /dev/null --write-out "%{http_code}" http://localhost:8081/api/v1/videos')
+          test "$status" = 401
+
+  deploy-frontend:
+    needs: [changes, preflight, deploy-core, deploy-video, deploy-job, deploy-processing, deploy-gateway]
+    if: >-
+      always() && needs.preflight.result == 'success' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true')
+    runs-on: ubuntu-latest
+    env:
+      HOST: ${{ vars.AWS_FRONTEND_HOST }}
+      FRONTEND_PORT: ${{ vars.AWS_FRONTEND_PORT || '8081' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+      - name: Validate frontend settings
+        env:
+          AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
+          API_PUBLIC_BASE_URL: ${{ vars.API_PUBLIC_BASE_URL }}
+        run: |
+          python3 - <<'PYTHON'
+          import os
+          from urllib.parse import urlparse
+          if not os.environ['HOST'].strip():
+              raise SystemExit('Configure AWS_FRONTEND_HOST')
+          port = os.environ['FRONTEND_PORT']
+          if not port.isdigit() or not 1024 <= int(port) <= 65535:
+              raise SystemExit('AWS_FRONTEND_PORT deve estar entre 1024 e 65535')
+          if not os.environ['AUTH0_CLIENT_ID'].strip():
+              raise SystemExit('Configure AUTH0_CLIENT_ID com o Client ID da SPA')
+          api = urlparse(os.environ['API_PUBLIC_BASE_URL'])
+          if api.scheme != 'https' or not api.hostname or api.path.rstrip('/') != '/api/v1' or api.query or api.fragment:
+              raise SystemExit('API_PUBLIC_BASE_URL deve ser HTTPS e terminar em /api/v1')
+          PYTHON
+      - name: Install, lint and test frontend
+        working-directory: apps/frontend
+        run: |
+          npm ci
+          npm run lint
+          npm test
+      - name: Build production frontend
+        working-directory: apps/frontend
+        env:
+          AUTH_ISSUER: ${{ vars.AUTH_ISSUER }}
+          VITE_AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
+          VITE_AUTH0_AUDIENCE: ${{ vars.AUTH_AUDIENCE }}
+          VITE_API_BASE_URL: ${{ vars.API_PUBLIC_BASE_URL }}
+          VITE_USE_MOCKS: 'false'
+        run: |
+          export VITE_AUTH0_DOMAIN="${AUTH_ISSUER#https://}"
+          export VITE_AUTH0_DOMAIN="${VITE_AUTH0_DOMAIN%/}"
+          npm run build
+      - name: Build and package Nginx image
+        run: |
+          docker build -t "video-insight/frontend:${GITHUB_SHA}" apps/frontend
+          docker save "video-insight/frontend:${GITHUB_SHA}" | gzip > /tmp/frontend.tar.gz
+      - *ssh_setup
+      - name: Deploy frontend with health checks and rollback
+        run: |
+          scp -i ~/.ssh/video-insight /tmp/frontend.tar.gz ubuntu@"$HOST":/tmp/video-insight-frontend.tar.gz
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; sudo docker load -i /tmp/video-insight-frontend.tar.gz; rm -f /tmp/video-insight-frontend.tar.gz'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "sudo ufw allow ${FRONTEND_PORT}/tcp"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "bash -s -- video-insight/frontend:${GITHUB_SHA} ${FRONTEND_PORT}" < infrastructure/aws/frontend/deploy.sh

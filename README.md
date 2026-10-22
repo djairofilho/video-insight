@@ -28,7 +28,7 @@ docs/           produto, decisões e arquiteturas
 Cada componente tem um README próprio com sua responsabilidade e seus limites.
 Video Service e Job Service usam Java 21 com Spring Boot, o Processing Service
 usa Python 3.12 com FastAPI e o API Gateway usa KrakenD Community Edition. O
-frontend será desenvolvido em TypeScript.
+frontend usa React, TypeScript e Vite.
 
 ## Documentação
 
@@ -39,7 +39,13 @@ frontend será desenvolvido em TypeScript.
 - [Arquitetura AWS](docs/arquiteturas/videos-ia-aws.html)
 - [Contratos entre componentes](contracts/README.md)
 - [Ambiente local](infrastructure/README.md)
+- [Autenticação Auth0 e publicação AWS / EC2](docs/autenticacao-e-deploy.md)
 - [Deploy nas máquinas AWS](infrastructure/aws/README.md)
 
 O enunciado original da disciplina está disponível em
 [`Trabalho - Projeto de Software.pdf`](Trabalho%20-%20Projeto%20de%20Software.pdf).
+
+Veja o [passo a passo de login e cadastro com Auth0](docs/login-auth0.md),
+sem serviço próprio de usuários.
+
+Para iniciar cada componente, siga os [quatro scripts de desenvolvimento local](docs/desenvolvimento-local.md).

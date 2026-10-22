@@ -1,10 +1,6 @@
-import { CssBaseline, ThemeProvider } from '@mui/material'
-import { createBrowserRouter, RouterProvider } from 'react-router'
+import { RouterProvider } from 'react-router'
 import { setUnauthorizedHandler } from '../services/authService'
-import { routes } from './routes'
-import { theme } from './theme'
-
-const router = createBrowserRouter(routes)
+import { router } from './router'
 
 setUnauthorizedHandler(() => {
   if (router.state.location.pathname !== '/login') {
@@ -13,10 +9,5 @@ setUnauthorizedHandler(() => {
 })
 
 export function App() {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline enableColorScheme />
-      <RouterProvider router={router} />
-    </ThemeProvider>
-  )
+  return <RouterProvider router={router} />
 }

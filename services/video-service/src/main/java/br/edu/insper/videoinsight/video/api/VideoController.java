@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Implementa {@code contracts/openapi/video-service.yaml}. O Job Service consulta {@code GET /videos/{videoId}} antes de
- * criar um job. A autenticação com Auth0 e a restrição de cada vídeo ao seu dono entram na etapa 3.
+ * criar um job. O serviço valida JWT Auth0 e restringe cada vídeo ao seu dono.
  */
 @RestController
 @RequestMapping("/api/v1/videos")

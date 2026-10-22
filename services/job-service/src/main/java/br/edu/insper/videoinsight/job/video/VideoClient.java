@@ -1,6 +1,8 @@
 package br.edu.insper.videoinsight.job.video;
 
 import java.util.Optional;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -20,6 +22,12 @@ public class VideoClient {
         try {
             return Optional.ofNullable(restClient.get()
                     .uri("/api/v1/videos/{videoId}", videoId)
+                    .headers(headers -> {
+                        var authentication = SecurityContextHolder.getContext().getAuthentication();
+                        if (authentication instanceof JwtAuthenticationToken jwt) {
+                            headers.setBearerAuth(jwt.getToken().getTokenValue());
+                        }
+                    })
                     .retrieve()
                     .body(VideoSummary.class));
         } catch (HttpClientErrorException.NotFound exception) {

@@ -17,4 +17,12 @@ public interface VideoRepository extends JpaRepository<Video, UUID> {
             order by v.createdAt desc, v.id desc
             """)
     List<Video> findPageAfter(Instant createdAt, UUID id, Limit limit);
+    List<Video> findByOwnerIdOrderByCreatedAtDescIdDesc(String ownerId, Limit limit);
+
+    @Query("""
+            select v from Video v where v.ownerId = :ownerId
+            and (v.createdAt < :createdAt or (v.createdAt = :createdAt and v.id < :id))
+            order by v.createdAt desc, v.id desc
+            """)
+    List<Video> findOwnedPageAfter(String ownerId, Instant createdAt, UUID id, Limit limit);
 }

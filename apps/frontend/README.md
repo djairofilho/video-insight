@@ -17,7 +17,7 @@ armazenamento pela URL assinada, sem passar pelo backend.
 | `/videos/:videoId` | Dados do vídeo, escolha das operações e processamentos anteriores |
 | `/jobs/:jobId` | Progresso por polling, cancelamento e nova tentativa |
 | `/jobs/:jobId/result` | Player, resumo, capítulos com diagramas, transcrição e exportação |
-| `/login` | Ponto de entrada do Auth0 (etapa 3) |
+| `/login` | Entrada pelo Auth0 Universal Login |
 
 ## Organização
 
@@ -46,16 +46,14 @@ Decisões principais:
 
 ## Autenticação
 
-O Auth0 é integrado em [`src/services/authService.ts`](src/services/authService.ts):
+O SDK oficial Auth0 gerencia login, logout e tokens em memória. A aplicação usa
+Authorization Code com PKCE e solicita access tokens para a audience da API.
+As rotas aguardam o carregamento da sessão antes de redirecionar ao login.
+O cliente HTTP anexa o bearer token e trata falhas de renovação e respostas 401.
 
-- `setAccessTokenProvider` registra a função que devolve o access token,
-  enviado como `Authorization: Bearer` em todas as chamadas.
-- `setSessionChecker` informa se há sessão; sem ela, as rotas protegidas
-  redirecionam para `/login`.
-- Uma resposta `401` leva para `/login` com o aviso de sessão expirada.
-
-Com `VITE_AUTH0_DOMAIN` vazio, as rotas ficam abertas e as chamadas saem sem
-token, como os serviços aceitam nesta etapa.
+Consulte o [guia de configuração e deploy](../../docs/autenticacao-e-deploy.md).
+O build de produção exige as três variáveis Auth0 e uma API HTTPS. As rotas protegidas exigem sessão também em desenvolvimento; configuração
+ausente bloqueia o acesso e mostra o erro no login.
 
 ## Configuração
 
@@ -63,8 +61,8 @@ Copie `.env.example` para `.env.local` (ignorado pelo Git):
 
 | Variável | Uso |
 |---|---|
-| `VITE_API_BASE_URL` | URL do Gateway com `/api/v1`; na AWS, `http://3.227.9.20:8081/api/v1` |
-| `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_AUDIENCE` | Auth0; vazio desliga a proteção das rotas |
+| `VITE_API_BASE_URL` | URL HTTPS pública do Gateway com `/api/v1` em produção |
+| `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_AUDIENCE` | Configuração pública Auth0; obrigatória em produção |
 
 Variáveis `VITE_*` vão para o bundle do navegador: não coloque segredos nelas.
 
@@ -99,3 +97,15 @@ contra o Gateway simulado de [`src/mocks/handlers.ts`](src/mocks/handlers.ts)
 e cobrem utilitários, cliente HTTP, upload pela URL assinada, polling,
 componentes e os fluxos de envio, criação de job, nova tentativa,
 cancelamento, resultado, exportação e redirecionamento para o login.
+
+## Deploy na EC2
+
+O job `deploy-frontend` de `.github/workflows/deploy-aws.yml` compila e testa a
+SPA e envia uma imagem Nginx à máquina definida por `AWS_FRONTEND_HOST`.
+`AWS_FRONTEND_PORT` usa 8081 por padrão. O Dockerfile recebe `dist/` já compilado;
+não execute `vite dev` nem `vite preview` como servidor de produção.
+As configurações e os passos de HTTPS estão no
+[guia de deploy](../../docs/autenticacao-e-deploy.md).
+
+Veja o [passo a passo de login e cadastro com Auth0](../../docs/login-auth0.md),
+sem serviço próprio de usuários.

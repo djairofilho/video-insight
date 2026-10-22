@@ -17,6 +17,7 @@ import br.edu.insper.videoinsight.job.storage.ArtifactStorage;
 import br.edu.insper.videoinsight.job.storage.PresignedUrl;
 import br.edu.insper.videoinsight.job.video.VideoClient;
 import java.time.Clock;
+import br.edu.insper.videoinsight.job.security.CurrentUser;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -81,7 +82,7 @@ public class JobService {
         validateIdempotencyKey(idempotencyKey);
         var normalizedOperations = normalize(operations);
 
-        var existing = jobs.findByIdempotencyKey(idempotencyKey);
+        var existing = jobs.findByOwnerIdAndIdempotencyKey(CurrentUser.subject(), idempotencyKey);
         if (existing.isPresent()) {
             return sameRequestOrConflict(existing.get(), videoId, normalizedOperations);
         }
@@ -97,6 +98,7 @@ public class JobService {
             return transaction.execute(status -> {
                 var created = Job.create(
                         videoId, normalizedOperations, idempotencyKey, storageKey(videoId), clock.instant());
+                created.assignOwner(CurrentUser.subject());
                 jobs.saveAndFlush(created);
                 attempts.save(JobAttempt.queued(created.getId(), created.getAttempt(), clock.instant()));
                 outbox.enqueueProcessingRequested(created);
@@ -104,7 +106,7 @@ public class JobService {
             });
         } catch (DataIntegrityViolationException exception) {
             // Duas requisições simultâneas com a mesma chave: a segunda devolve o job da primeira.
-            var concurrent = jobs.findByIdempotencyKey(idempotencyKey).orElseThrow(() -> exception);
+            var concurrent = jobs.findByOwnerIdAndIdempotencyKey(CurrentUser.subject(), idempotencyKey).orElseThrow(() -> exception);
             return sameRequestOrConflict(concurrent, videoId, normalizedOperations);
         }
     }
@@ -122,7 +124,7 @@ public class JobService {
     public JobPage listJobs(UUID videoId, int limit, String cursor) {
         // Um item a mais indica se existe próxima página.
         var page = cursor == null
-                ? jobs.findByVideoIdOrderByCreatedAtDescIdDesc(videoId, Limit.of(limit + 1))
+                ? jobs.findByOwnerIdAndVideoIdOrderByCreatedAtDescIdDesc(CurrentUser.subject(), videoId, Limit.of(limit + 1))
                 : findPageAfter(videoId, JobCursor.decode(cursor), limit + 1);
         if (page.size() <= limit) {
             return new JobPage(page, null);
@@ -185,11 +187,12 @@ public class JobService {
     }
 
     private List<Job> findPageAfter(UUID videoId, JobCursor cursor, int limit) {
-        return jobs.findPageByVideoAfter(videoId, cursor.createdAt(), cursor.id(), Limit.of(limit));
+        return jobs.findOwnedPageByVideoAfter(CurrentUser.subject(), videoId, cursor.createdAt(), cursor.id(), Limit.of(limit));
     }
 
     private Job findJob(UUID jobId) {
         return jobs.findById(jobId)
+                .filter(job -> CurrentUser.subject().equals(job.getOwnerId()))
                 .orElseThrow(() -> ApiException.notFound("JOB_NOT_FOUND", "Job não encontrado."));
     }
 
