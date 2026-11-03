@@ -16,9 +16,11 @@ correspondente for alterado.
 Não há revisão obrigatória, CODEOWNERS ou proteção de branch configurada nesta
 etapa.
 
-O job `deploy-frontend` compila a SPA Vite/React e publica uma imagem Nginx por
-SSH na EC2 definida por `AWS_FRONTEND_HOST`. Ele executa testes e verifica as
-rotas da SPA antes e depois da troca, com restauração do contêiner anterior em
-caso de falha. As configurações Auth0 e URLs são fornecidas por Variables;
-o frontend reutiliza os secrets SSH existentes. A lista completa está no
+O job `deploy-frontend` publica a SPA Vite/React no projeto Vercel após as
+validações. O build remoto recebe as configurações públicas do ambiente
+Production da Vercel; a publicação usa `VERCEL_TOKEN` e os IDs do projeto/equipe.
+Os serviços AWS continuam entregues como imagens por SSH, com rollback.
+O workflow também provisiona HTTPS de objetos, coleta restrita, túneis,
+dashboards e alertas, preservando volumes e o ledger de consumo do worker.
+A lista completa de configurações está no
 [guia de autenticação e deploy](../../docs/autenticacao-e-deploy.md).
