@@ -13,6 +13,16 @@ class Settings(BaseSettings):
 
     worker_id: str = Field(default_factory=socket.gethostname)
     consumer_enabled: bool = True
+    worker_concurrency: int = Field(default=1, ge=1, le=2)
+    provider_budget_enabled: bool = False
+    provider_budget_path: str = "/var/lib/video-insight/provider-budget.sqlite3"
+    groq_audio_seconds_per_hour: int = Field(default=6000, ge=1, le=7200)
+    groq_audio_seconds_per_day: int = Field(default=24000, ge=1, le=28800)
+    groq_requests_per_minute: int = Field(default=15, ge=1, le=20)
+    gemini_requests_per_minute: int = Field(default=3, ge=1)
+    gemini_requests_per_day: int = Field(default=100, ge=1)
+    gemini_tokens_per_minute: int = Field(default=60000, ge=1)
+    gemini_max_output_tokens: int = Field(default=4096, ge=512, le=8192)
 
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672

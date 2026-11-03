@@ -15,6 +15,7 @@ Docker (`docker.host.internal`).
 | Matheus Pereira | `docker.host.internal:19000` | MinIO `9000` |
 | Leonardo Moretti | `docker.host.internal:15434` | Job PostgreSQL `5434` |
 | Leonardo Moretti | `docker.host.internal:15672` | RabbitMQ `5672` |
+| Leonardo Moretti | `docker.host.internal:19000` | MinIO `9000` |
 | Eduardo Marcelino | `docker.host.internal:15672` | RabbitMQ `5672` |
 | Eduardo Marcelino | `docker.host.internal:19000` | MinIO `9000` |
 
@@ -22,10 +23,16 @@ Cada origem usa uma chave Ed25519 própria em
 `/etc/video-insight/tunnel_ed25519`. As chaves autorizadas em Ruan limitam o
 encaminhamento aos destinos da tabela e não são armazenadas no Git.
 
-O Job Service lê os artefatos do MinIO pelo endereço privado
-`core.private.internal:8081`. A chave SSH dessa máquina não autoriza o encaminhamento
-para a porta `9000`; banco de dados e RabbitMQ continuam no túnel.
+O Job Service também lê os artefatos pelo túnel local `19000`. O instalador
+`allow-job-storage.py` acrescenta somente o destino MinIO à chave restrita que
+já existia. Nenhuma chave privada é copiada entre servidores.
 
 Video Service e Processing Service usam os endpoints locais da tabela. Os
-buckets do MinIO permanecem privados; a porta `8081` do Core aceita as URLs
-assinadas de upload e download.
+buckets do MinIO permanecem privados; a porta `8081` do Core termina HTTPS com Caddy e aceita as URLs
+assinadas de upload e download. O MinIO atende internamente em `9000`.
+
+A coleta das máquinas também usa SSH, porque a rede AWS bloqueia as portas
+`9100` e `9091` entre as instâncias. O monitor mantém uma chave própria, sem
+acesso a shell, limitada a `9100` e, no gateway, a `9091`. As host keys são
+obtidas por conexões administrativas já verificadas, sem aceitar hosts desconhecidos.
+Veja [operação e limites](../../../docs/operacao-infra.md).

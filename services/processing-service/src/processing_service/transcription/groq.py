@@ -1,4 +1,5 @@
 import time
+import math
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,8 @@ from processing_service.domain import (
     Transcript,
     TranscriptSegment,
 )
+from processing_service.budget import ProviderBudget
+from processing_service.metrics import METRICS
 
 _RETRYABLE_STATUS = {408, 409, 429}
 _ERROR_DETAIL = 300
@@ -27,6 +30,7 @@ class GroqTranscriber:
         max_attempts: int,
         max_retry_wait_seconds: float,
         sleep: Callable[[float], None] = time.sleep,
+        budget: ProviderBudget | None = None,
     ) -> None:
         self._client = client
         self._model = model
@@ -34,6 +38,7 @@ class GroqTranscriber:
         self._max_attempts = max_attempts
         self._max_retry_wait = max_retry_wait_seconds
         self._sleep = sleep
+        self._budget = budget
         self.model = ModelReference(
             purpose=Operation.TRANSCRIPTION, provider="groq", model=model, version=model
         )
@@ -50,6 +55,7 @@ class GroqTranscriber:
         max_attempts: int,
         max_retry_wait_seconds: float,
         transport: httpx.BaseTransport | None = None,
+        budget: ProviderBudget | None = None,
     ) -> "GroqTranscriber":
         client = httpx.Client(
             base_url=base_url,
@@ -63,10 +69,11 @@ class GroqTranscriber:
             language=language,
             max_attempts=max_attempts,
             max_retry_wait_seconds=max_retry_wait_seconds,
+            budget=budget,
         )
 
     def transcribe(self, audio: Path, *, duration_seconds: float) -> Transcript:
-        body = self._request(audio)
+        body = self._request(audio, duration_seconds=duration_seconds)
         segments = tuple(
             segment
             for raw in body.get("segments") or ()
@@ -76,18 +83,23 @@ class GroqTranscriber:
             language=self._language, duration_seconds=duration_seconds, segments=segments
         )
 
-    def _request(self, audio: Path) -> dict[str, Any]:
+    def _request(self, audio: Path, *, duration_seconds: float = 0) -> dict[str, Any]:
         for attempt in range(1, self._max_attempts + 1):
+            if self._budget:
+                self._budget.reserve("groq", units=max(10, math.ceil(duration_seconds)))
             try:
                 response = self._post(audio)
             except httpx.TransportError as error:
+                METRICS.providers.labels("groq", "network_error").inc()
                 failure = ProcessingError(
                     "transcription_unavailable", f"Falha de rede com a Groq: {error}", retryable=True
                 )
                 wait = 2.0**attempt
             else:
                 if response.is_success:
+                    METRICS.providers.labels("groq", "success").inc()
                     return response.json()
+                METRICS.providers.labels("groq", "error").inc()
                 detail = response.text[:_ERROR_DETAIL]
                 message = f"Groq respondeu {response.status_code}: {detail}"
                 if response.status_code not in _RETRYABLE_STATUS and response.status_code < 500:

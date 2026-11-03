@@ -5,6 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apk add --no-cache ffmpeg
 RUN addgroup -S app && adduser -S -G app app
+RUN mkdir -p /var/lib/video-insight && chown app:app /var/lib/video-insight
 WORKDIR /app
 COPY pyproject.toml .
 COPY src src

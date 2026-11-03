@@ -2,7 +2,8 @@
 
 ## Ambiente publicado
 
-Frontend: <https://video-insight-ruby.vercel.app>. A SPA React/Vite está na
+Frontend principal: <https://video-insight.alyvera.pro>. O endereço
+<https://video-insight-ruby.vercel.app> permanece disponível por compatibilidade. A SPA React/Vite está na
 Vercel; os três serviços, KrakenD, bancos, RabbitMQ e MinIO ficam na AWS.
 As alternativas antigas EC2/CloudFront foram preservadas, mas não são usadas.
 
@@ -20,7 +21,9 @@ flowchart LR
   J -->|Outbox / confirmação| Q[RabbitMQ]
   Q --> P[Processing / FFmpeg / Groq / Gemini]
   P --> Q
-  N -->|Storage / HTTP privado| S[(MinIO)]
+  U -->|PUT e GET HTTPS assinados| C[Caddy / objetos]
+  N -->|Compatibilidade / HTTPS| C
+  C --> S[(MinIO privado)]
   V --> S
   J --> S
   P --> S
@@ -43,7 +46,8 @@ O tenant acessível é `dev-l73dre016gevtcsh.us.auth0.com`. Consulte o
 Identifier `https://video-insight-api` e RS256. A SPA tem **User-Delegated Access**
 com autorização por aplicação. Não é necessário Client Secret ou grant M2M.
 
-Mantenha `https://video-insight-ruby.vercel.app` e `http://localhost:5173` nas
+Mantenha `https://video-insight.alyvera.pro`,
+`https://video-insight-ruby.vercel.app` e `http://localhost:5173` nas
 três listas: **Allowed Callback URLs**, **Allowed Logout URLs** e
 **Allowed Web Origins**. A conexão `Username-Password-Authentication` está
 habilitada e é solicitada explicitamente pelo frontend. Tokens ficam na memória.
@@ -55,6 +59,10 @@ e `/storage/videos/*` e `/storage/artifacts/*` ao Nginx da mesma máquina.
 O fallback da SPA não captura essas rotas nem assets. Respostas privadas usam
 `Cache-Control: private, no-store`.
 
+O storage atual usa URLs assinadas HTTPS diretas, conforme o
+[guia de operação](operacao-infra.md). O caminho descrito abaixo permanece
+como compatibilidade para URLs HTTP antigas.
+
 O storage assina URLs com o secret `STORAGE_PUBLIC_ENDPOINT`. O frontend troca a origem,
 acrescenta `/storage` e preserva caminho e query original.
 [`proxy.conf`](../infrastructure/aws/edge/proxy.conf.template) remove esse prefixo, fixa
@@ -62,12 +70,13 @@ acrescenta `/storage` e preserva caminho e query original.
 anterior direto ao MinIO causava `SignatureDoesNotMatch` por alterar o Host.
 O proxy preserva `Content-Type`, parâmetros `X-Amz-*` e `Range`, transmite sem
 buffer de corpo e aceita 110 MB para atender ao limite de produto de 100 MiB.
-URLs assinadas são permissões temporárias; os logs do Nginx omitem sua query.
+URLs assinadas são permissões temporárias; os logs de acesso do Nginx omitem sua query.
 
-**Trecho sem TLS:** Vercel → Nginx público e os hops internos AWS usam HTTP.
-O navegador usa HTTPS, sem mixed content, mas bearer e arquivos ficam sem TLS
-no trecho de origem. TLS completo exige domínio/certificado na origem e acesso
-à configuração de rede da disciplina. Os buckets continuam privados.
+**Trecho de API sem TLS:** Vercel → Nginx público e chamadas entre serviços
+continuam HTTP. O navegador usa HTTPS, mas o bearer não tem TLS ponta a ponta
+nessa cadeia de API. Os objetos novos usam HTTPS direto no Caddy, e o proxy
+de compatibilidade valida o TLS do upstream. As dependências de dados passam
+pelos túneis SSH. Os buckets continuam privados.
 
 ## GitHub e Vercel
 
@@ -85,8 +94,9 @@ envie seu valor no chat nem copie credenciais pessoais do CLI para o repositóri
 | `AUTH_ISSUER` | `https://dev-l73dre016gevtcsh.us.auth0.com/` |
 | `AUTH_AUDIENCE` | `https://video-insight-api` |
 | `AUTH0_CLIENT_ID` | Client ID público da SPA do guia de login |
-| `FRONTEND_ORIGIN` | `https://video-insight-ruby.vercel.app` |
-| `API_PUBLIC_BASE_URL` | `https://video-insight-ruby.vercel.app/api/v1` |
+| `FRONTEND_ORIGIN` | `https://video-insight.alyvera.pro` |
+| `FRONTEND_ORIGINS` | `https://video-insight.alyvera.pro,https://video-insight-ruby.vercel.app` |
+| `API_PUBLIC_BASE_URL` | `https://video-insight.alyvera.pro/api/v1` |
 | `VERCEL_ORG_ID` | ID da equipe Vercel |
 | `VERCEL_PROJECT_ID` | ID do projeto `video-insight` |
 
@@ -95,13 +105,13 @@ Os hosts são **Secrets**, nunca Variables nem valores literais em arquivos:
 | Secret | Uso |
 | --- | --- |
 | `AWS_GATEWAY_HOST`, `AWS_VIDEO_HOST`, `AWS_PROCESSING_HOST`, `AWS_CORE_HOST`, `AWS_OBSERVABILITY_HOST` | Acesso SSH às máquinas |
-| `AWS_VIDEO_PRIVATE_HOST`, `AWS_JOB_PRIVATE_HOST`, `AWS_PROCESSING_PRIVATE_HOST`, `AWS_CORE_PRIVATE_HOST` | Rotas internas, storage e monitoramento |
+| `AWS_GATEWAY_PRIVATE_HOST`, `AWS_VIDEO_PRIVATE_HOST`, `AWS_JOB_PRIVATE_HOST`, `AWS_PROCESSING_PRIVATE_HOST`, `AWS_CORE_PRIVATE_HOST` | Rotas internas, storage e monitoramento |
 | `AWS_DOCKER_BRIDGE_HOST`, `AWS_DOCKER_NETWORK_CIDR` | Bind dos túneis e regra de rede Docker |
 | `STORAGE_PUBLIC_ENDPOINT` | Origem usada na assinatura S3 |
 | `METRICS_ALLOWED_NETWORKS` | CIDRs autorizados a coletar métricas, separados por vírgula |
 
 `scripts/render_deployment.py` gera Gateway, Vercel, Nginx, Prometheus e unidades
-systemd a partir dos arquivos `.template`. Os arquivos gerados são ignorados
+systemd e Caddy a partir dos arquivos `.template`. Os arquivos gerados são ignorados
 pelo Git. Sem secrets completos, a geração falha antes de gravá-los. Nunca use
 `--example` no deploy: esse modo utiliza hosts locais somente para validar.
 
@@ -136,6 +146,11 @@ token restrito ao projeto; não foi ampliado o acesso à equipe para contornar
 isso. Variáveis Vite vêm da Vercel, não das variables do GitHub. Alterá-las exige
 novo build. Senhas, PEM e chaves de IA nunca podem ter prefixo `VITE_`.
 
+O monitoramento público usa também as variables `GRAFANA_PUBLIC_HOST`,
+`PROMETHEUS_PUBLIC_HOST` e `STORAGE_PUBLIC_HOST`, e o secret
+`PROMETHEUS_AUTH_HASH` com hash bcrypt da senha administrativa. Esses valores
+alimentam o proxy de monitoramento; nenhum hash real deve ser versionado.
+
 ## Pipeline e rollback
 
 `deploy-aws.yml` chama `validate-repository.yml` com `full-validation: true`.
@@ -158,16 +173,15 @@ pipeline remoto verde. O merge deve ocorrer após os checks do PR; a atualizaç�
 
 ## Monitoramento
 
-Prometheus coleta `/actuator/prometheus` em Video/Job e `/metrics` no Processing
-a cada 15 segundos. As métricas aceitam somente VPC, ponte Docker e loopback;
-não são expostas pelo Gateway. O dashboard **Video Insight: operação**, UID
-`video-insight`, mostra disponibilidade, requisições, latência média, 5xx,
-memória JVM e conexão do worker. O datasource existente é preservado.
+Grafana está em <https://grafana.alyvera.pro> e Prometheus em
+<https://prometheus.alyvera.pro>. Ambos exigem autenticação administrativa.
+Os serviços nativos continuam privados; a Vercel encaminha HTTPS ao Core e
+os túneis SSH chegam à VM de monitoramento. Os dados não são publicados
+anonimamente nem armazenados no cache público.
 
-Prometheus escuta no IP privado de Leonardo. Acesse Grafana por túnel SSH se a
-porta 3000 não estiver liberada, usando a senha administrativa existente.
-Volumes preservam histórico e painéis. Alertas e métricas de cada etapa da IA
-não foram incluídos neste escopo.
+Os painéis incluem as máquinas, filas, etapas de IA e cota local, com 14 regras
+de alerta e dez alvos. Os detalhes, limites e alternativa por SSH estão no
+[guia de operação](operacao-infra.md).
 
 Siga o [roteiro da entrega 4](entrega-4.md), o
 [desenvolvimento local](desenvolvimento-local.md) e os

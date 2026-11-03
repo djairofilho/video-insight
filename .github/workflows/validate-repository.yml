@@ -79,10 +79,11 @@ jobs:
         run: python scripts/check_sensitive_addresses.py
       - name: Validate operational helpers
         run: |
-          bash -n infrastructure/aws/deploy-service.sh infrastructure/aws/edge/deploy.sh
+          bash -n infrastructure/aws/deploy-service.sh infrastructure/aws/edge/deploy.sh infrastructure/aws/https/deploy.sh infrastructure/aws/observability/node-exporter.sh infrastructure/aws/observability/metrics-firewall.sh
           bash infrastructure/aws/test-deploy-service.sh
           python -m pip install pytest==9.1.1 httpx==0.28.1
           python -m pytest tests/load tests/deployment -q
+          docker run --rm --entrypoint promtool -v "$PWD/infrastructure/aws/observability/alerts.yml:/etc/prometheus/alerts.yml:ro" -v "$PWD/tests/deployment/alerts.test.yml:/tests/alerts.test.yml:ro" prom/prometheus:v3.5.0 test rules /tests/alerts.test.yml
           python scripts/render_deployment.py edge --example
           docker run --rm -v "$PWD/infrastructure/aws/edge/proxy.conf:/etc/nginx/conf.d/default.conf:ro" nginx:1.29-alpine nginx -t
 

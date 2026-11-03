@@ -1,0 +1,16 @@
+[Unit]
+Description=Video Insight container metrics for Node Exporter
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/video-insight/node-exporter/container-metrics.py
+User=root
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/video-insight/node-exporter/textfile
+TimeoutStartSec=10
+MemoryMax=64M

@@ -4,6 +4,7 @@ from processing_service.config import Settings
 from processing_service.domain import ConfigurationError
 from processing_service.transcription.base import Transcriber
 from processing_service.transcription.groq import GroqTranscriber
+from processing_service.budget import get_budget
 
 
 def _groq(settings: Settings) -> Transcriber:
@@ -18,6 +19,7 @@ def _groq(settings: Settings) -> Transcriber:
         language=settings.transcription_language,
         max_attempts=settings.groq_max_attempts,
         max_retry_wait_seconds=settings.groq_max_retry_wait_seconds,
+        budget=get_budget(settings),
     )
 
 

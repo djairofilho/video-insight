@@ -55,7 +55,7 @@ class FfmpegMedia:
                 "ffmpeg", "-nostdin", "-v", "error", "-y",
                 "-i", str(video),
                 "-vn", "-ac", "1", "-ar", "16000",
-                "-c:a", "flac",
+                "-c:a", "flac", "-threads", "1",
                 str(destination),
             ],
             error_code="audio_extraction_failed",

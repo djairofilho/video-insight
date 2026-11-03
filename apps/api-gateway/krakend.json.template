@@ -5,14 +5,23 @@
   "port": 8080,
   "timeout": "3s",
   "cache_ttl": "0s",
+  "max_idle_connections": 128,
+  "max_idle_connections_per_host": 64,
+  "idle_connection_timeout": "90s",
+  "dialer_keep_alive": "30s",
   "extra_config": {
+    "telemetry/opentelemetry": {
+      "service_name": "video-insight-gateway",
+      "metric_reporting_period": 15,
+      "exporters": {
+        "prometheus": [{"name": "private", "port": 9091, "process_metrics": true, "go_metrics": false}]
+      }
+    },
     "router": {
       "auto_options": true
     },
     "security/cors": {
-      "allow_origins": [
-        "__FRONTEND_ORIGIN__"
-      ],
+      "allow_origins": __FRONTEND_ORIGINS_JSON__,
       "allow_methods": [
         "GET",
         "POST",

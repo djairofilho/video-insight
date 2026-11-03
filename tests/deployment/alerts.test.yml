@@ -1,0 +1,34 @@
+rule_files:
+  - /etc/prometheus/alerts.yml
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="video-service"}'
+        values: '0 0 0 1 1'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: ServiceUnavailable
+        exp_alerts:
+          - exp_labels: {job: video-service, severity: critical}
+            exp_annotations: {summary: "Um serviço ou coletor está indisponível"}
+      - eval_time: 4m
+        alertname: ServiceUnavailable
+        exp_alerts: []
+  - interval: 1m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{role="core",mountpoint="/",fstype="ext4"}'
+        values: '536870912+0x7'
+      - series: 'node_filesystem_size_bytes{role="core",mountpoint="/",fstype="ext4"}'
+        values: '8589934592+0x7'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: DiskSpaceCritical
+        exp_alerts:
+          - exp_labels: {role: core, mountpoint: "/", fstype: ext4, severity: critical}
+            exp_annotations: {summary: "Máquina com menos de 1 GiB de disco livre"}
+      - eval_time: 6m
+        alertname: DiskSpaceLow
+        exp_alerts:
+          - exp_labels: {role: core, mountpoint: "/", fstype: ext4, severity: warning}
+            exp_annotations: {summary: "Máquina com menos de 20% de disco livre"}

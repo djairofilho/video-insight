@@ -1,7 +1,14 @@
 name: video-insight-core
 
+x-logging: &logging
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   video-db:
+    logging: *logging
     image: postgres:17.11-alpine
     environment:
       POSTGRES_DB: video_insight_videos
@@ -19,6 +26,7 @@ services:
     restart: unless-stopped
 
   job-db:
+    logging: *logging
     image: postgres:17.11-alpine
     environment:
       POSTGRES_DB: video_insight_jobs
@@ -36,6 +44,7 @@ services:
     restart: unless-stopped
 
   rabbitmq:
+    logging: *logging
     image: rabbitmq:4.3.5-management-alpine
     environment:
       RABBITMQ_DEFAULT_USER: video_insight
@@ -53,16 +62,17 @@ services:
     restart: unless-stopped
 
   minio:
+    logging: *logging
     image: video-insight/minio:RELEASE.2025-09-07T16-13-09Z
     pull_policy: never
     command: server /data --console-address :9001
     environment:
       MINIO_ROOT_USER: video_insight
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_API_CORS_ALLOW_ORIGIN: ${FRONTEND_ORIGIN:?Configure FRONTEND_ORIGIN}
+      MINIO_API_CORS_ALLOW_ORIGIN: ${FRONTEND_ORIGINS:-${FRONTEND_ORIGIN:?Configure FRONTEND_ORIGIN}}
     ports:
       - "${AWS_CORE_PRIVATE_HOST:?Configure o secret de rede}:9000:9000"
-      - "0.0.0.0:8081:9000"
+      - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
     volumes:
       - minio-data:/data

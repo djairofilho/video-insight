@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+/acessos-locais/
 
 # Editors and operating systems
 .idea/
@@ -51,3 +52,4 @@ htmlcov/
 /infrastructure/aws/tunnels/video-service-tunnel.service
 /infrastructure/aws/tunnels/job-service-tunnel.service
 /infrastructure/aws/tunnels/processing-service-tunnel.service
+infrastructure/aws/https/storage.Caddyfile

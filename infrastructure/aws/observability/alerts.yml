@@ -1,0 +1,70 @@
+groups:
+  - name: video-insight
+    rules:
+      - alert: ServiceUnavailable
+        expr: up == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Um serviço ou coletor está indisponível"}
+      - alert: DiskSpaceLow
+        expr: node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} < 0.20
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Máquina com menos de 20% de disco livre"}
+      - alert: DiskSpaceCritical
+        expr: node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} < 1073741824
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Máquina com menos de 1 GiB de disco livre"}
+      - alert: MemoryPressure
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.15
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Pouca memória disponível na máquina"}
+      - alert: CPUHigh
+        expr: 1 - avg by (instance,role) (rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.85
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: "CPU acima de 85% por dez minutos"}
+      - alert: ContainerMemoryPressure
+        expr: (video_insight_container_memory_working_set_bytes / video_insight_container_memory_limit_bytes > 0.85) and (video_insight_container_memory_limit_bytes > 0)
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Contêiner próximo do limite de memória"}
+      - alert: ContainerOOM
+        expr: increase(video_insight_container_oom_kills_total[5m]) > 0
+        labels: {severity: critical}
+        annotations: {summary: "Contêiner teve falta de memória"}
+      - alert: ContainerRestarted
+        expr: increase(video_insight_container_restarts_total[5m]) > 0
+        labels: {severity: warning}
+        annotations: {summary: "Contêiner reiniciou inesperadamente"}
+      - alert: ContainerMetricsStale
+        expr: time() - video_insight_container_collector_timestamp_seconds > 90
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: "Coletor de contêineres parou de atualizar"}
+      - alert: WorkerDisconnected
+        expr: video_insight_worker_connected == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Worker sem todos os consumidores conectados"}
+      - alert: ProviderBudgetReached
+        expr: increase(video_insight_budget_rejections_total[10m]) > 0
+        labels: {severity: warning}
+        annotations: {summary: "Uma chamada de IA foi impedida pelo orçamento"}
+      - alert: JobQueueWaiting
+        expr: video_insight_oldest_queued_job_seconds > 300
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Há job esperando mais de cinco minutos na fila"}
+      - alert: JobMetricsUnavailable
+        expr: video_insight_job_metrics_available == 0
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: "Métricas da fila não puderam ser atualizadas"}
+      - alert: HTTPErrorRate
+        expr: sum by (job) (rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum by (job) (rate(http_server_requests_seconds_count[5m])) > 0.01 and sum by (job) (increase(http_server_requests_seconds_count[5m])) >= 100
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Mais de 1% de erros HTTP com pelo menos cem consultas"}

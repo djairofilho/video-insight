@@ -5,9 +5,35 @@ Worker Python responsável pelo pipeline de mídia e IA. Consome
 transcreve com Groq Whisper, gera resumo e capítulos com agentes Gemini, grava os
 artefatos no MinIO e publica os eventos de progresso, conclusão ou falha.
 
-O serviço não expõe API de negócio nem acessa PostgreSQL. O único endpoint HTTP é
-`GET /health`, que também informa o estado do consumidor (`connected`,
+O serviço não expõe API de negócio nem acessa PostgreSQL. `GET /health`
+informa o estado do consumidor (`connected`,
 `connecting` ou `disabled`).
+
+`GET /metrics` fornece métricas agregadas somente à rede interna autorizada.
+Não inclui usuários, identificadores de jobs ou endereços nas labels.
+
+## Admissão de chamadas aos provedores
+
+Com `PROVIDER_BUDGET_ENABLED=true`, cada tentativa reserva consumo no SQLite
+antes da chamada externa. O histórico persiste entre reinicializações; uma
+falha não devolve a reserva. Tetos por minuto, hora e janela móvel de 24 horas
+continuam sendo verificados atomicamente.
+
+Os consumidores do mesmo processo aguardam em ordem por provedor. Assim, uma
+chamada nova não consome a vaga pela qual outra já estava esperando. Essa fila
+não mantém transação SQLite aberta e a espera do Gemini não bloqueia o Groq.
+A proteção entre instâncias continua no SQLite; a ordem de admissão não é uma
+fila distribuída entre réplicas.
+
+- `video_insight_budget_wait_seconds`: tempo na fila local e na espera por cota,
+  sem incluir o HTTP externo.
+- `video_insight_budget_rejection_reasons_total`: separa provedor, janela,
+  medida e motivo (`wait_timeout`, `request_exceeds_limit` ou
+  `window_exhausted`).
+
+A troca de conta exige preservar o histórico de cada conta separadamente.
+Não apague o ledger para liberar cota. Os tetos locais não confirmam o plano
+gratuito: confira plano, faturamento e limites efetivos antes de gerar carga.
 
 ## Módulos
 

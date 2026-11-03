@@ -1,5 +1,6 @@
 import logging
 import time
+import json
 from collections.abc import Callable, Sequence
 
 import httpx
@@ -8,6 +9,8 @@ from google.genai import errors, types
 
 from processing_service.content_intelligence.agent import Tool, ToolCall, ToolResult
 from processing_service.domain import ProcessingError
+from processing_service.budget import ProviderBudget
+from processing_service.metrics import METRICS
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +30,8 @@ class GeminiChatModel:
         call_attempts: int,
         max_backoff_seconds: float,
         sleep: Callable[[float], None] = time.sleep,
+        budget: ProviderBudget | None = None,
+        max_output_tokens: int = 4096,
     ) -> None:
         self._client = client
         self.model = model
@@ -35,6 +40,8 @@ class GeminiChatModel:
         self._call_attempts = call_attempts
         self._max_backoff = max_backoff_seconds
         self._sleep = sleep
+        self._budget = budget
+        self._max_output_tokens = max_output_tokens
 
     @classmethod
     def create(
@@ -47,6 +54,8 @@ class GeminiChatModel:
         timeout_seconds: float,
         call_attempts: int,
         max_backoff_seconds: float,
+        budget: ProviderBudget | None = None,
+        max_output_tokens: int = 4096,
     ) -> "GeminiChatModel":
         client = genai.Client(
             api_key=api_key,
@@ -62,10 +71,13 @@ class GeminiChatModel:
             thinking_level=thinking_level,
             call_attempts=call_attempts,
             max_backoff_seconds=max_backoff_seconds,
+            budget=budget,
+            max_output_tokens=max_output_tokens,
         )
 
     def open_session(self, system_prompt: str, tools: Sequence[Tool]) -> "GeminiSession":
         config = types.GenerateContentConfig(
+            max_output_tokens=self._max_output_tokens,
             system_instruction=system_prompt,
             tools=[
                 types.Tool(
@@ -92,20 +104,32 @@ class GeminiChatModel:
     ) -> tuple[types.GenerateContentResponse, str]:
         models = self._rotation()
         for attempt, model in enumerate(models, start=1):
+            if self._budget:
+                # Limite conservador de texto: bytes UTF-8 do pedido + teto de saída.
+                payload = {"contents": [item.model_dump(mode="json") for item in contents],
+                           "config": config.model_dump(mode="json")}
+                estimate = len(json.dumps(payload, ensure_ascii=False).encode("utf8")) + self._max_output_tokens
+                self._budget.reserve("google", tokens=estimate)
             try:
                 response = self._client.models.generate_content(
                     model=model, contents=contents, config=config
                 )
             except errors.APIError as error:
+                METRICS.providers.labels("google", "error").inc()
                 message = f"Gemini ({model}) respondeu {error.code}: {error.message}"
                 if error.code not in _RETRYABLE_STATUS and error.code < 500:
                     raise ProcessingError("llm_rejected", message, retryable=False) from error
                 failure = ProcessingError("llm_unavailable", message, retryable=True)
             except httpx.TransportError as error:
+                METRICS.providers.labels("google", "network_error").inc()
                 failure = ProcessingError(
                     "llm_unavailable", f"Falha de rede com o Gemini: {error}", retryable=True
                 )
             else:
+                METRICS.providers.labels("google", "success").inc()
+                usage = response.usage_metadata
+                if usage and usage.total_token_count:
+                    METRICS.tokens.labels("google").inc(usage.total_token_count)
                 _log_usage(model, response)
                 return response, model
             if attempt == len(models):
