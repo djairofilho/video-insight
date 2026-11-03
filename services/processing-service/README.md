@@ -79,9 +79,9 @@ resumo e dos capítulos, então uma falha nessas etapas não a perde.
 
 | Variável | Padrão | Uso |
 |---|---|---|
-| `RABBITMQ_HOST` / `RABBITMQ_PORT` | `localhost` / `5672` | Na AWS, `172.17.0.1` / `15672` pelo túnel |
+| `RABBITMQ_HOST` / `RABBITMQ_PORT` | `localhost` / `5672` | Na AWS, `docker.host.internal` / `15672` pelo túnel |
 | `RABBITMQ_USER` / `RABBITMQ_PASSWORD` | `video_insight` / vazio | Senha obrigatória |
-| `MINIO_ENDPOINT` | `localhost:9000` | Na AWS, `172.17.0.1:19000` pelo túnel |
+| `MINIO_ENDPOINT` | `localhost:9000` | Na AWS, `docker.host.internal:19000` pelo túnel |
 | `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` | `video_insight` / vazio | Chave secreta obrigatória |
 | `VIDEOS_BUCKET` / `ARTIFACTS_BUCKET` | `videos` / `artifacts` | Buckets de entrada e saída |
 | `GROQ_API_KEY` | vazio | Obrigatória |

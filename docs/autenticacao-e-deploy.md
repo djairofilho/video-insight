@@ -1,221 +1,174 @@
 # Autenticação e deploy
 
-## Arquitetura
+## Ambiente publicado
+
+Frontend: <https://video-insight-ruby.vercel.app>. A SPA React/Vite está na
+Vercel; os três serviços, KrakenD, bancos, RabbitMQ e MinIO ficam na AWS.
+As alternativas antigas EC2/CloudFront foram preservadas, mas não são usadas.
 
 ```mermaid
 flowchart LR
-  U[Navegador / React / Nginx na EC2] --> A[Auth0 Universal Login / PKCE]
-  U --> E[HTTPS da API]
-  E --> G[KrakenD / EC2 Djairo]
-  G --> V[Video Service / EC2 Matheus]
-  G --> J[Job Service / EC2 Leonardo]
-  J --> V
-  V --> D[(PostgreSQL / EC2 Ruan)]
-  J --> D
-  J --> Q[RabbitMQ / EC2 Ruan]
-  Q --> P[Processing Service / EC2 Eduardo]
+  U[Navegador] --> A[Auth0 Universal Login / PKCE]
+  U -->|HTTPS| E[Vercel / React e rewrites]
+  E -->|HTTP 8081| N[Nginx / EC2 Gateway]
+  N -->|API / loopback 8082| G[KrakenD]
+  G --> V[Video Service]
+  G --> J[Job Service]
+  J -->|Bearer do usuário| V
+  V --> VD[(PostgreSQL Video)]
+  J --> JD[(PostgreSQL Job)]
+  J -->|Outbox / confirmação| Q[RabbitMQ]
+  Q --> P[Processing / FFmpeg / Groq / Gemini]
   P --> Q
-  P --> S[(MinIO privado / EC2 Ruan)]
-  U -->|URLs assinadas por HTTPS| S
+  N -->|Storage / HTTP privado| S[(MinIO)]
+  V --> S
+  J --> S
+  P --> S
+  M[Prometheus / Grafana] --> V
+  M --> J
+  M --> P
 ```
 
-O Video Service cadastra metadados, valida o upload e emite URLs temporárias.
-O navegador envia o arquivo diretamente ao MinIO. O Job Service verifica o
-vídeo e grava o pedido de processamento e o evento no outbox na mesma transação.
-O worker Python consome RabbitMQ, extrai áudio com FFmpeg e usa Groq/Gemini para
-produzir os resultados. Eventos atualizam o Job Service, consultado por polling
-pelo frontend. Os bancos são separados por serviço. Túneis SSH existentes
-conectam os serviços às dependências; Prometheus e Grafana ficam na EC2 Leonardo.
+O Gateway encaminha `Authorization`; os dois serviços Java validam assinatura
+RS256, expiração, emissor, audience e `sub`. Job → Video preserva o bearer.
+O proprietário vem do JWT. Recursos de outro usuário retornam 404, inclusive
+URLs de reprodução/exportação, exclusão, cancelamento e retry. Registros antigos
+com dono `local-development` não foram transferidos. Processing é interno e
+não recebe o token do usuário.
 
-O gateway encaminha o header `Authorization`. Video Service e Job Service
-validam o JWT independentemente: assinatura RS256, expiração, emissor, audience
-e subject. A consulta interna Job → Video preserva o mesmo bearer token.
-Nenhum header de identidade enviado pelo cliente determina o proprietário.
-O Processing Service continua sendo um consumidor interno, sem login de usuário.
+## Auth0
 
-Vídeos e jobs recebem `owner_id` a partir do `sub` validado. Listas, paginação,
-URLs, cancelamentos, tentativas e resultados são restritos ao dono. Outro usuário
-recebe 404. A chave de idempotência é única por usuário. Registros anteriores
-ficam associados a `local-development`; não são atribuídos automaticamente ao
-primeiro usuário que entrar. Uma eventual migração desses registros exige uma
-associação explícita com o `sub` escolhido.
+O tenant acessível é `dev-l73dre016gevtcsh.us.auth0.com`. Consulte o
+[guia de login](login-auth0.md) para o Client ID público da SPA. A API tem
+Identifier `https://video-insight-api` e RS256. A SPA tem **User-Delegated Access**
+com autorização por aplicação. Não é necessário Client Secret ou grant M2M.
 
-## 1. Criar o Auth0
+Mantenha `https://video-insight-ruby.vercel.app` e `http://localhost:5173` nas
+três listas: **Allowed Callback URLs**, **Allowed Logout URLs** e
+**Allowed Web Origins**. A conexão `Username-Password-Authentication` está
+habilitada e é solicitada explicitamente pelo frontend. Tokens ficam na memória.
 
-1. Crie sua conta e seu tenant no [Auth0](https://auth0.com/pt).
-2. Abra **Applications → Applications → Create Application**.
-3. Nome: `Video Insight Frontend`. Tipo: **Single Page Web Applications**.
-4. Em **Settings**, copie **Domain** e **Client ID**.
-5. Em **Allowed Callback URLs**, **Allowed Logout URLs** e
-   **Allowed Web Origins**, cadastre `http://localhost:5173`.
-6. Quando tiver a URL HTTPS definitiva do frontend, acrescente essa origem HTTPS nos
-   três campos, separada por vírgula. Exemplo: `https://DISTRIBUICAO-FRONTEND.cloudfront.net`.
-   O callback usa a raiz da aplicação, sem `/login` ou `/callback`.
-7. Salve. Garanta que a conexão de usuários esteja habilitada para essa SPA em
-   **Connections**. Universal Login permite cadastro e entrada.
-8. Abra **Applications → APIs → Create API**. Nome: `Video Insight API`.
-   Identifier: `https://video-insight-api`. Signing Algorithm: **RS256**.
+## HTTPS e assinatura S3
 
-O Identifier é uma identificação lógica; não precisa resolver no DNS. Use o
-mesmo valor como audience em todos os ambientes. Não é necessário Client Secret,
-Management API, uma aplicação Machine to Machine ou Auth0 Actions para esse fluxo.
-O SDK gerencia Authorization Code com PKCE e guarda tokens em memória.
+O [template Vercel](../apps/frontend/vercel.json.template) encaminha `/api/v1/*` ao Gateway
+e `/storage/videos/*` e `/storage/artifacts/*` ao Nginx da mesma máquina.
+O fallback da SPA não captura essas rotas nem assets. Respostas privadas usam
+`Cache-Control: private, no-store`.
 
-Referência: [SDK oficial React](https://auth0.github.io/auth0-react/).
+O storage assina URLs com o secret `STORAGE_PUBLIC_ENDPOINT`. O frontend troca a origem,
+acrescenta `/storage` e preserva caminho e query original.
+[`proxy.conf`](../infrastructure/aws/edge/proxy.conf.template) remove esse prefixo, fixa
+`Host` com a porta original e encaminha os bytes ao MinIO privado. O rewrite
+anterior direto ao MinIO causava `SignatureDoesNotMatch` por alterar o Host.
+O proxy preserva `Content-Type`, parâmetros `X-Amz-*` e `Range`, transmite sem
+buffer de corpo e aceita 110 MB para atender ao limite de produto de 100 MiB.
+URLs assinadas são permissões temporárias; os logs do Nginx omitem sua query.
 
-## 2. Preparar HTTPS na AWS
+**Trecho sem TLS:** Vercel → Nginx público e os hops internos AWS usam HTTP.
+O navegador usa HTTPS, sem mixed content, mas bearer e arquivos ficam sem TLS
+no trecho de origem. TLS completo exige domínio/certificado na origem e acesso
+à configuração de rede da disciplina. Os buckets continuam privados.
 
-O frontend usa Nginx em uma EC2. SPA, API e URLs assinadas do MinIO
-precisam de HTTPS; caso contrário, o navegador bloqueia as chamadas como mixed
-content. Publicar apenas o frontend não resolve isso.
+## GitHub e Vercel
 
-O arquivo [`cloudfront.yaml`](../infrastructure/aws/edge/cloudfront.yaml) prepara
-três distribuições sem domínio próprio: frontend Nginx, KrakenD e MinIO.
-Na AWS, abra **CloudFormation → Create stack → With new resources**, envie esse
-arquivo e informe os DNS públicos das EC2 do frontend, gateway e Core, sem
-protocolo ou porta. `FrontendPort` deve ser igual a `AWS_FRONTEND_PORT` (8081 por
-padrão). A conta precisa permitir criar distribuições CloudFront. A criação
-pode gerar cobrança conforme o uso; confira os preços da sua conta antes de
-criar a stack. Não foi criada nenhuma distribuição automaticamente.
+Mantenha os secrets existentes: `AWS_SSH_PRIVATE_KEY`, `AWS_KNOWN_HOSTS`,
+`VIDEO_DB_PASSWORD`, `JOB_DB_PASSWORD`, `RABBITMQ_PASSWORD`,
+`MINIO_ROOT_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`, `GROQ_API_KEY` e `GEMINI_API_KEY`.
+O frontend também exige **`VERCEL_TOKEN`**, cadastrado em **Settings → Secrets
+and variables → Actions**. A credencial da entrega já foi criada com autorização
+do titular, limitada ao projeto `video-insight` e com validade de 30 dias.
+O token anterior foi revogado. Renove essa credencial antes de expirar; não
+envie seu valor no chat nem copie credenciais pessoais do CLI para o repositório.
 
-Depois da criação, copie os outputs `FrontendOrigin`, `ApiBaseUrl` e `StoragePublicEndpoint`.
-O template desativa cache, inclusive de erros 403/404, e encaminha todos os
-headers e query strings. Preservar `Host` e os parâmetros `X-Amz-*` é necessário
-para o MinIO validar as URLs assinadas. Não acrescente um prefixo ao endpoint
-de storage e não altere a URL assinada no frontend.
-
-**Limitação da infraestrutura da disciplina:** esse template usa HTTP na porta
-8081 entre CloudFront e EC2, compatível com a restrição de rede atual. O navegador
-usa HTTPS, mas esse trecho até a origem permanece sem TLS. Para uma implantação
-com TLS em todo o caminho, configure certificado na origem (por exemplo, ALB ou
-proxy com domínio/certificado) e troque a política para `https-only`. Restrinja
-as origens aos endereços de origem do CloudFront e os serviços Java à rede
-interna assim que o administrador permitir alterar o Security Group.
-
-Referência: [headers encaminhados pelo CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorCustomOrigin.html).
-
-## 3. Configurar o GitHub
-
-Abra **Settings → Secrets and variables → Actions** no repositório. Há duas
-abas diferentes: **Secrets** guarda as chaves e senhas; **Variables** guarda os
-hosts e as configurações públicas. A Action usa repository-level variables.
-
-### Secrets
-
-Mantenha os secrets existentes. O frontend reutiliza `AWS_SSH_PRIVATE_KEY` e
-`AWS_KNOWN_HOSTS`; não requer secret Auth0 nem credenciais de API da AWS.
-
-| Secret | Conteúdo |
+| Variable GitHub | Valor |
 | --- | --- |
-| `AWS_SSH_PRIVATE_KEY` | Conteúdo completo da chave privada PEM autorizada nas EC2 |
-| `AWS_KNOWN_HOSTS` | Linhas OpenSSH dos hosts de destino, incluindo o frontend, com fingerprints conferidos |
-| `VIDEO_DB_PASSWORD` | Senha PostgreSQL do Video Service |
-| `JOB_DB_PASSWORD` | Senha PostgreSQL do Job Service |
-| `RABBITMQ_PASSWORD` | Senha do usuário RabbitMQ |
-| `MINIO_ROOT_PASSWORD` | Senha MinIO usada pelos serviços |
-| `GRAFANA_ADMIN_PASSWORD` | Senha administrativa Grafana |
-| `GROQ_API_KEY` | Chave do provedor de transcrição |
-| `GEMINI_API_KEY` | Chave do provedor de geração |
+| `AUTH_ISSUER` | `https://dev-l73dre016gevtcsh.us.auth0.com/` |
+| `AUTH_AUDIENCE` | `https://video-insight-api` |
+| `AUTH0_CLIENT_ID` | Client ID público da SPA do guia de login |
+| `FRONTEND_ORIGIN` | `https://video-insight-ruby.vercel.app` |
+| `API_PUBLIC_BASE_URL` | `https://video-insight-ruby.vercel.app/api/v1` |
+| `VERCEL_ORG_ID` | ID da equipe Vercel |
+| `VERCEL_PROJECT_ID` | ID do projeto `video-insight` |
 
-`AWS_KNOWN_HOSTS` não é uma chave privada: são as entradas de chave pública do
-servidor no formato `hostname algoritmo chave`. Se for usada uma nova EC2,
-acrescente seu IP/DNS exatamente como aparece em `AWS_FRONTEND_HOST`. Confira
-os fingerprints pelo acesso confiável à máquina antes de cadastrar as entradas.
-Nunca envie PEM ou senhas pelo chat.
+Os hosts são **Secrets**, nunca Variables nem valores literais em arquivos:
 
-### Variables
-
-| Variable | Valor |
+| Secret | Uso |
 | --- | --- |
-| `AUTH_ISSUER` | `https://dev-wj6kifnw5uxt2gpk.us.auth0.com/` |
-| `AUTH0_CLIENT_ID` | `ni2qNMV1N9PYkxUOqUNaIC5vbgF28BsJ` (SPA) |
-| `AUTH_AUDIENCE` | **Identifier** cadastrado em Applications → APIs → sua API → Settings |
-| `AWS_FRONTEND_HOST` | IP ou DNS público da EC2 do frontend, sem protocolo ou porta |
-| `AWS_FRONTEND_PORT` | `8081` por padrão; use uma porta livre se compartilhar a EC2 |
-| `FRONTEND_ORIGIN` | Output `FrontendOrigin`, sem `/` final |
-| `API_PUBLIC_BASE_URL` | Output `ApiBaseUrl`, incluindo `/api/v1` |
-| `STORAGE_PUBLIC_ENDPOINT` | Output `StoragePublicEndpoint`, sem `/` final |
-| `AWS_GATEWAY_HOST` | Host público existente de Djairo |
-| `AWS_VIDEO_HOST` | Host público existente de Matheus |
-| `AWS_PROCESSING_HOST` | Host público existente de Eduardo |
-| `AWS_CORE_HOST` | Host público existente de Ruan |
-| `AWS_OBSERVABILITY_HOST` | Host público existente de Leonardo |
+| `AWS_GATEWAY_HOST`, `AWS_VIDEO_HOST`, `AWS_PROCESSING_HOST`, `AWS_CORE_HOST`, `AWS_OBSERVABILITY_HOST` | Acesso SSH às máquinas |
+| `AWS_VIDEO_PRIVATE_HOST`, `AWS_JOB_PRIVATE_HOST`, `AWS_PROCESSING_PRIVATE_HOST`, `AWS_CORE_PRIVATE_HOST` | Rotas internas, storage e monitoramento |
+| `AWS_DOCKER_BRIDGE_HOST`, `AWS_DOCKER_NETWORK_CIDR` | Bind dos túneis e regra de rede Docker |
+| `STORAGE_PUBLIC_ENDPOINT` | Origem usada na assinatura S3 |
+| `METRICS_ALLOWED_NETWORKS` | CIDRs autorizados a coletar métricas, separados por vírgula |
 
-Se o Identifier escolhido foi `https://video-insight-api`, esse é o valor de
-`AUTH_AUDIENCE`. O Client ID `83YzuvHXSbj0CNYbWZrwrFcP5IkZO995` informado para
-a API não substitui o Identifier e não é usado neste fluxo. O Client Secret
-não deve ser cadastrado: esta aplicação usa uma SPA pública com PKCE.
+`scripts/render_deployment.py` gera Gateway, Vercel, Nginx, Prometheus e unidades
+systemd a partir dos arquivos `.template`. Os arquivos gerados são ignorados
+pelo Git. Sem secrets completos, a geração falha antes de gravá-los. Nunca use
+`--example` no deploy: esse modo utiliza hosts locais somente para validar.
 
-O workflow deriva `VITE_AUTH0_DOMAIN` do `AUTH_ISSUER`, usa `AUTH0_CLIENT_ID`
-para `VITE_AUTH0_CLIENT_ID`, `AUTH_AUDIENCE` para `VITE_AUTH0_AUDIENCE` e
-`API_PUBLIC_BASE_URL` para `VITE_API_BASE_URL`. Esses valores ficam no JavaScript
-público após o build. Não é necessário criar essas `VITE_*` separadamente no
-GitHub. Mudanças nas variables exigem novo build/deploy.
+```bash
+# Validação local sem acesso à infraestrutura:
+python scripts/render_deployment.py gateway edge frontend observability tunnels --example
 
-## 4. Publicar a SPA na EC2
+# No runner, os mesmos parâmetros vêm dos Secrets, sem --example:
+python scripts/render_deployment.py gateway edge frontend observability tunnels
+```
 
-1. Prepare uma EC2 Ubuntu com Docker, `curl`, UFW e acesso SSH do usuário
-   `ubuntu` com permissão para executar Docker por `sudo` sem senha, como as
-   máquinas atuais. O workflow não cria a EC2 nem instala Docker.
-2. Autorize nela a mesma chave pública correspondente a `AWS_SSH_PRIVATE_KEY`.
-   Atualize `AWS_KNOWN_HOSTS` e `AWS_FRONTEND_HOST` no GitHub.
-3. Escolha a porta. Em uma máquina própria, use `8081`. Se compartilhar uma EC2
-   cujo serviço já usa 8081, escolha outra porta livre e use o mesmo número em
-   `AWS_FRONTEND_PORT` e `FrontendPort` da stack CloudFormation. Não reutilize
-   uma porta ocupada. O administrador precisa permitir a porta no Security Group;
-   o workflow só abre a porta no UFW da máquina. A restrição atual da disciplina
-   permite 8081, portanto uma porta diferente exige liberação adicional.
-4. Crie ou atualize a stack HTTPS do passo 2. Configure os outputs nas Variables.
-   Se já houver HTTPS por um proxy/ALB, use suas URLs equivalentes.
-5. No Auth0, adicione o `FRONTEND_ORIGIN` nas três listas da SPA: **Allowed
-   Callback URLs**, **Allowed Logout URLs** e **Allowed Web Origins**.
-6. Depois que as alterações estiverem na `main`, abra **Actions → Deploy to AWS
-   → Run workflow**. Essa execução manual refaz o deploy de todos os componentes
-   e aplica CORS e autenticação. Nos pushes seguintes, o filtro atualiza apenas
-   os componentes alterados. Alterações em frontend ou no script de deploy
-   disparam o job `deploy-frontend`.
+O CI também executa `scripts/check_sensitive_addresses.py`. Somente loopback,
+bind genérico e faixas reservadas para exemplos de teste podem ser literais.
+Os nomes `*.internal` dos diagramas são rótulos ilustrativos, não endereços reais.
+IPs que já estavam em commits anteriores continuam no histórico antigo; esta
+alteração remove os valores do estado atual e evita sua reintrodução.
 
-A Action executa `npm ci`, lint, testes e build Vite em Node 22; empacota `dist/`
-num contêiner Nginx, transfere a imagem por SSH e executa
-[`frontend/deploy.sh`](../infrastructure/aws/frontend/deploy.sh). A EC2 não
-precisa de Node. O servidor atende `/login`, `/videos` e outras rotas React pelo
-fallback para `index.html`, mas assets ausentes retornam 404. O HTML não recebe
-cache, evitando referenciar chunks antigos depois de um deploy.
+No ambiente **Production** da Vercel:
 
-O script verifica a imagem em uma porta temporária local antes de trocar o
-contêiner público. Depois verifica health, HTML e rotas internas; se a nova
-versão falhar, restaura o contêiner anterior. A troca tem uma breve interrupção.
-Se uma execução for encerrada abruptamente e deixar um contêiner com sufixo
-`-previous`, confira-o na EC2 antes de executar novamente. As imagens antigas
-não são removidas automaticamente; acompanhe o espaço em disco.
+```dotenv
+VITE_API_BASE_URL=/api/v1
+VITE_AUTH0_DOMAIN=dev-l73dre016gevtcsh.us.auth0.com
+VITE_AUTH0_CLIENT_ID=CLIENT_ID_PUBLICO_DA_SPA
+VITE_AUTH0_AUDIENCE=https://video-insight-api
+VITE_STORAGE_PROXY_PATH=/storage
+VITE_USE_MOCKS=false
+```
 
-O build de produção exige autenticação, API HTTPS e mocks desativados. Os dois
-serviços Java recebem `AUTH_ENABLED=true`; o gateway e MinIO recebem a origem
-CORS pública do frontend. O workflow espera os componentes de dados antes de
-atualizar serviços dependentes e verifica resposta 401 sem token no gateway.
+Após os gates, o workflow usa `vercel@65.9.0 deploy --prod --yes` e o build remoto
+carrega as variáveis Production. O CLI antigo não conseguia executar `pull` com
+token restrito ao projeto; não foi ampliado o acesso à equipe para contornar
+isso. Variáveis Vite vêm da Vercel, não das variables do GitHub. Alterá-las exige
+novo build. Senhas, PEM e chaves de IA nunca podem ter prefixo `VITE_`.
 
-Referência: [build estático do Vite](https://vite.dev/guide/static-deploy.html).
+## Pipeline e rollback
 
-## 5. Teste de aceite em produção
+`deploy-aws.yml` chama `validate-repository.yml` com `full-validation: true`.
+Contratos, Markdown, links, scanner, frontend e testes dos três serviços com
+cobertura mínima de 80% bloqueiam o preflight e a implantação. Java usa
+PostgreSQL real no CI. Processing testa RabbitMQ/MinIO reais e FFmpeg.
+O Gitleaks mantém as regras padrão, com exceção específica para o Client ID
+público documentado, sem desabilitar o detector de chaves genéricas.
 
-1. Abra a URL do frontend sem sessão: deve exibir o login.
-2. Cadastre uma conta, entre e confira a volta para `/videos`.
-3. Envie um MP4 pequeno e acompanhe upload, processamento e resultado.
-4. Confirme que vídeo, transcrição e artefatos usam URLs HTTPS assinadas.
-5. Saia e entre com uma segunda conta: a lista deve estar vazia. Tentar abrir
-   os IDs da primeira conta deve retornar 404, inclusive resultados e URLs.
-6. Chame uma rota de negócio sem token: deve retornar 401. Health permanece
-   disponível para os checks de infraestrutura.
-7. Recarregue uma rota interna no Nginx e confirme que a sessão é restabelecida
-   ou o login é solicitado. O frontend não mantém tokens em localStorage.
+As imagens AWS são compiladas no runner, enviadas por SSH e publicadas por
+[`deploy-service.sh`](../infrastructure/aws/deploy-service.sh). O contêiner
+anterior fica disponível para rollback. O script verifica health, autenticação,
+conexão do consumidor e estabilidade. Os volumes são preservados. Java usa
+512 MiB; com 320 MiB o Job sofria OOM após startup. KrakenD escuta apenas em
+`127.0.0.1:8082`; Nginx publica a porta 8081.
 
-## Desenvolvimento local
+Para comprovar o novo pipeline remoto, os arquivos precisam estar na branch
+remota e o `VERCEL_TOKEN` deve existir. Deploy manual validado não equivale a um
+pipeline remoto verde. O merge deve ocorrer após os checks do PR; a atualização da main dispara o deploy.
 
-Copie `apps/frontend/.env.example` para `.env.local` e preencha os três valores
-Auth0. Para os serviços Java, defina `AUTH_ENABLED=true`, `AUTH_ISSUER` e
-`AUTH_AUDIENCE` no processo ou contêiner. `npm run dev:local` usa o proxy Vite
-para os serviços em `8081` e `8082`, preservando Authorization.
+## Monitoramento
 
-Sem Auth0 configurado, a SPA bloqueia as rotas protegidas e informa a
-configuração ausente no login, inclusive em desenvolvimento. Os serviços Java
-precisam de `AUTH_ENABLED=true` para exigir tokens, também no ambiente local.
+Prometheus coleta `/actuator/prometheus` em Video/Job e `/metrics` no Processing
+a cada 15 segundos. As métricas aceitam somente VPC, ponte Docker e loopback;
+não são expostas pelo Gateway. O dashboard **Video Insight: operação**, UID
+`video-insight`, mostra disponibilidade, requisições, latência média, 5xx,
+memória JVM e conexão do worker. O datasource existente é preservado.
+
+Prometheus escuta no IP privado de Leonardo. Acesse Grafana por túnel SSH se a
+porta 3000 não estiver liberada, usando a senha administrativa existente.
+Volumes preservam histórico e painéis. Alertas e métricas de cada etapa da IA
+não foram incluídos neste escopo.
+
+Siga o [roteiro da entrega 4](entrega-4.md), o
+[desenvolvimento local](desenvolvimento-local.md) e os
+[testes ponta a ponta](../tests/end-to-end/README.md).

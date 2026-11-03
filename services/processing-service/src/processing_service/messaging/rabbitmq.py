@@ -39,7 +39,8 @@ class RabbitMQWorker:
 
     @property
     def connected(self) -> bool:
-        return self._connection is not None
+        return (self._connection is not None and not self._connection.is_closed
+                and self._connection.connected.is_set())
 
     async def start(self) -> None:
         self._task = asyncio.create_task(self._connect_with_retry(), name="rabbitmq-connect")
@@ -105,6 +106,10 @@ class RabbitMQWorker:
 
         try:
             await asyncio.to_thread(self._handler, request, emit)
+        except (aio_pika.exceptions.AMQPError, OSError, TimeoutError):
+            logger.warning("Falha transitória no job %s; solicitação será reenviada", request.data.job_id)
+            await message.reject(requeue=True)
+            return
         except Exception:
             logger.exception("Job %s não pôde ser concluído", request.data.job_id)
             await message.reject(requeue=False)

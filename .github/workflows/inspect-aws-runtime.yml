@@ -22,32 +22,33 @@ jobs:
 
       - name: Inspect Processing Service
         env:
-          HOST: ${{ vars.AWS_PROCESSING_HOST }}
+          HOST: ${{ secrets.AWS_PROCESSING_HOST }}
         run: |
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" \
             'sudo docker logs --since 30m --tail 250 video-insight-processing 2>&1' |
-            sed -E 's/gsk_[[:alnum:]]+/[REDACTED]/g; s/AQ\.[[:alnum:]_-]+/[REDACTED]/g' |
+            sed -E 's/gsk_[[:alnum:]]+/[REDACTED]/g; s/AQ\.[[:alnum:]_-]+/[REDACTED]/g; s/([0-9]{1,3}\.){3}[0-9]{1,3}/[HOST_REDACTED]/g' |
             tail -n 180
 
       - name: Inspect Job Service
         env:
-          HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
+          HOST: ${{ secrets.AWS_OBSERVABILITY_HOST }}
         run: |
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" \
             'sudo docker logs --since 30m --tail 250 video-insight-job 2>&1' |
-            sed -E 's/gsk_[[:alnum:]]+/[REDACTED]/g; s/AQ\.[[:alnum:]_-]+/[REDACTED]/g' |
+            sed -E 's/gsk_[[:alnum:]]+/[REDACTED]/g; s/AQ\.[[:alnum:]_-]+/[REDACTED]/g; s/([0-9]{1,3}\.){3}[0-9]{1,3}/[HOST_REDACTED]/g' |
             tail -n 180
 
       - name: Inspect Job Service storage paths
         env:
-          HOST: ${{ vars.AWS_OBSERVABILITY_HOST }}
+          HOST: ${{ secrets.AWS_OBSERVABILITY_HOST }}
+          PRIVATE_STORAGE_HOST: ${{ secrets.AWS_CORE_PRIVATE_HOST }}
         run: |
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" '
-            set -u
-            printf "tunnel status: "
-            systemctl is-active video-insight-core-tunnel.service || true
-            printf "private storage health: "
-            curl --silent --show-error --max-time 5 -o /dev/null -w "%{http_code}\n" http://172.31.8.165:8081/minio/health/live || true
-            printf "tunnel journal:\n"
-            sudo journalctl -u video-insight-core-tunnel.service --since "30 minutes ago" --no-pager -n 40
-          '
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" bash -s -- "$PRIVATE_STORAGE_HOST" <<'REMOTE' |
+          set -u
+          printf 'tunnel status: '
+          systemctl is-active video-insight-core-tunnel.service || true
+          printf 'private storage health: '
+          curl --silent --show-error --max-time 5 -o /dev/null -w '%{http_code}\n' "http://$1:8081/minio/health/live" || true
+          sudo journalctl -u video-insight-core-tunnel.service --since '30 minutes ago' --no-pager -n 40
+          REMOTE
+            sed -E 's/([0-9]{1,3}\.){3}[0-9]{1,3}/[HOST_REDACTED]/g'

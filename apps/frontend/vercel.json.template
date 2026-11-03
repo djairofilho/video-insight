@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci",
+  "rewrites": [
+    { "source": "/api/v1/:path*", "destination": "http://__AWS_GATEWAY_HOST__:8081/api/v1/:path*" },
+    { "source": "/storage/videos/:path*", "destination": "http://__AWS_GATEWAY_HOST__:8081/storage/videos/:path*" },
+    { "source": "/storage/artifacts/:path*", "destination": "http://__AWS_GATEWAY_HOST__:8081/storage/artifacts/:path*" },
+    { "source": "/((?!api/|storage/|assets/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/api/:path*", "headers": [{ "key": "Cache-Control", "value": "private, no-store" }] },
+    { "source": "/storage/:path*", "headers": [{ "key": "Cache-Control", "value": "private, no-store" }] },
+    { "source": "/assets/:path*", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+  ]
+}

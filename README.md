@@ -32,6 +32,7 @@ frontend usa React, TypeScript e Vite.
 
 ## Documentação
 
+- [Entrega 4: evidências, roteiro e checklist](docs/entrega-4.md)
 - [Contexto, escopo e requisitos do produto](docs/contexto-produto-videos-ia.md)
 - [Relatório da primeira entrega](docs/entrega-1.md)
 - [Registro da decisão arquitetural](docs/decisoes/adr-001-processamento-videos-ia.md)

@@ -1,0 +1,12 @@
+title = "Video Insight"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "Client ID público da SPA Auth0 nos exemplos de configuração"
+condition = "AND"
+paths = ['''(^|/)apps/frontend/\.env\.example$''', '''(^|/)docs/(desenvolvimento-local|login-auth0)\.md$''']
+regexTarget = "secret"
+regexes = ['''^eUBEMDWJkXSsGDO7PJo1hn3JiLDpqfgz$''']

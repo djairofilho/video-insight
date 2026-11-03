@@ -4,6 +4,7 @@ interface ImportMetaEnv {
   readonly VITE_AUTH0_CLIENT_ID?: string
   readonly VITE_AUTH0_AUDIENCE?: string
   readonly VITE_USE_MOCKS?: string
+  readonly VITE_STORAGE_PROXY_PATH?: string
 }
 
 interface ImportMeta {

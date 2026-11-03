@@ -2,6 +2,7 @@ import type { ExportUrl } from '../types/api'
 import type { Job, JobPage, Operation } from '../types/job'
 import type { JobResult, TranscriptFormat } from '../types/result'
 import { apiRequest } from './apiClient'
+import { withStorageProxy } from './storageProxy'
 
 export function createJob(videoId: string, operations: Operation[], idempotencyKey: string): Promise<Job> {
   return apiRequest<Job>(`/videos/${videoId}/jobs`, {
@@ -36,5 +37,5 @@ export function getJobResult(jobId: string, signal?: AbortSignal): Promise<JobRe
 }
 
 export function exportTranscript(jobId: string, format: TranscriptFormat): Promise<ExportUrl> {
-  return apiRequest<ExportUrl>(`/jobs/${jobId}/transcript?format=${format}`)
+  return apiRequest<ExportUrl>(`/jobs/${jobId}/transcript?format=${format}`).then(withStorageProxy)
 }

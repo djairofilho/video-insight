@@ -42,3 +42,12 @@ services/processing-service/preview/
 .cache/
 .coverage
 htmlcov/
+
+# Configurações geradas com hosts de infraestrutura privados
+/apps/frontend/vercel.json
+/apps/api-gateway/krakend.json
+/infrastructure/aws/edge/proxy.conf
+/infrastructure/aws/observability/prometheus.yml
+/infrastructure/aws/tunnels/video-service-tunnel.service
+/infrastructure/aws/tunnels/job-service-tunnel.service
+/infrastructure/aws/tunnels/processing-service-tunnel.service

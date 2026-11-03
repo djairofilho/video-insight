@@ -3,6 +3,11 @@ name: Validate repository
 on:
   push:
   pull_request:
+  workflow_call:
+    inputs:
+      full-validation:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -70,6 +75,16 @@ jobs:
         run: >-
           docker compose --env-file .env.example
           -f infrastructure/compose.yaml config --quiet
+      - name: Reject infrastructure addresses in source
+        run: python scripts/check_sensitive_addresses.py
+      - name: Validate operational helpers
+        run: |
+          bash -n infrastructure/aws/deploy-service.sh infrastructure/aws/edge/deploy.sh
+          bash infrastructure/aws/test-deploy-service.sh
+          python -m pip install pytest==9.1.1 httpx==0.28.1
+          python -m pytest tests/load tests/deployment -q
+          python scripts/render_deployment.py edge --example
+          docker run --rm -v "$PWD/infrastructure/aws/edge/proxy.conf:/etc/nginx/conf.d/default.conf:ro" nginx:1.29-alpine nginx -t
 
   links:
     name: Validate local links
@@ -93,30 +108,67 @@ jobs:
         run: >-
           docker run --rm -v "$PWD:/repo"
           zricethezav/gitleaks:v8.30.1
-          detect --source=/repo --no-git --redact --no-banner
+          detect --source=/repo --config=/repo/.gitleaks.toml --no-git --redact --no-banner
 
   video-service:
     name: Test Video Service
     needs: changes
-    if: needs.changes.outputs.video_service == 'true'
+    if: inputs.full-validation || needs.changes.outputs.video_service == 'true'
     runs-on: ubuntu-latest
+    services:
+      postgres: &test_postgres
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_DB: video_insight_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test-only-password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Test against real PostgreSQL with coverage gate
+        working-directory: services/video-service
+        run: >-
+          mvn -B verify
+          -Dspring.datasource.url=jdbc:postgresql://localhost:5432/video_insight_test
+          -Dspring.datasource.username=postgres
+          -Dspring.datasource.password=test-only-password
       - run: docker build -t video-insight/video-service:test services/video-service
 
   job-service:
     name: Test Job Service
     needs: changes
-    if: needs.changes.outputs.job_service == 'true'
+    if: inputs.full-validation || needs.changes.outputs.job_service == 'true'
     runs-on: ubuntu-latest
+    services:
+      postgres: *test_postgres
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Test against real PostgreSQL with coverage gate
+        working-directory: services/job-service
+        run: >-
+          mvn -B verify
+          -Dspring.datasource.url=jdbc:postgresql://localhost:5432/video_insight_test
+          -Dspring.datasource.username=postgres
+          -Dspring.datasource.password=test-only-password
       - run: docker build -t video-insight/job-service:test services/job-service
 
   processing-service:
     name: Test Processing Service
     needs: changes
-    if: needs.changes.outputs.processing_service == 'true'
+    if: inputs.full-validation || needs.changes.outputs.processing_service == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -135,10 +187,11 @@ jobs:
   gateway:
     name: Validate API Gateway
     needs: changes
-    if: needs.changes.outputs.gateway == 'true'
+    if: inputs.full-validation || needs.changes.outputs.gateway == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: python scripts/render_deployment.py gateway --example
       - run: docker build -t video-insight/api-gateway:test apps/api-gateway
       - run: >-
           docker run --rm video-insight/api-gateway:test
@@ -147,7 +200,7 @@ jobs:
   frontend:
     name: Test frontend
     needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    if: inputs.full-validation || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+  - job_name: video-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [__AWS_VIDEO_PRIVATE_HOST__:8081]
+  - job_name: job-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [__AWS_JOB_PRIVATE_HOST__:8081]
+  - job_name: processing-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: [__AWS_PROCESSING_PRIVATE_HOST__:8081]
