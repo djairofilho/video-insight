@@ -3,6 +3,7 @@
 import struct
 import time
 import uuid
+from urllib.parse import urlsplit
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
@@ -18,6 +19,13 @@ class Api:
     client: httpx.Client
     video_url: str
     job_url: str
+    storage_proxy_base: str | None = None
+
+    def storage_url(self, url: str) -> str:
+        parsed = urlsplit(url)
+        if self.storage_proxy_base and parsed.scheme == "http":
+            return self.storage_proxy_base.rstrip("/") + parsed.path + ("?" + parsed.query if parsed.query else "")
+        return url
 
     def create_video(self, size_bytes: int, file_name: str = "e2e.mp4",
                      content_type: str = "video/mp4") -> httpx.Response:
@@ -45,7 +53,12 @@ class Api:
 
     def put_file(self, signed_url: dict, content: bytes) -> httpx.Response:
         """Envia o arquivo direto ao MinIO, como o navegador faria."""
-        return self.client.put(signed_url["url"], content=content, headers=signed_url.get("headers") or {})
+        # URLs assinadas já autorizam o storage; o bearer pertence somente à API.
+        return httpx.put(self.storage_url(signed_url["url"]), content=content,
+                         headers=signed_url.get("headers") or {}, timeout=120)
+
+    def get_file(self, url: str) -> httpx.Response:
+        return httpx.get(self.storage_url(url), timeout=120)
 
     def upload(self, content: bytes, duration_seconds: float) -> str:
         """Cadastra, envia e confirma um vídeo; devolve o id do vídeo pronto."""

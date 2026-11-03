@@ -15,7 +15,7 @@ def test_upload_goes_directly_to_storage_and_can_be_played(api):
 
     playback = api.playback_url(video_id).json()
     assert playback["method"] == "GET"
-    downloaded = api.client.get(playback["url"])
+    downloaded = api.get_file(playback["url"])
     assert downloaded.status_code == 200
     assert downloaded.content == FAKE_MEDIA
 
@@ -72,7 +72,7 @@ def test_deleted_video_disappears_for_both_services(api):
     assert api.delete_video(video_id).status_code == 204
 
     assert api.get_video(video_id).status_code == 404
-    assert api.client.get(playback["url"]).status_code == 404
+    assert api.get_file(playback["url"]).status_code == 404
     assert api.create_job(video_id).status_code == 404
     assert api.delete_video(video_id).status_code == 404
 

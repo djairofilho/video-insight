@@ -32,13 +32,13 @@ def test_video_is_transcribed_summarized_and_chaptered(api, sample_video, job_ti
     for fmt in ("txt", "srt", "json"):
         export = api.export_transcript(job_id, fmt)
         assert export.status_code == 200
-        downloaded = api.client.get(export.json()["url"])
+        downloaded = api.get_file(export.json()["url"])
         assert downloaded.status_code == 200
         assert downloaded.content.strip()
 
     # O vídeo original continua disponível para navegar pelos timestamps.
     playback = api.playback_url(video_id).json()
-    assert api.client.get(playback["url"]).content == content
+    assert api.get_file(playback["url"]).content == content
 
 
 def test_two_videos_are_processed_at_the_same_time(api, sample_video, job_timeout):
