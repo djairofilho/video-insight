@@ -42,6 +42,7 @@ export default defineConfig(({ mode, command }) => {
     babel({ presets: [reactCompilerPreset()] })
   ],
   test: {
+    maxWorkers: 2,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
