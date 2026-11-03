@@ -1,0 +1,31 @@
+log_format video_insight '$remote_addr [$time_local] "$request_method $uri $server_protocol" $status $body_bytes_sent';
+
+server {
+    access_log /var/log/nginx/access.log video_insight;
+    listen 8081;
+    server_name _;
+    client_max_body_size 110m;
+    client_body_timeout 180s;
+
+    location /storage/ {
+        # A assinatura S3 inclui o Host e a porta da origem, não o domínio da Vercel.
+        proxy_set_header Host __STORAGE_AUTHORITY__;
+        proxy_set_header Connection "";
+        proxy_http_version 1.1;
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_read_timeout 180s;
+        proxy_send_timeout 180s;
+        proxy_hide_header Cache-Control;
+        add_header Cache-Control "private, no-store" always;
+        proxy_pass http://__AWS_CORE_PRIVATE_HOST__:8081/;
+    }
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_pass http://127.0.0.1:8082;
+    }
+}

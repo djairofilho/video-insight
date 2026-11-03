@@ -1,6 +1,7 @@
 import type { SignedUrl } from '../types/api'
 import type { CreateVideoRequest, Video, VideoPage } from '../types/video'
 import { apiRequest } from './apiClient'
+import { withStorageProxy } from './storageProxy'
 
 export function listVideos(cursor?: string, limit = 20, signal?: AbortSignal): Promise<VideoPage> {
   const params = new URLSearchParams({ limit: String(limit) })
@@ -23,7 +24,7 @@ export function deleteVideo(videoId: string): Promise<void> {
 }
 
 export function createUploadUrl(videoId: string): Promise<SignedUrl> {
-  return apiRequest<SignedUrl>(`/videos/${videoId}/upload-url`, { method: 'POST' })
+  return apiRequest<SignedUrl>(`/videos/${videoId}/upload-url`, { method: 'POST' }).then(withStorageProxy)
 }
 
 export function completeUpload(videoId: string, durationSeconds: number): Promise<Video> {
@@ -34,7 +35,7 @@ export function completeUpload(videoId: string, durationSeconds: number): Promis
 }
 
 export function createPlaybackUrl(videoId: string): Promise<SignedUrl> {
-  return apiRequest<SignedUrl>(`/videos/${videoId}/playback-url`, { method: 'POST' })
+  return apiRequest<SignedUrl>(`/videos/${videoId}/playback-url`, { method: 'POST' }).then(withStorageProxy)
 }
 
 export class UploadError extends Error {

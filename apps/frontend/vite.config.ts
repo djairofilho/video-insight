@@ -24,8 +24,8 @@ export default defineConfig(({ mode, command }) => {
     for (const key of ['VITE_AUTH0_DOMAIN', 'VITE_AUTH0_CLIENT_ID', 'VITE_AUTH0_AUDIENCE']) {
       if (!env[key]?.trim()) throw new Error(`${key} é obrigatório no build de produção`)
     }
-    if (!env.VITE_API_BASE_URL?.startsWith('https://')) {
-      throw new Error('VITE_API_BASE_URL precisa usar HTTPS em produção')
+    if (env.VITE_API_BASE_URL !== '/api/v1' && !env.VITE_API_BASE_URL?.startsWith('https://')) {
+      throw new Error('VITE_API_BASE_URL precisa usar HTTPS ou /api/v1 com proxy na mesma origem')
     }
     if (env.VITE_USE_MOCKS === 'true') throw new Error('Mocks não podem ser publicados em produção')
   }
