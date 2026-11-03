@@ -11,7 +11,7 @@
     },
     "security/cors": {
       "allow_origins": [
-        "*"
+        "__FRONTEND_ORIGIN__"
       ],
       "allow_methods": [
         "GET",
@@ -36,7 +36,7 @@
           "url_pattern": "/health",
           "encoding": "json",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ]
@@ -50,7 +50,7 @@
           "url_pattern": "/health",
           "encoding": "json",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ]
@@ -64,7 +64,7 @@
           "url_pattern": "/health",
           "encoding": "json",
           "host": [
-            "http://172.31.14.236:8081"
+            "http://__AWS_PROCESSING_PRIVATE_HOST__:8081"
           ]
         }
       ]
@@ -82,7 +82,7 @@
           "url_pattern": "/api/v1/videos",
           "encoding": "no-op",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ]
@@ -100,7 +100,7 @@
           "url_pattern": "/api/v1/videos",
           "encoding": "no-op",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -117,7 +117,7 @@
           "url_pattern": "/api/v1/videos/{videoId}",
           "encoding": "no-op",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -134,7 +134,7 @@
           "url_pattern": "/api/v1/videos/{videoId}",
           "encoding": "no-op",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -151,7 +151,7 @@
           "url_pattern": "/api/v1/videos/{videoId}/upload-url",
           "encoding": "no-op",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -172,7 +172,7 @@
           "url_pattern": "/api/v1/videos/{videoId}/upload-complete",
           "encoding": "no-op",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ]
@@ -186,7 +186,7 @@
           "url_pattern": "/api/v1/videos/{videoId}/playback-url",
           "encoding": "no-op",
           "host": [
-            "http://172.31.1.54:8081"
+            "http://__AWS_VIDEO_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -208,7 +208,7 @@
           "url_pattern": "/api/v1/videos/{videoId}/jobs",
           "encoding": "no-op",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ]
@@ -226,7 +226,7 @@
           "url_pattern": "/api/v1/videos/{videoId}/jobs",
           "encoding": "no-op",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -243,7 +243,7 @@
           "url_pattern": "/api/v1/jobs/{jobId}",
           "encoding": "no-op",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -260,7 +260,7 @@
           "url_pattern": "/api/v1/jobs/{jobId}/cancel",
           "encoding": "no-op",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -277,7 +277,7 @@
           "url_pattern": "/api/v1/jobs/{jobId}/retry",
           "encoding": "no-op",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -294,7 +294,7 @@
           "url_pattern": "/api/v1/jobs/{jobId}/result",
           "encoding": "no-op",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ],
@@ -314,7 +314,7 @@
           "url_pattern": "/api/v1/jobs/{jobId}/transcript",
           "encoding": "no-op",
           "host": [
-            "http://172.31.7.191:8081"
+            "http://__AWS_JOB_PRIVATE_HOST__:8081"
           ]
         }
       ],

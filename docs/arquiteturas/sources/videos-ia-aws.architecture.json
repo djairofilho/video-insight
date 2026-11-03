@@ -18,16 +18,16 @@
   "components": [
     { "id": "user", "type": "external", "label": "Usuário", "sublabel": "navegador", "pos": [25, 367], "size": [130, 60] },
     { "id": "frontend", "type": "frontend", "label": "Frontend SPA", "sublabel": "TypeScript", "pos": [210, 367], "size": [150, 60] },
-    { "id": "gateway", "type": "cloud", "label": "KrakenD", "sublabel": "Djairo · porta 8081", "pos": [430, 365], "size": [170, 64], "tag": "172.31.7.117" },
+    { "id": "gateway", "type": "cloud", "label": "KrakenD", "sublabel": "Djairo · porta 8081", "pos": [430, 365], "size": [170, 64], "tag": "host-configurado.internal" },
     { "id": "github-actions", "type": "cloud", "label": "GitHub Actions", "sublabel": "CI/CD por diretório", "pos": [430, 90], "size": [170, 64], "tag": "deploy por SSH" },
-    { "id": "video-service", "type": "backend", "label": "Video Service", "sublabel": "Matheus · Java", "pos": [685, 170], "size": [180, 64], "tag": "172.31.1.54:8081" },
-    { "id": "job-service", "type": "backend", "label": "Job Service", "sublabel": "Marcus · Java", "pos": [685, 365], "size": [180, 64], "tag": "172.31.13.221:8081" },
-    { "id": "processing-service", "type": "backend", "label": "Processing Service", "sublabel": "Eduardo · Python", "pos": [685, 585], "size": [190, 64], "tag": "172.31.14.236:8081" },
+    { "id": "video-service", "type": "backend", "label": "Video Service", "sublabel": "Matheus · Java", "pos": [685, 170], "size": [180, 64], "tag": "video.private.internal:8081" },
+    { "id": "job-service", "type": "backend", "label": "Job Service", "sublabel": "Marcus · Java", "pos": [685, 365], "size": [180, 64], "tag": "host-configurado.internal:8081" },
+    { "id": "processing-service", "type": "backend", "label": "Processing Service", "sublabel": "Eduardo · Python", "pos": [685, 585], "size": [190, 64], "tag": "processing.private.internal:8081" },
     { "id": "video-db", "type": "database", "label": "PostgreSQL Video", "sublabel": "metadados de vídeos", "pos": [960, 95], "size": [185, 64], "tag": "Ruan · :5433" },
     { "id": "job-db", "type": "database", "label": "PostgreSQL Job", "sublabel": "jobs e resultados", "pos": [960, 275], "size": [185, 64], "tag": "Ruan · :5434" },
     { "id": "rabbitmq", "type": "messagebus", "label": "RabbitMQ", "sublabel": "fila + eventos", "pos": [960, 455], "size": [185, 60], "tag": "Ruan · :5672" },
     { "id": "minio", "type": "cloud", "label": "MinIO", "sublabel": "vídeos e artefatos", "pos": [960, 635], "size": [185, 64], "tag": "Ruan · :9000" },
-    { "id": "observability", "type": "cloud", "label": "Prometheus + Grafana", "sublabel": "Leonardo", "pos": [1245, 275], "size": [205, 64], "tag": "172.31.7.191" },
+    { "id": "observability", "type": "cloud", "label": "Prometheus + Grafana", "sublabel": "Leonardo", "pos": [1245, 275], "size": [205, 64], "tag": "job.private.internal" },
     { "id": "ai-adapter", "type": "external", "label": "Provedor de IA", "sublabel": "adapter substituível", "pos": [1245, 635], "size": [180, 64] }
   ],
   "boundaries": [

@@ -1,0 +1,13 @@
+[Unit]
+Description=Video Insight tunnel for Processing Service dependencies
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ssh -NT -i /etc/video-insight/tunnel_ed25519 -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/etc/video-insight/known_hosts -L __AWS_DOCKER_BRIDGE_HOST__:15672:__AWS_CORE_PRIVATE_HOST__:5672 -L __AWS_DOCKER_BRIDGE_HOST__:19000:__AWS_CORE_PRIVATE_HOST__:9000 video-tunnel@__AWS_CORE_PRIVATE_HOST__
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

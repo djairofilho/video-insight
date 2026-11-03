@@ -7,12 +7,12 @@ def test_rabbitmq_url_escapes_credentials_and_vhost():
     settings = Settings(
         rabbitmq_user="user@insper",
         rabbitmq_password=SecretStr("p@ss/:w#"),
-        rabbitmq_host="172.17.0.1",
+        rabbitmq_host="broker.internal",
         rabbitmq_port=15672,
         rabbitmq_vhost="/",
     )
 
-    assert settings.rabbitmq_url == "amqp://user%40insper:p%40ss%2F%3Aw%23@172.17.0.1:15672/%2F"
+    assert settings.rabbitmq_url == "amqp://user%40insper:p%40ss%2F%3Aw%23@broker.internal:15672/%2F"
 
 
 def test_reads_environment_variables(monkeypatch):

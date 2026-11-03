@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: video_service
       POSTGRES_PASSWORD: ${VIDEO_DB_PASSWORD}
     ports:
-      - "172.31.8.165:5433:5432"
+      - "${AWS_CORE_PRIVATE_HOST:?Configure o secret de rede}:5433:5432"
     volumes:
       - video-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -25,7 +25,7 @@ services:
       POSTGRES_USER: job_service
       POSTGRES_PASSWORD: ${JOB_DB_PASSWORD}
     ports:
-      - "172.31.8.165:5434:5432"
+      - "${AWS_CORE_PRIVATE_HOST:?Configure o secret de rede}:5434:5432"
     volumes:
       - job-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -41,7 +41,7 @@ services:
       RABBITMQ_DEFAULT_USER: video_insight
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
-      - "172.31.8.165:5672:5672"
+      - "${AWS_CORE_PRIVATE_HOST:?Configure o secret de rede}:5672:5672"
       - "127.0.0.1:15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
@@ -61,7 +61,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_API_CORS_ALLOW_ORIGIN: ${FRONTEND_ORIGIN:?Configure FRONTEND_ORIGIN}
     ports:
-      - "172.31.8.165:9000:9000"
+      - "${AWS_CORE_PRIVATE_HOST:?Configure o secret de rede}:9000:9000"
       - "0.0.0.0:8081:9000"
       - "127.0.0.1:9001:9001"
     volumes:

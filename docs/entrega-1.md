@@ -60,7 +60,7 @@ bloqueadas pelo Security Group e o grupo não pode alterá-lo, PostgreSQL,
 RabbitMQ e MinIO são alcançados por túneis SSH persistentes na porta `22`.
 Senhas e chaves privadas não ficam no repositório.
 
-Para acesso pela internet, o KrakenD usa `http://3.227.9.20:8081`. A porta `80`
+Para acesso pela internet, o KrakenD usa `http://gateway.internal:8081`. A porta `80`
 continua bloqueada na camada de rede da AWS. A exposição pública de `8081` nas
 máquinas dos serviços deve ser restringida ao Gateway por uma identidade AWS
 com permissão para alterar grupos de segurança.

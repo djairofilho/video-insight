@@ -103,13 +103,13 @@ def test_from_settings_uses_configured_credentials(settings, monkeypatch):
     minio = MagicMock()
     monkeypatch.setattr("processing_service.storage.Minio", minio)
     configured = settings.model_copy(
-        update={"minio_endpoint": "172.17.0.1:19000", "minio_secret_key": SecretStr("segredo")}
+        update={"minio_endpoint": "minio.internal:19000", "minio_secret_key": SecretStr("segredo")}
     )
 
     MinioStorage.from_settings(configured)
 
     minio.assert_called_once_with(
-        "172.17.0.1:19000", access_key="video_insight", secret_key="segredo", secure=False
+        "minio.internal:19000", access_key="video_insight", secret_key="segredo", secure=False
     )
 
 
