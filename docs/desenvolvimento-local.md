@@ -50,15 +50,15 @@ Java. Não é um quinto comando que você precise executar.
 
 ```dotenv
 VITE_API_BASE_URL=/api/v1
-VITE_AUTH0_DOMAIN=dev-wj6kifnw5uxt2gpk.us.auth0.com
-VITE_AUTH0_CLIENT_ID=ni2qNMV1N9PYkxUOqUNaIC5vbgF28BsJ
+VITE_AUTH0_DOMAIN=dev-l73dre016gevtcsh.us.auth0.com
+VITE_AUTH0_CLIENT_ID=eUBEMDWJkXSsGDO7PJo1hn3JiLDpqfgz
 VITE_AUTH0_AUDIENCE=https://video-insight-api
 ```
 
 Esses três valores Auth0 já foram fornecidos e configurados. Para obtê-los
 novamente: Domain e Client ID ficam em **Applications → Applications → SPA →
 Settings**. A audience é **Applications → APIs → API → Settings → Identifier**.
-O ID administrativo `6ad928e1b86689f988d9fc98` da API não substitui o Identifier.
+O ID administrativo da API não substitui o Identifier.
 O Client Secret da SPA não é usado nem deve ser copiado para o frontend.
 
 ## Configuração necessária no painel Auth0
@@ -67,7 +67,7 @@ O Client Secret da SPA não é usado nem deve ser copiado para o frontend.
    **Allowed Logout URLs** e **Allowed Web Origins**.
 2. Em **Authentication → Database → Username-Password-Authentication →
    Applications**, habilite a SPA. Deixe **Disable Sign Ups** desligado.
-3. Use **New Universal Login** e desabilite a conexão Google para essa SPA.
+3. Use **New Universal Login**; o frontend solicita a conexão de banco.
 4. Na API `https://video-insight-api`, abra **Application Access**, edite o
    acesso da SPA e autorize **User-Delegated Access**. Se necessário, use
    **Per-app authorization** e autorize somente essa aplicação. Não é
@@ -75,8 +75,8 @@ O Client Secret da SPA não é usado nem deve ser copiado para o frontend.
 5. Confirme RS256 na API. Confira os templates e a configuração de entrega de
    e-mails do Auth0 para testar recuperação de senha e verificação de e-mail.
 
-O último teste real encontrou a SPA sem autorização para a API. Essa alteração
-precisa ser salva no tenant; executar os scripts locais não altera o painel.
+O tenant acessível já tem o acesso delegado da SPA salvo. Ao configurar outra
+aplicação, repita esse grant; os scripts locais não alteram o painel.
 
 ## Conferir cadastro e login
 

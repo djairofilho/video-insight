@@ -12,29 +12,28 @@ associam vídeos e jobs ao identificador `sub`.
    Não configure banco customizado da aplicação.
 2. Em **Applications** dessa conexão, habilite a SPA `Video Insight Frontend`.
 3. Confirme que **Disable Sign Ups** está desligado, para permitir cadastro.
-4. Em **Authentication → Social → Google → Applications**, desabilite Google
-   para essa SPA, se estiver habilitado. Não é necessário excluir a conexão.
+4. O frontend solicita a conexão de banco explicitamente. A conexão Google
+   existente no tenant foi preservada; não é usada pelo botão de entrada.
 5. Em **Branding → Universal Login**, use a experiência **New Universal Login**.
    O botão **Entrar com e-mail e senha** solicita a conexão de banco; o botão
    **Criar conta** usa a mesma conexão com `screen_hint=signup`.
 6. Em **Applications → Applications → Video Insight Frontend → Settings**,
-   confirme Domain `dev-wj6kifnw5uxt2gpk.us.auth0.com` e Client ID
-   `ni2qNMV1N9PYkxUOqUNaIC5vbgF28BsJ`.
-7. Cadastre `http://localhost:5173` nos três campos **Allowed Callback URLs**,
-   **Allowed Logout URLs** e **Allowed Web Origins**. Salve.
+   confirme Domain `dev-l73dre016gevtcsh.us.auth0.com` e Client ID
+   `eUBEMDWJkXSsGDO7PJo1hn3JiLDpqfgz`.
+7. Cadastre `http://localhost:5173` e `https://video-insight-ruby.vercel.app`
+   nos três campos **Allowed Callback URLs**, **Allowed Logout URLs** e
+   **Allowed Web Origins**. Salve.
 8. Em **Applications → APIs → sua API**, copie **Identifier** e confirme **RS256**.
    O Identifier é a audience, não o Client ID de outra aplicação.
 9. Nessa API, abra **Application Access → Edit** e autorize **User-Delegated
    Access** para a SPA `Video Insight Frontend` (Client ID
-   `ni2qNMV1N9PYkxUOqUNaIC5vbgF28BsJ`). Mantenha autorização por aplicação;
+   `eUBEMDWJkXSsGDO7PJo1hn3JiLDpqfgz`). Mantenha autorização por aplicação;
    não é necessário liberar todas as aplicações nem ativar Client Access/M2M.
    Se a política estiver em **No apps allowed**, altere para **Per-app
    authorization** e autorize somente essa SPA.
 
-O teste real do fluxo identificou que a SPA ainda não tinha esse acesso à API
-`https://video-insight-api`: o Auth0 retornava `Client is not authorized to
-access resource server`. Essa permissão precisa ser salva no tenant antes
-que o login real possa ser concluído.
+Esse acesso foi salvo no tenant acessível e a emissão de tokens das duas contas
+de teste foi validada. Ao criar outra SPA, o grant precisa ser configurado nela.
 
 A conexão configurada no código se chama `Username-Password-Authentication`.
 Se sua conexão tiver outro nome, ajuste `AuthLoginButton.tsx` para corresponder.
@@ -53,9 +52,11 @@ Copie `apps/frontend/.env.example` para `apps/frontend/.env.local`:
 
 ```dotenv
 VITE_API_BASE_URL=/api/v1
-VITE_AUTH0_DOMAIN=dev-wj6kifnw5uxt2gpk.us.auth0.com
-VITE_AUTH0_CLIENT_ID=ni2qNMV1N9PYkxUOqUNaIC5vbgF28BsJ
-VITE_AUTH0_AUDIENCE=IDENTIFIER_EXATO_DA_API
+VITE_AUTH0_DOMAIN=dev-l73dre016gevtcsh.us.auth0.com
+VITE_AUTH0_CLIENT_ID=eUBEMDWJkXSsGDO7PJo1hn3JiLDpqfgz
+VITE_AUTH0_AUDIENCE=https://video-insight-api
+VITE_STORAGE_PROXY_PATH=/storage
+VITE_USE_MOCKS=false
 ```
 
 Substitua `IDENTIFIER_EXATO_DA_API` pelo campo Identifier do painel. Se o valor
@@ -73,13 +74,13 @@ Para usar a API, os serviços Java locais precisam de suas dependências e de:
 
 ```dotenv
 AUTH_ENABLED=true
-AUTH_ISSUER=https://dev-wj6kifnw5uxt2gpk.us.auth0.com/
-AUTH_AUDIENCE=IDENTIFIER_EXATO_DA_API
+AUTH_ISSUER=https://dev-l73dre016gevtcsh.us.auth0.com/
+AUTH_AUDIENCE=https://video-insight-api
 ```
 
 O proxy Vite usa Video Service em 8081 e Job Service em 8082. O login pode ser
 verificado sem backend, mas as telas de vídeos mostrarão falha de conexão até
-os serviços estarem disponíveis. Deploy não faz parte desta etapa.
+os serviços estarem disponíveis. Veja o [deploy publicado](autenticacao-e-deploy.md).
 
 ## Nome do usuário
 
@@ -101,7 +102,7 @@ login e cadastro com e-mail e senha.
    e senha. Crie uma conta e confira o retorno à rota solicitada.
 3. Use **Sair**, depois **Entrar com e-mail e senha** com a conta criada.
 4. Na página do Auth0, teste a opção de recuperação de senha e a entrega do e-mail.
-5. Confira que Google não aparece entre as opções habilitadas para a SPA.
+5. Confira que o botão de entrada abre a conexão de e-mail e senha.
 6. Com os serviços ativos, teste duas contas e confirme o isolamento de vídeos
    e jobs. Os recursos continuam vinculados ao `sub`, não ao nome ou e-mail.
 7. Em caso de erro do callback, confira a tela de nova tentativa, sem detalhes
