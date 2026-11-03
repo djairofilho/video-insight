@@ -5,6 +5,9 @@ import br.edu.insper.videoinsight.job.domain.OutboxEvent;
 import br.edu.insper.videoinsight.job.domain.OutboxEventRepository;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
@@ -13,6 +16,7 @@ import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Component;
 
@@ -43,8 +47,16 @@ public class OutboxPublisher {
         var published = 0;
         for (var event : pending) {
             try {
-                rabbitTemplate.send(properties.messaging().exchange(), event.getRoutingKey(), toMessage(event));
-            } catch (AmqpException exception) {
+                var correlation = new CorrelationData(event.getId().toString());
+                rabbitTemplate.send(properties.messaging().exchange(), event.getRoutingKey(), toMessage(event), correlation);
+                var confirm = correlation.getFuture().get(5, TimeUnit.SECONDS);
+                if (!confirm.ack() || correlation.getReturned() != null) {
+                    throw new AmqpException("Broker não confirmou a entrega à fila: " + confirm.reason());
+                }
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (AmqpException | ExecutionException | TimeoutException exception) {
                 log.warn("Falha ao publicar o evento {} do outbox; nova tentativa no próximo ciclo",
                         event.getId(), exception);
                 break;

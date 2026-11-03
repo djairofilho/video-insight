@@ -55,6 +55,9 @@ def fake_broker() -> SimpleNamespace:
         queue=AsyncMock(),
     )
     broker.connection.channel.return_value = broker.channel
+    broker.connection.is_closed = False
+    broker.connection.connected = asyncio.Event()
+    broker.connection.connected.set()
     broker.channel.declare_exchange.side_effect = [broker.exchange, broker.dead_letters]
     broker.channel.declare_queue.side_effect = [broker.dead_letter_queue, broker.queue]
     return broker
@@ -221,6 +224,35 @@ async def test_handler_crash_rejects_without_requeue(settings):
     assert message.acked is False
 
 
+@pytest.mark.parametrize("error", [ConnectionError("broker caiu"), TimeoutError("confirmação ausente")])
+async def test_transient_failure_requeues_the_request(settings, error):
+    def unavailable(request, emit):
+        raise error
+
+    message = FakeMessage(make_request().model_dump_json().encode())
+    await RabbitMQWorker(settings, unavailable).handle_message(message)
+    assert message.rejected_with is True
+    assert message.acked is False
+
+
+async def test_closed_connection_is_not_reported_as_connected(settings):
+    broker = fake_broker()
+    worker = await connected_worker(settings, broker)
+    broker.connection.is_closed = True
+    assert worker.connected is False
+    await worker.stop()
+
+
+async def test_reconnecting_connection_is_not_reported_as_connected(settings):
+    broker = fake_broker()
+    worker = await connected_worker(settings, broker)
+    broker.connection.connected.clear()
+    assert worker.connected is False
+    broker.connection.connected.set()
+    assert worker.connected is True
+    await worker.stop()
+
+
 async def collect_until_final(queue) -> list[dict]:
     received: list[dict] = []
     async with queue.iterator() as messages:
@@ -277,6 +309,23 @@ async def test_processes_a_request_end_to_end_with_real_rabbitmq(settings, valid
             )
             async with asyncio.timeout(30):
                 received = await collect_until_final(observer)
+
+            # Reinicia somente o broker descartável para comprovar recuperação e reentrega idempotente.
+            container = rabbit.get_wrapped_container()
+            stopped = await asyncio.to_thread(container.exec_run, ['rabbitmqctl', 'stop_app'])
+            assert stopped.exit_code == 0
+            await wait_until(lambda: not worker.connected, timeout=30)
+            restarted = await asyncio.to_thread(container.exec_run, ['rabbitmqctl', 'start_app'])
+            assert restarted.exit_code == 0
+            await wait_until(lambda: worker.connected, timeout=90)
+            await connection.ready()
+            await channel.ready()
+            await exchange.publish(
+                aio_pika.Message(request.model_dump_json().encode()), REQUESTED_ROUTING_KEY
+            )
+            async with asyncio.timeout(30):
+                redelivered = await collect_until_final(observer)
+            assert [event['event_type'] for event in redelivered] == ['processing.completed']
 
             await exchange.publish(aio_pika.Message(b"isto nao e json"), REQUESTED_ROUTING_KEY)
             dead_letters = await channel.declare_queue(DEAD_LETTER_QUEUE, durable=True)
