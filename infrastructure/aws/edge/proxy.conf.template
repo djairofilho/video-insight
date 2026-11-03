@@ -1,4 +1,9 @@
-log_format video_insight '$remote_addr [$time_local] "$request_method $uri $server_protocol" $status $body_bytes_sent';
+log_format video_insight '[$time_local] "$request_method $uri $server_protocol" $status $body_bytes_sent rt=$request_time upstream=$upstream_response_time connect=$upstream_connect_time';
+
+upstream api_gateway {
+    server localhost:8082;
+    keepalive 64;
+}
 
 server {
     access_log /var/log/nginx/access.log video_insight;
@@ -18,14 +23,20 @@ server {
         proxy_send_timeout 180s;
         proxy_hide_header Cache-Control;
         add_header Cache-Control "private, no-store" always;
-        proxy_pass http://__AWS_CORE_PRIVATE_HOST__:8081/;
+        proxy_ssl_server_name on;
+        proxy_ssl_name __STORAGE_PROXY_HOST__;
+        proxy_ssl_verify on;
+        proxy_ssl_verify_depth 3;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        proxy_pass __STORAGE_PROXY_ORIGIN__/;
     }
 
     location / {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header Authorization $http_authorization;
+        proxy_set_header Connection "";
         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
-        proxy_pass http://127.0.0.1:8082;
+        proxy_pass http://api_gateway;
     }
 }

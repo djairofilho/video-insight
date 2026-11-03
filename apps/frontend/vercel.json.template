@@ -4,7 +4,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm ci",
+  "redirects": [
+    { "source": "/", "has": [{"type": "host", "value": "__GRAFANA_PUBLIC_HOST__"}], "destination": "/d/video-insight-infra", "permanent": false },
+    { "source": "/", "has": [{"type": "host", "value": "__PROMETHEUS_PUBLIC_HOST__"}], "destination": "/query", "permanent": false }
+  ],
   "rewrites": [
+    { "source": "/:path*", "has": [{"type": "host", "value": "__GRAFANA_PUBLIC_HOST__"}], "destination": "https://__STORAGE_PUBLIC_HOST__:8081/_monitor/grafana/:path*" },
+    { "source": "/:path*", "has": [{"type": "host", "value": "__PROMETHEUS_PUBLIC_HOST__"}], "destination": "https://__STORAGE_PUBLIC_HOST__:8081/_monitor/prometheus/:path*" },
     { "source": "/api/v1/:path*", "destination": "http://__AWS_GATEWAY_HOST__:8081/api/v1/:path*" },
     { "source": "/storage/videos/:path*", "destination": "http://__AWS_GATEWAY_HOST__:8081/storage/videos/:path*" },
     { "source": "/storage/artifacts/:path*", "destination": "http://__AWS_GATEWAY_HOST__:8081/storage/artifacts/:path*" },
@@ -13,6 +19,8 @@
   "headers": [
     { "source": "/api/:path*", "headers": [{ "key": "Cache-Control", "value": "private, no-store" }] },
     { "source": "/storage/:path*", "headers": [{ "key": "Cache-Control", "value": "private, no-store" }] },
-    { "source": "/assets/:path*", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+    { "source": "/assets/:path*", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/:path*", "has": [{"type": "host", "value": "__GRAFANA_PUBLIC_HOST__"}], "headers": [{"key": "Cache-Control", "value": "private, no-store"}] },
+    { "source": "/:path*", "has": [{"type": "host", "value": "__PROMETHEUS_PUBLIC_HOST__"}], "headers": [{"key": "Cache-Control", "value": "private, no-store"}] }
   ]
 }

@@ -1,0 +1,49 @@
+https://__STORAGE_PUBLIC_HOST__:8081 {
+    handle_path /_monitor/grafana/* {
+        header Cache-Control "private, no-store"
+        header X-Content-Type-Options nosniff
+        reverse_proxy 127.0.0.1:13000 {
+            header_up Host __GRAFANA_PUBLIC_HOST__
+            header_up X-Forwarded-Host __GRAFANA_PUBLIC_HOST__
+            header_up X-Forwarded-Proto https
+        }
+    }
+    handle_path /_monitor/prometheus/* {
+        basic_auth bcrypt "Video Insight Monitoring" {
+            admin __PROMETHEUS_AUTH_HASH__
+        }
+        header Cache-Control "private, no-store"
+        header X-Content-Type-Options nosniff
+        @management path /-/reload /-/quit /api/v1/admin/*
+        respond @management 403
+        reverse_proxy 127.0.0.1:19090 {
+            header_up Host __PROMETHEUS_PUBLIC_HOST__
+            header_up X-Forwarded-Host __PROMETHEUS_PUBLIC_HOST__
+            header_up X-Forwarded-Proto https
+            header_up -Authorization
+        }
+    }
+    @objects {
+        path /videos/* /artifacts/*
+        method GET PUT HEAD OPTIONS
+    }
+    handle @objects {
+        request_body {
+            max_size 104857600
+        }
+        header Cache-Control "private, no-store"
+        reverse_proxy localhost:9000 {
+            transport http {
+                dial_timeout 3s
+                response_header_timeout 180s
+            }
+        }
+    }
+    handle /healthz {
+        rewrite * /minio/health/ready
+        reverse_proxy localhost:9000
+    }
+    handle {
+        respond 404
+    }
+}
