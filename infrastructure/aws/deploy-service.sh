@@ -6,7 +6,7 @@ image=${2:?imagem obrigatória}
 env_file=${3:?arquivo de ambiente obrigatório}
 case "$component" in
   video|job) memory=512m; health=/health ;;
-  processing) memory=320m; health=/health ;;
+  processing) memory=512m; health=/health ;;
   gateway) memory=256m; health=/health/video ;;
   *) echo 'Componente inválido' >&2; exit 2 ;;
 esac
@@ -37,7 +37,18 @@ rollback() {
   fi
 }
 trap rollback ERR
+extra_args=()
+if [[ "$component" == processing ]]; then
+  extra_args+=(--mount type=volume,src=video-insight-provider-budget,dst=/var/lib/video-insight)
+fi
+if [[ "$component" == gateway ]]; then
+  metrics_bind=$(awk -F= '$1 == "METRICS_BIND_HOST" {print substr($0,index($0,"=")+1)}' "$env_file")
+  [[ "$metrics_bind" =~ ^[0-9.]+$ ]]
+  extra_args+=(-p "${metrics_bind}:9091:9091")
+fi
 docker run -d --name "$name" --restart unless-stopped --memory "$memory" \
+  --log-driver local --log-opt max-size=10m --log-opt max-file=3 \
+  "${extra_args[@]}" \
   --env-file "$env_file" -p "$binding" "$image" >/dev/null
 healthy=false
 for _ in {1..40}; do

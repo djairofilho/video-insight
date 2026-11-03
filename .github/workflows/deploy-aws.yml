@@ -23,6 +23,7 @@ concurrency:
 
 env:
   AWS_GATEWAY_HOST: ${{ secrets.AWS_GATEWAY_HOST }}
+  AWS_GATEWAY_PRIVATE_HOST: ${{ secrets.AWS_GATEWAY_PRIVATE_HOST }}
   AWS_VIDEO_PRIVATE_HOST: ${{ secrets.AWS_VIDEO_PRIVATE_HOST }}
   AWS_JOB_PRIVATE_HOST: ${{ secrets.AWS_JOB_PRIVATE_HOST }}
   AWS_PROCESSING_PRIVATE_HOST: ${{ secrets.AWS_PROCESSING_PRIVATE_HOST }}
@@ -32,6 +33,10 @@ env:
   METRICS_ALLOWED_NETWORKS: ${{ secrets.METRICS_ALLOWED_NETWORKS }}
   STORAGE_PUBLIC_ENDPOINT: ${{ secrets.STORAGE_PUBLIC_ENDPOINT }}
   FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+  FRONTEND_ORIGINS: ${{ vars.FRONTEND_ORIGINS }}
+  STORAGE_PUBLIC_HOST: ${{ vars.STORAGE_PUBLIC_HOST }}
+  GRAFANA_PUBLIC_HOST: ${{ vars.GRAFANA_PUBLIC_HOST }}
+  PROMETHEUS_PUBLIC_HOST: ${{ vars.PROMETHEUS_PUBLIC_HOST }}
 
 jobs:
   validate:
@@ -67,23 +72,27 @@ jobs:
             video:
               - 'services/video-service/**'
               - 'infrastructure/aws/deploy-service.sh'
-              - 'infrastructure/aws/tunnels/video-service-tunnel.service'
+              - 'infrastructure/aws/tunnels/video-service-tunnel.service.template'
               - '.github/workflows/deploy-aws.yml'
             job:
               - 'services/job-service/**'
               - 'infrastructure/aws/deploy-service.sh'
-              - 'infrastructure/aws/tunnels/job-service-tunnel.service'
+              - 'infrastructure/aws/tunnels/job-service-tunnel.service.template'
               - '.github/workflows/deploy-aws.yml'
             processing:
               - 'services/processing-service/**'
               - 'infrastructure/aws/deploy-service.sh'
-              - 'infrastructure/aws/tunnels/processing-service-tunnel.service'
+              - 'infrastructure/aws/tunnels/processing-service-tunnel.service.template'
               - '.github/workflows/deploy-aws.yml'
             core:
               - 'infrastructure/aws/core/**'
+              - 'infrastructure/aws/https/storage.Caddyfile.template'
+              - 'infrastructure/aws/https/deploy.sh'
+              - 'infrastructure/aws/https/compose.yaml'
               - '.github/workflows/deploy-aws.yml'
             observability:
               - 'infrastructure/aws/observability/**'
+              - 'infrastructure/aws/https/**'
               - '.github/workflows/deploy-aws.yml'
 
   preflight:
@@ -103,7 +112,9 @@ jobs:
           python3 scripts/render_deployment.py frontend edge
           python3 - <<'PYTHON'
           import os, json
+          import runpy
           from urllib.parse import urlparse
+          runpy.run_path('scripts/render_deployment.py')['value']('FRONTEND_ORIGINS_JSON', os.environ)
           for key in ('AUTH_ISSUER', 'FRONTEND_ORIGIN'):
               value = os.environ[key]
               parsed = urlparse(value)
@@ -215,11 +226,14 @@ jobs:
       - name: Install Job Service dependency tunnel
         env:
           HOST: ${{ secrets.AWS_OBSERVABILITY_HOST }}
+          CORE_HOST: ${{ secrets.AWS_CORE_HOST }}
         run: |
           python3 scripts/render_deployment.py tunnels
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo test -r /etc/video-insight/tunnel_ed25519 && sudo test -r /etc/video-insight/known_hosts'
+          scp -i ~/.ssh/video-insight infrastructure/aws/tunnels/allow-job-storage.py ubuntu@"$CORE_HOST":/tmp/video-insight-allow-job-storage.py
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo ssh-keygen -y -f /etc/video-insight/tunnel_ed25519' | ssh -i ~/.ssh/video-insight ubuntu@"$CORE_HOST" "sudo python3 /tmp/video-insight-allow-job-storage.py '$AWS_CORE_PRIVATE_HOST'"
           scp -i ~/.ssh/video-insight infrastructure/aws/tunnels/job-service-tunnel.service ubuntu@"$HOST":/tmp/video-insight-core-tunnel.service
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo install -m 644 /tmp/video-insight-core-tunnel.service /etc/systemd/system/video-insight-core-tunnel.service; rm -f /tmp/video-insight-core-tunnel.service; sudo ufw allow in on docker0 from ${AWS_DOCKER_NETWORK_CIDR} to ${AWS_DOCKER_BRIDGE_HOST} port 15434 proto tcp; sudo ufw allow in on docker0 from ${AWS_DOCKER_NETWORK_CIDR} to ${AWS_DOCKER_BRIDGE_HOST} port 15672 proto tcp; sudo systemctl daemon-reload; sudo systemctl enable video-insight-core-tunnel.service; sudo systemctl restart video-insight-core-tunnel.service; sudo systemctl is-active --quiet video-insight-core-tunnel.service"
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "set -e; sudo install -m 644 /tmp/video-insight-core-tunnel.service /etc/systemd/system/video-insight-core-tunnel.service; rm -f /tmp/video-insight-core-tunnel.service; sudo ufw allow in on docker0 from ${AWS_DOCKER_NETWORK_CIDR} to ${AWS_DOCKER_BRIDGE_HOST} port 15434 proto tcp; sudo ufw allow in on docker0 from ${AWS_DOCKER_NETWORK_CIDR} to ${AWS_DOCKER_BRIDGE_HOST} port 15672 proto tcp; sudo ufw allow in on docker0 from ${AWS_DOCKER_NETWORK_CIDR} to ${AWS_DOCKER_BRIDGE_HOST} port 19000 proto tcp; sudo systemctl daemon-reload; sudo systemctl enable video-insight-core-tunnel.service; sudo systemctl restart video-insight-core-tunnel.service; sudo systemctl is-active --quiet video-insight-core-tunnel.service"
       - name: Deploy Job Service
         env:
           HOST: ${{ secrets.AWS_OBSERVABILITY_HOST }}
@@ -231,7 +245,7 @@ jobs:
           MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
         run: |
           umask 077
-          # Banco e RabbitMQ usam túneis SSH; MinIO usa o endereço privado do Core.
+          # Banco, RabbitMQ e MinIO usam os túneis SSH privados.
           {
             echo "DB_URL=jdbc:postgresql://${AWS_DOCKER_BRIDGE_HOST}:15434/video_insight_jobs"
             echo 'DB_USER=job_service'
@@ -240,7 +254,7 @@ jobs:
             echo 'RABBITMQ_PORT=15672'
             echo 'RABBITMQ_USER=video_insight'
             printf 'RABBITMQ_PASSWORD=%s\n' "$RABBITMQ_PASSWORD"
-            echo "STORAGE_ENDPOINT=http://${AWS_CORE_PRIVATE_HOST}:8081"
+            echo "STORAGE_ENDPOINT=http://${AWS_DOCKER_BRIDGE_HOST}:19000"
             printf 'STORAGE_PUBLIC_ENDPOINT=%s\n' "$STORAGE_PUBLIC_ENDPOINT"
             echo 'AUTH_ENABLED=true'
             printf 'METRICS_ALLOWED_NETWORKS=%s\n' "$METRICS_ALLOWED_NETWORKS"
@@ -318,7 +332,12 @@ jobs:
             "MINIO_ACCESS_KEY=video_insight" \
             "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
             "GROQ_API_KEY=$GROQ_API_KEY" \
-            "GEMINI_API_KEY=$GEMINI_API_KEY" > /tmp/processing.env
+            "GEMINI_API_KEY=$GEMINI_API_KEY" \
+            "WORKER_CONCURRENCY=2" \
+            "PROVIDER_BUDGET_ENABLED=true" \
+            "GEMINI_REQUESTS_PER_MINUTE=6" \
+            "GEMINI_REQUESTS_PER_DAY=100" \
+            "GEMINI_TOKENS_PER_MINUTE=120000" > /tmp/processing.env
           scp -i ~/.ssh/video-insight /tmp/processing.env ubuntu@"$HOST":processing.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'chmod 600 ~/processing.env; sudo docker image prune -af'
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo docker load' < /tmp/processing-service.tar.gz
@@ -361,10 +380,23 @@ jobs:
           trap cleanup EXIT
           printf 'VIDEO_DB_PASSWORD=%s\nJOB_DB_PASSWORD=%s\nRABBITMQ_PASSWORD=%s\nMINIO_ROOT_PASSWORD=%s\n' "$VIDEO_DB_PASSWORD" "$JOB_DB_PASSWORD" "$RABBITMQ_PASSWORD" "$MINIO_ROOT_PASSWORD" > /tmp/core.env
           printf 'FRONTEND_ORIGIN=%s\nAWS_DOCKER_BRIDGE_HOST=%s\nAWS_CORE_PRIVATE_HOST=%s\n' "$FRONTEND_ORIGIN" "$AWS_DOCKER_BRIDGE_HOST" "$AWS_CORE_PRIVATE_HOST" >> /tmp/core.env
+          printf 'FRONTEND_ORIGINS=%s\n' "$FRONTEND_ORIGINS" >> /tmp/core.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/core'
           scp -i ~/.ssh/video-insight infrastructure/aws/core/compose.yaml /tmp/core.env ubuntu@"$HOST":/opt/video-insight/core/
           scp -i ~/.ssh/video-insight /tmp/minio-image.tar.gz ubuntu@"$HOST":/tmp/minio-image.tar.gz
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; cd /opt/video-insight/core; sudo ufw allow 8081/tcp; sudo docker load -i /tmp/minio-image.tar.gz; sudo docker run --rm --user 0:0 --entrypoint chown -v video-insight-core_minio-data:/data video-insight/minio:RELEASE.2025-09-07T16-13-09Z -R 10001:10001 /data; sudo docker compose --env-file core.env up -d --remove-orphans --wait --wait-timeout 180; sudo docker image prune -af'
+
+      - name: Publish storage and monitoring HTTPS
+        env:
+          HOST: ${{ secrets.AWS_CORE_HOST }}
+          PROMETHEUS_AUTH_HASH: ${{ secrets.PROMETHEUS_AUTH_HASH }}
+        run: |
+          set -euo pipefail
+          test -n "$STORAGE_PUBLIC_HOST"
+          python3 scripts/render_deployment.py https-storage
+          scp -i ~/.ssh/video-insight infrastructure/aws/https/storage.Caddyfile ubuntu@"$HOST":/tmp/video-insight-Caddyfile
+          scp -i ~/.ssh/video-insight infrastructure/aws/https/compose.yaml ubuntu@"$HOST":/tmp/video-insight-https-compose.yaml
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'bash -s -- /tmp/video-insight-Caddyfile /tmp/video-insight-https-compose.yaml' < infrastructure/aws/https/deploy.sh
 
   deploy-observability:
     needs: [changes, preflight]
@@ -376,6 +408,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - *ssh_setup
+      - name: Update machine and container collectors
+        env:
+          VIDEO_HOST: ${{ secrets.AWS_VIDEO_HOST }}
+          JOB_HOST: ${{ secrets.AWS_OBSERVABILITY_HOST }}
+          PROCESSING_HOST: ${{ secrets.AWS_PROCESSING_HOST }}
+          CORE_HOST: ${{ secrets.AWS_CORE_HOST }}
+        run: |
+          set -euo pipefail
+          for entry in "${AWS_GATEWAY_HOST}:${AWS_GATEWAY_PRIVATE_HOST}" "${VIDEO_HOST}:${AWS_VIDEO_PRIVATE_HOST}" "${JOB_HOST}:${AWS_JOB_PRIVATE_HOST}" "${PROCESSING_HOST}:${AWS_PROCESSING_PRIVATE_HOST}" "${CORE_HOST}:${AWS_CORE_PRIVATE_HOST}"; do
+            IFS=: read -r host private <<< "$entry"
+            ssh -i ~/.ssh/video-insight ubuntu@"$host" 'mkdir -p /tmp/video-insight-node-exporter; sudo install -d /opt/video-insight/node-exporter/textfile'
+            scp -i ~/.ssh/video-insight infrastructure/aws/observability/node-exporter.sh infrastructure/aws/observability/metrics-firewall.sh infrastructure/aws/observability/container-metrics.py infrastructure/aws/observability/container-metrics.service infrastructure/aws/observability/container-metrics.timer ubuntu@"$host":/tmp/video-insight-node-exporter/
+            ssh -i ~/.ssh/video-insight ubuntu@"$host" "set -e; sudo install -m 644 /tmp/video-insight-node-exporter/container-metrics.py /opt/video-insight/node-exporter/; sudo install -m 700 /tmp/video-insight-node-exporter/metrics-firewall.sh /opt/video-insight/node-exporter/; sudo install -m 644 /tmp/video-insight-node-exporter/container-metrics.service /etc/systemd/system/video-insight-container-metrics.service; sudo install -m 644 /tmp/video-insight-node-exporter/container-metrics.timer /etc/systemd/system/video-insight-container-metrics.timer; sudo systemctl daemon-reload; sudo systemctl enable --now video-insight-container-metrics.timer; sudo systemctl start video-insight-container-metrics.service; NODE_EXPORTER_BIND_HOST='$private' MONITORING_PRIVATE_HOST='$AWS_JOB_PRIVATE_HOST' bash /tmp/video-insight-node-exporter/node-exporter.sh"
+          done
       - name: Deploy Prometheus and Grafana
         env:
           HOST: ${{ secrets.AWS_OBSERVABILITY_HOST }}
@@ -390,9 +436,28 @@ jobs:
           trap cleanup EXIT
           python3 scripts/render_deployment.py observability
           printf 'GRAFANA_ADMIN_PASSWORD=%s\nPROMETHEUS_BIND_HOST=%s\n' "$GRAFANA_ADMIN_PASSWORD" "$AWS_JOB_PRIVATE_HOST" > /tmp/observability.env
+          printf 'GRAFANA_ROOT_URL=https://%s\nGRAFANA_COOKIE_SECURE=true\nPROMETHEUS_PUBLIC_URL=https://%s\n' "$GRAFANA_PUBLIC_HOST" "$PROMETHEUS_PUBLIC_HOST" >> /tmp/observability.env
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'sudo install -d -o ubuntu -g ubuntu /opt/video-insight/observability'
           scp -i ~/.ssh/video-insight infrastructure/aws/observability/* /tmp/observability.env ubuntu@"$HOST":/opt/video-insight/observability/
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'cd /opt/video-insight/observability && sudo docker compose --env-file observability.env up -d --remove-orphans --force-recreate && sudo docker image prune -af'
+      - name: Install restricted metrics tunnels
+        env:
+          VIDEO_HOST: ${{ secrets.AWS_VIDEO_HOST }}
+          JOB_HOST: ${{ secrets.AWS_OBSERVABILITY_HOST }}
+          PROCESSING_HOST: ${{ secrets.AWS_PROCESSING_HOST }}
+          CORE_HOST: ${{ secrets.AWS_CORE_HOST }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/video-insight ubuntu@"$JOB_HOST" "set -e; sudo install -d -m 700 /etc/video-insight; if ! sudo test -f /etc/video-insight/metrics_ed25519; then sudo ssh-keygen -q -t ed25519 -N '' -f /etc/video-insight/metrics_ed25519; fi"
+          metrics_key=$(ssh -i ~/.ssh/video-insight ubuntu@"$JOB_HOST" 'sudo ssh-keygen -y -f /etc/video-insight/metrics_ed25519')
+          scp -i ~/.ssh/video-insight infrastructure/aws/observability/install-metrics-tunnel.py ubuntu@"$JOB_HOST":/tmp/video-insight-install-metrics-tunnel.py
+          for entry in "${AWS_GATEWAY_HOST}:${AWS_GATEWAY_PRIVATE_HOST}:gateway" "${VIDEO_HOST}:${AWS_VIDEO_PRIVATE_HOST}:video" "${PROCESSING_HOST}:${AWS_PROCESSING_PRIVATE_HOST}:processing" "${CORE_HOST}:${AWS_CORE_PRIVATE_HOST}:core"; do
+            IFS=: read -r host private role <<< "$entry"
+            scp -i ~/.ssh/video-insight infrastructure/aws/observability/authorize-metrics.py ubuntu@"$host":/tmp/video-insight-authorize-metrics.py
+            printf '%s' "$metrics_key" | ssh -i ~/.ssh/video-insight ubuntu@"$host" "python3 /tmp/video-insight-authorize-metrics.py '$private' '$role'"
+            host_key=$(ssh -i ~/.ssh/video-insight ubuntu@"$host" 'cat /etc/ssh/ssh_host_ed25519_key.pub')
+            printf '%s' "$host_key" | ssh -i ~/.ssh/video-insight ubuntu@"$JOB_HOST" "sudo env TARGET_PRIVATE_HOST='$private' AWS_DOCKER_BRIDGE_HOST='$AWS_DOCKER_BRIDGE_HOST' AWS_DOCKER_NETWORK_CIDR='$AWS_DOCKER_NETWORK_CIDR' AWS_JOB_PRIVATE_HOST='$AWS_JOB_PRIVATE_HOST' python3 /tmp/video-insight-install-metrics-tunnel.py '$role'"
+          done
 
   deploy-gateway:
     needs: [changes, preflight, deploy-video, deploy-job, deploy-processing]
@@ -421,7 +486,8 @@ jobs:
           HOST: ${{ secrets.AWS_GATEWAY_HOST }}
         run: |
           scp -i ~/.ssh/video-insight /tmp/api-gateway.tar.gz ubuntu@"$HOST":/tmp/api-gateway.tar.gz
-          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; sudo docker load -i /tmp/api-gateway.tar.gz; umask 077; : > /tmp/video-insight-gateway.env; rm -f /tmp/api-gateway.tar.gz'
+          ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'set -e; sudo docker load -i /tmp/api-gateway.tar.gz; umask 077; rm -f /tmp/api-gateway.tar.gz'
+          printf 'METRICS_BIND_HOST=%s\n' "$AWS_GATEWAY_PRIVATE_HOST" | ssh -i ~/.ssh/video-insight ubuntu@"$HOST" 'umask 077; cat > /tmp/video-insight-gateway.env'
           ssh -i ~/.ssh/video-insight ubuntu@"$HOST" "bash -s -- gateway video-insight/api-gateway:${GITHUB_SHA} /tmp/video-insight-gateway.env" < infrastructure/aws/deploy-service.sh
           python3 scripts/render_deployment.py edge
           scp -i ~/.ssh/video-insight infrastructure/aws/edge/proxy.conf ubuntu@"$HOST":/tmp/video-insight-proxy.conf
