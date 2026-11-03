@@ -7,6 +7,7 @@ from processing_service.content_intelligence.chapter_agent import AgentChapterWr
 from processing_service.content_intelligence.gemini import GeminiChatModel
 from processing_service.content_intelligence.summary_agent import AgentSummarizer
 from processing_service.domain import ConfigurationError
+from processing_service.budget import get_budget
 
 ContentWriters = tuple[Summarizer, ChapterWriter]
 
@@ -23,6 +24,8 @@ def _gemini(settings: Settings) -> ContentWriters:
         timeout_seconds=settings.gemini_timeout_seconds,
         call_attempts=settings.gemini_call_attempts,
         max_backoff_seconds=settings.gemini_max_backoff_seconds,
+        budget=get_budget(settings),
+        max_output_tokens=settings.gemini_max_output_tokens,
     )
     summary_limits = AgentLimits(
         max_turns=settings.summary_agent_max_turns,

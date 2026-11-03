@@ -11,6 +11,8 @@ from fastapi.responses import Response
 from processing_service.config import get_settings
 from processing_service.domain import ConfigurationError
 from processing_service.worker import build_worker
+from processing_service.metrics import METRICS
+from processing_service.budget import get_budget
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +65,17 @@ def metrics(request: Request) -> Response:
         raise HTTPException(status_code=403)
     worker = getattr(app.state, "worker", None)
     connected = int(worker is not None and worker.connected)
+    consumers = getattr(worker, "workers", [worker] if worker is not None else [])
+    consumer_count = sum(int(consumer.connected) for consumer in consumers)
+    settings = get_settings()
+    if getattr(settings, "provider_budget_enabled", False):
+        get_budget(settings).report_metrics()
     return Response(
         "# HELP video_insight_worker_connected Conexão com RabbitMQ disponível.\n"
         "# TYPE video_insight_worker_connected gauge\n"
-        f"video_insight_worker_connected {connected}\n",
+        f"video_insight_worker_connected {connected}\n"
+        "# HELP video_insight_worker_consumers_connected Consumidores conectados.\n"
+        "# TYPE video_insight_worker_consumers_connected gauge\n"
+        f"video_insight_worker_consumers_connected {consumer_count}\n" + METRICS.render().decode(),
         media_type="text/plain; version=0.0.4",
     )
