@@ -22,6 +22,29 @@ function respondWith(statuses: JobStatus[]) {
 }
 
 describe('useJobPolling', () => {
+  it('pausa em aba oculta e atualiza ao voltar sem sobrepor chamadas', async () => {
+    const visibility = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    const calls = respondWith(['processing', 'completed'])
+    const { result } = renderHook(() => useJobPolling(JOB, 10))
+    await new Promise((resolve) => setTimeout(resolve, 30))
+    expect(calls).toHaveLength(0)
+    visibility.mockReturnValue(false)
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    await waitFor(() => expect(result.current.job?.status).toBe('completed'))
+    expect(calls).toHaveLength(2)
+    visibility.mockRestore()
+  })
+
+  it('espaça consultas enquanto o job espera na fila', async () => {
+    const calls = respondWith(['queued', 'completed'])
+    const { result } = renderHook(() => useJobPolling(JOB, 40))
+    await waitFor(() => expect(calls).toHaveLength(1))
+    await new Promise((resolve) => setTimeout(resolve, 60))
+    expect(calls).toHaveLength(1)
+    await waitFor(() => expect(result.current.job?.status).toBe('completed'))
+    expect(calls[1] - calls[0]).toBeGreaterThanOrEqual(110)
+  })
+
   it('consulta até o estado final e para', async () => {
     const calls = respondWith(['queued', 'processing', 'completed'])
     const { result } = renderHook(() => useJobPolling(JOB, 10))
