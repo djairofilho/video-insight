@@ -16,6 +16,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 
 @Configuration
 public class SecurityConfig {
@@ -23,9 +28,14 @@ public class SecurityConfig {
     SecurityFilterChain apiSecurity(HttpSecurity http,
             @Value("${auth.enabled:false}") boolean enabled,
             @Value("${auth.issuer:}") String issuer,
-            @Value("${auth.audience:}") String audience, JsonMapper mapper) throws Exception {
+            @Value("${auth.audience:}") String audience,
+            @Value("${metrics.allowed-networks:}") String metricNetworks, JsonMapper mapper) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        // Sem configuração de redes, somente o host local pode coletar métricas.
+        http.authorizeHttpRequests(requests -> requests.requestMatchers("/actuator/prometheus")
+                .access((authentication, context) -> new AuthorizationDecision(
+                        metricsAllowed(context.getRequest().getRemoteAddr(), metricNetworks))));
         if (!enabled) {
             http.authorizeHttpRequests(requests -> requests.anyRequest().permitAll());
         } else {
@@ -48,6 +58,16 @@ public class SecurityConfig {
         }
         return http.build();
     }
+    static boolean metricsAllowed(String address, String networks) {
+        try {
+            return InetAddress.getByName(address).isLoopbackAddress()
+                    || Arrays.stream(networks.split(",")).map(String::trim).filter(value -> !value.isEmpty())
+                            .map(IpAddressMatcher::new).anyMatch(network -> network.matches(address));
+        } catch (UnknownHostException | IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
     static OAuth2TokenValidator<Jwt> validator(String issuer, String audience) {
         return new DelegatingOAuth2TokenValidator<>(
                 JwtValidators.createDefaultWithIssuer(issuer),

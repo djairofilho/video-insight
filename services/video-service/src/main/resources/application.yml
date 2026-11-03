@@ -29,7 +29,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
@@ -50,3 +50,6 @@ auth:
   enabled: ${AUTH_ENABLED:false}
   issuer: ${AUTH_ISSUER:}
   audience: ${AUTH_AUDIENCE:}
+
+metrics:
+  allowed-networks: ${METRICS_ALLOWED_NETWORKS:}

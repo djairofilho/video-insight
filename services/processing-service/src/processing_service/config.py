@@ -3,7 +3,8 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import quote
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
+from ipaddress import ip_network
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -59,6 +60,14 @@ class Settings(BaseSettings):
     chapter_agent_wall_clock_seconds: float = 360.0
 
     log_level: str = "INFO"
+    metrics_allowed_networks: str = ""
+
+    @field_validator("metrics_allowed_networks")
+    @classmethod
+    def validate_metric_networks(cls, value: str) -> str:
+        for network in filter(None, (item.strip() for item in value.split(","))):
+            ip_network(network)
+        return value
 
     @property
     def rabbitmq_url(self) -> str:
